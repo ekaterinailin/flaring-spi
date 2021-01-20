@@ -102,7 +102,7 @@ def preselect_toi_catalog(tstamp):
 def preselect_nasa_catalog(tstamp):
 
     # Composite Table of confirmed exoplanets
-    path = "../data/PSCompPars_2021.01.08_01.59.05.csv"
+    path = "../data/2021_01_08_NASA_COMPOSITE.csv"
     mprint(f"[UP] Using NASA Composite Table from {path}")
     df = pd.read_csv(path, skiprows=318) # composite table
     # df.columns.values
@@ -135,25 +135,28 @@ if __name__ == "__main__":
     # 1b. MAST SEARCH in TESS-TOI CATALOG
     # -----------------------------------------------------------------------
 
-#    mprint("Beginning search for SC LCs in TOI catalog.")
-#    x = 0
-#    N = dfs.shape[0]
-#    for i, row in dfs.iterrows():
-#        TIC = row.name
-#        x += 1
-#        try:
-#            lst = search_lightcurvefile(f"TIC {TIC}", cadence="short")
-#            _ = {"sector":lst.table.to_pandas()["observation"].str[-2:].values,
-#                 "mission":lst.table.to_pandas()["observation"].str[:4].values,
-#                 "TIC":TIC}
-#            r = pd.DataFrame(_)
-#            with open(f"../data/{tstamp}_toi_gotlc.csv", "a") as f:
-#                r.to_csv(f,header=False, index=False)
-#            print(f"[{x / N * 100:.0f} %]", "TIC ", i, r.shape[0], x)
-#        except:
-#            with open(f"../data/{tstamp}_toi_nolc.txt", "a") as f:
-#                f.write(f"TIC {TIC}\n")
-#    mprint("Finished search for SC LCs in TOI catalog.")
+    mprint("Beginning search for SC LCs in TOI catalog.")
+    x = 0
+    N = dfs.shape[0]
+    # save first row:
+    with open(f"../data/{tstamp}_nasa_gotlc.csv", "a") as f:
+               f.write("sector,mission,TIC\n")
+    for i, row in dfs.iterrows():
+        TIC = row.name
+        x += 1
+        try:
+            lst = search_lightcurvefile(f"TIC {TIC}", cadence="short")
+            _ = {"sector":lst.table.to_pandas()["observation"].str[-2:].values,
+                 "mission":lst.table.to_pandas()["observation"].str[:4].values,
+                 "TIC":TIC}
+            r = pd.DataFrame(_)
+            with open(f"../data/{tstamp}_toi_gotlc.csv", "a") as f:
+                r.to_csv(f,header=False, index=False)
+            print(f"[{x / N * 100:.0f} %]", "TIC ", i, r.shape[0], x)
+        except:
+            with open(f"../data/{tstamp}_toi_nolc.txt", "a") as f:
+                f.write(f"TIC {TIC}\n")
+    mprint("Finished search for SC LCs in TOI catalog.")
 
 
     # -----------------------------------------------------------------------
@@ -175,27 +178,31 @@ if __name__ == "__main__":
     # 2b. MAST SEARCH in NASA CATALOG
     # -----------------------------------------------------------------------
 
-#    mprint("Begin search for SC LCs in NASA catalog.")
-#    x = 0
-#     N = dfs.shape[0]
-#     for i, row in dfs.iloc[2417:].iterrows():
-#         hostname = row.name
-#         x += 1
-#         try:
-#             lst = search_lightcurvefile(hostname, cadence="short")
-#             _ = {"qcs":lst.table.to_pandas()["observation"].str[-2:].values,
-#                  "mission":lst.table.to_pandas()["observation"].str[:4].values,
-#              "ID":hostname}
-#             r = pd.DataFrame(_)
-#             mprint(r)
-#             with open(f"../data/{tstamp}_nasa_gotlc.csv", "a") as f:
-#                 r.to_csv(f,header=False, index=False)
-#             print(f"[{x / N * 100:.0f} %]", hostname, r.shape[0], x)
-#         except:
-#             with open(f"../data/{tstamp}_nasa_nolc.txt", "a") as f:
-#                 f.write(f"{hostname}\n")
-#             print("exception")
-#     mprint("Finished search for SC LCs in NASA catalog.")
+    mprint("Begin search for SC LCs in NASA catalog.")
+    x = 0
+    N = dfs.shape[0]
+    print(N)
+    # save first row:
+    with open(f"../data/{tstamp}_nasa_gotlc.csv", "a") as f:
+               f.write("qcs,mission,ID\n")
+    for i, row in dfs.iterrows():
+        hostname = row.name
+        x += 1
+        try:
+            lst = search_lightcurvefile(hostname, cadence="short")
+            _ = {"qcs":lst.table.to_pandas()["observation"].str[-2:].values,
+                 "mission":lst.table.to_pandas()["observation"].str[:4].values,
+             "ID":hostname}
+            r = pd.DataFrame(_)
+            mprint(r)
+            with open(f"../data/{tstamp}_nasa_gotlc.csv", "a") as f:
+                r.to_csv(f,header=False, index=False)
+            print(f"[{x / N * 100:.0f} %]", hostname, r.shape[0], x)
+        except:
+            with open(f"../data/{tstamp}_nasa_nolc.txt", "a") as f:
+                f.write(f"{hostname}\n")
+            print("exception")
+    mprint("Finished search for SC LCs in NASA catalog.")
 
     # # -----------------------------------------------------------------------
     # # last updated 13/01/2021
@@ -228,7 +235,7 @@ if __name__ == "__main__":
     # save to file
     path = f"../data/{tstamp}_tic_name_match.csv"
     mprint(f"[DOWN] NASA ID to TESS TIC matches to {path}")
-    dd.to_csv(path)
+    dd.to_csv(path, index=False)
 
     # -----------------------------------------------------------------------
     # -----------------------------------------------------------------------
@@ -238,7 +245,7 @@ if __name__ == "__main__":
     # read in TIC ID matches
     path = f"../data/{tstamp}_tic_name_match.csv"
     mprint(f"[UP] Using TIC ID matches from {path}")
-    dd = pd.read_csv(path, names=["qcs","mission","TIC"])
+    dd = pd.read_csv(path)
 
     dd["TIC"] = dd["TIC"].astype(int)
 
