@@ -49,6 +49,20 @@ def test_get_full_transit_mask():
                                     19. , 19.2, 19.4, 23.8, 24. ,
                                     24.2, 28.6, 28.8, 29. , 29.2, 
                                     29.4])))
+    
+    # Check that single transits are treated okay
+    system = pd.DataFrame({"pl_trandur":[12., 20.],
+                           "pl_tranmidepoch" : [9., 9.], 
+                           "pl_orbper": [5.,np.nan]})
+
+    mask = get_full_transit_mask(system, flc)
+    flc.time[mask]
+
+    # These are also manually confirmed
+    assert (flc.time[mask] == 
+            pytest.approx(np.array([13.8, 14. , 14.2, 18.8,
+                                    19. , 19.2, 23.8, 24. ,
+                                    24.2, 28.8, 29. , 29.2,])))
 
 def test_get_transit_mid_epochs(): 
     assert (get_transit_mid_epochs(10., 3., 20., 40.) ==
@@ -68,3 +82,7 @@ def test_get_transit_mid_epochs():
 
     with pytest.raises(ValueError) as e:
         get_transit_mid_epochs(np.nan, 3., np.nan, 40.)
+        
+    # test a very long orbital period for single transit case
+    assert (get_transit_mid_epochs(30., 300., 20., 40.) ==
+        np.array([-270.,   30.,  330.])).all()

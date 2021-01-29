@@ -59,12 +59,18 @@ def get_full_transit_mask(system, flc, pad=0):
     boolean array of light curve length with 1=transit, and
     0=no transit.
     """
+    
     # start and end time of light curve
     t0, tf = flc.time[0], flc.time[-1]
     
+    # mask single transits
+    for i, row in system.iterrows():
+        if (np.isnan(row.pl_orbper)) & (~np.isnan(row.pl_tranmidepoch)):
+            system.loc[i,"pl_orbper"] = (tf - t0) * 1e6 
+    
     # half transit duration in days
     system["durhalf"] = system["pl_trandur"] / 48. # convert to days and cut in half
-    
+
     # flag all time stamps withing transit duration time
     try:
         res = system.apply(lambda x:
@@ -75,7 +81,7 @@ def get_full_transit_mask(system, flc, pad=0):
                                                                               t0, tf)]),
                                   axis=0), # <<< merge masks all transits in one planet into a single mask
                            axis=1).values
-        
+   
     # throw error if the planets are not properly characterized:
     except ValueError:
         raise ValueError("Some planets in your system are not transiting"
