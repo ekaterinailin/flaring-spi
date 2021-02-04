@@ -195,7 +195,7 @@ def remove_sines_iteratively(flcd, niter=5, freq_unit=1/u.day,
                 # bump iterator
                 n += 1
                 tf = time.clock()
-                print(snr, n, tf-t, tf-t1, t1-t)
+#                 print(snr, n, tf-t, tf-t1, t1-t)
       
             # replace the empty array with the fitted detrended flux
             flcd.detrended_flux[le:ri] = flc.flux
@@ -407,8 +407,8 @@ def fit_spline(flc, spline_coarseness=30, spline_order=3):
         
         # if the LC chunk is too short, interpolate linearly
         if t.shape[0] <= k:
-            p1 = UnivariateSpline(t[1:-1], f[1:-1], k=1)
-            flcp.detrended_flux[le:ri] = flcp.flux[le:ri] - p1(flcp.time[le:ri]) + flux_med
+           # p1 = UnivariateSpline(t[1:-1], f[1:-1], k=1)
+            flcp.detrended_flux[le:ri] = flcp.flux[le:ri] #- p1(flcp.time[le:ri]) + flux_med
             
         # otherwise fit a spline
         else:

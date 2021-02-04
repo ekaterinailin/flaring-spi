@@ -79,7 +79,7 @@ if __name__ == "__main__":
     mprint(f"LC left to search: {eskeptess.shape[0]}")
 
     #work through a subset first
-    eskeptess = eskeptess.iloc[:30]
+    eskeptess = eskeptess.iloc[:130]
     
     #track progress
     N, n = eskeptess.shape[0], 0
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
         # fetch light curve from MAST
         flc = from_mast(row.ID, mission=row.mission, c=row.qcs, cadence="short",
-                        download_dir="/media/ekaterina/40A2-49D9/lcs")
+                        download_dir="/media/ekaterina/DISK_IMG/lcs")
 
         # make it a list of LCs even if only one LC is returned
         if type(flc) == FlareLightCurve:
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         mprint(f"{len(flc)} light curves available for {row.ID} in {row.mission}.")
 
         # loop over all LCs for the system    
-        for f in flc:
+        for i, f in enumerate(flc):
 
             # If any planet transiting
             if system.shape[0] > 0:
@@ -128,55 +128,69 @@ if __name__ == "__main__":
                 tranmask = get_full_transit_mask(system, f, pad=0)
                 f.flux[tranmask] = np.nan
 
-            # apply custom detrending
-            fd = custom_detrending(f, pad=3)
-
-            # define two hour window for rolling std
-            w = np.floor(1./12./np.nanmin(np.diff(fd.time)))
-            if w%2==0: 
-                w+=1
-
-            # use window to estimate the noise in the LC
-            df = estimate_detrended_noise(fd, std_window=int(w), mask_pos_outliers_sigma=1.5)
-
-            # search the residual for flares
-            ff = df.find_flares(addtail=True).flares
-
             # get timestamp for result
             tstamp = time.strftime("%d_%m_%Y_%H_%M_%S", time.localtime())
+            # apply custom detrending
+            try:
+                ts = time.clock()
+                fd = custom_detrending(f)
+                tf = time.clock()
 
-            # add meta info to flare table
-            # if no flares found, add empty row
-            if ff.shape[0]==0:
-                ff["total_n_valid_data_points"] = df.detrended_flux.shape[0]
-                ff["ID"] = row.ID
-                ff["qcs"] = row.qcs
-                ff["mission"] = row.mission
-                ff["tstamp"] = tstamp
-                ff = ff.append({"total_n_valid_data_points":df.detrended_flux.shape[0],
-                                "ID":row.ID,
-                                "qcs" : row.qcs,
-                                "mission":row.mission,
-                                "tstamp":tstamp},
-                                 ignore_index=True)
 
-            # otherwise add ID, QCS and mission
-            else:
-                ff["ID"] = row.ID
-                ff["qcs"] = row.qcs
-                ff["mission"] = row.mission
-                ff["tstamp"] = tstamp
+                # define two hour window for rolling std
+                w = np.floor(1./12./np.nanmin(np.diff(fd.time)))
+                if w%2==0: 
+                    w+=1
 
-            # add results to file
-            with open("../results/flares.csv", "a") as file:
-                ff.to_csv(file, index=False, header=False)
+                # use window to estimate the noise in the LC
+                df = estimate_detrended_noise(fd, std_window=int(w), mask_pos_outliers_sigma=2.5)
+
+                # search the residual for flares
+                ff = df.find_flares(addtail=True).flares
+
+                # add meta info to flare table
+                # if no flares found, add empty row
+                if ff.shape[0]==0:
+                    ff["total_n_valid_data_points"] = df.detrended_flux.shape[0]
+                    ff["ID"] = row.ID
+                    ff["qcs"] = row.qcs
+                    ff["mission"] = row.mission
+                    ff["tstamp"] = tstamp
+                    ff["dur_detrend"] = tf - ts
+                    ff["lc_n"] = i
+                    ff = ff.append({"total_n_valid_data_points":df.detrended_flux.shape[0],
+                                    "ID":row.ID,
+                                    "qcs" : row.qcs,
+                                    "mission":row.mission,
+                                    "tstamp":tstamp,
+                                    "dur_detrend":tf-ts,
+                                    "lc_n":i},
+                                     ignore_index=True)
+
+                # otherwise add ID, QCS and mission
+                else:
+                    ff["ID"] = row.ID
+                    ff["qcs"] = row.qcs
+                    ff["mission"] = row.mission
+                    ff["tstamp"] = tstamp
+                    ff["dur_detrend"] = tf - ts
+                    ff["lc_n"] = i
+
+                # add results to file
+                with open("../results/flares.csv", "a") as file:
+                    ff.to_csv(file, index=False, header=False)
+            except Exception as err:
+                mprint(f"{row.ID}, QCS={row.qcs} ({row.mission}) not de-trended!")
+                with open("../results/nodetrend.txt", "a") as file:
+                    s = f"{row.ID},{row.qcs},{row.mission},{tstamp},{i},{err}\n"
+                    file.write(s)
 
         # info
         n += 1
         print(f"{n / N * 100.:.1f}%, [{n}/{N}]")
 
         # breathe
-        time.sleep(20)
+        time.sleep(10)
             
     TSTOP = time.time()
     mprint(f"Analysis of {N} light curves took {(TSTOP - TSTART) / 60. / 60.:.1f} hours.")
