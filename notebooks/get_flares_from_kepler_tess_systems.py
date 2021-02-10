@@ -79,7 +79,7 @@ if __name__ == "__main__":
     mprint(f"LC left to search: {eskeptess.shape[0]}")
 
     #work through a subset first
-    eskeptess = eskeptess.iloc[:130]
+    eskeptess = eskeptess.iloc[110:260]
     
     #track progress
     N, n = eskeptess.shape[0], 0
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
         # fetch light curve from MAST
         flc = from_mast(row.ID, mission=row.mission, c=row.qcs, cadence="short",
-                        download_dir="/media/ekaterina/DISK_IMG/lcs")
+                        download_dir="/home/ekaterina/Documents/001_science/lcs")
 
         # make it a list of LCs even if only one LC is returned
         if type(flc) == FlareLightCurve:
