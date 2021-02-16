@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
 
                 # define two hour window for rolling std
-                w = np.floor(1./12./np.nanmin(np.diff(fd.time)))
+                w = np.floor(1. / 12. / np.nanmin(np.diff(fd.time)))
                 if w%2==0: 
                     w+=1
 
