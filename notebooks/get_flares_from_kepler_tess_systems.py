@@ -79,7 +79,7 @@ if __name__ == "__main__":
     mprint(f"LC left to search: {eskeptess.shape[0]}")
 
     #work through a subset first
-    eskeptess = eskeptess.iloc[110:260]
+    eskeptess = eskeptess.iloc[120:270]
     
     #track progress
     N, n = eskeptess.shape[0], 0
