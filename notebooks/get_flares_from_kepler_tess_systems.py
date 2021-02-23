@@ -37,7 +37,7 @@ def mprint(message):
     print(message)
     print(sep)
     
-offset = {"K2":2454833.,"Kepler":2454833.,"TESS":2457000.}    
+offset = {"K2":2454833.,"Kepler":2454833.,"TESS":2457000., "Transiting Exoplanet Survey Satellite (TESS)" : 2457000.}    
 
 
 if __name__ == "__main__":
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     mprint(f"LC left to search: {eskeptess.shape[0]}")
 
     #work through a subset first
-    eskeptess = eskeptess.iloc[120:270]
+    eskeptess = eskeptess.iloc[160:260]
     
     #track progress
     N, n = eskeptess.shape[0], 0
