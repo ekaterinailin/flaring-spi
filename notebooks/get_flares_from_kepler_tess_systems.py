@@ -79,7 +79,7 @@ if __name__ == "__main__":
     mprint(f"LC left to search: {eskeptess.shape[0]}")
 
     #work through a subset first
-    eskeptess = eskeptess.iloc[190:590]
+    eskeptess = eskeptess.iloc[30:]
     
     #track progress
     N, n = eskeptess.shape[0], 0
@@ -92,17 +92,21 @@ if __name__ == "__main__":
         # TIC is unique ID for star
         system_tess = exotess[(exotess.TIC == row.TIC)]
         
+
         # ID is unique, also ignore entries that have no transits
         # because there is nothing to mask (they are still searched for flares)
         system_kepler = exokepler[(exokepler.hostname == row.ID) &
                            (exokepler.discoverymethod == "Transit")]
         
-
-        if system_kepler.shape[0] > 0:
-            system_kepler["pl_tranmidepoch"] = (system_kepler.pl_tranmid -
-                                                offset[system_kepler.iloc[0].disc_facility])
-
-        system = pd.concat([system_kepler, system_tess],ignore_index=True)
+        try:
+            if system_kepler.shape[0] > 0:
+                system_kepler["pl_tranmidepoch"] = (system_kepler.pl_tranmid -
+                                                    offset[system_kepler.iloc[0].disc_facility])
+            system = pd.concat([system_kepler, system_tess],ignore_index=True)
+        
+        except KeyError:
+            system = system_tess
+            print(system_kepler.pl_tranmid_systemref)
 
         # fetch light curve from MAST
         flc = from_mast(row.ID, mission=row.mission, c=row.qcs, cadence="short",
