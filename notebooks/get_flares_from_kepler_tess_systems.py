@@ -74,12 +74,16 @@ if __name__ == "__main__":
     fla = pd.read_csv("../results/flares.csv")
 
     # pick only LC that were not yet searched
-    eskeptess = eskeptess[~eskeptess.ID.isin(fla.ID.unique())]
+   # eskeptess = eskeptess[~eskeptess.ID.isin(fla.ID.unique())]
 
-    mprint(f"LC left to search: {eskeptess.shape[0]}")
+    # pick missing LCs
+    missing = pd.concat([fla, eskeptess]).drop_duplicates(subset=["ID", "qcs"], 
+                                                          keep=False)
+
+    mprint(f"LC left to search: {missing.shape[0]}")
 
     #work through a subset first
-    eskeptess = eskeptess.iloc[30:]
+    eskeptess = missing.iloc[54:]
     
     #track progress
     N, n = eskeptess.shape[0], 0
