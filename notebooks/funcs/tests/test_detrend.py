@@ -8,7 +8,8 @@ from altaipony.flarelc import FlareLightCurve
 from ..detrend import (custom_detrending,
                        estimate_detrended_noise,
                        remove_exponential_fringes,
-                       remove_sines_iteratively)
+                       remove_sines_iteratively,
+                       measure_flare)
 
 from altaipony.altai import find_iterative_median
 
@@ -225,3 +226,30 @@ def test_estimate_detrended_noise():
 
     # error should not change too much
     np.median(flces.detrended_flux_err) == pytest.approx(41.23144256208637)
+    
+    
+    
+def test_measure_flare():
+    """Simple test: Generate light curve with flare,
+    detrend, and manually measure the flare.
+    """
+    # generate LC
+    flc = generate_lightcurve(15,.01,.03,4,.3,.1,.02)
+    
+    # de-trend LC
+    flcc = custom_detrending(flc)
+
+    # measure flare
+    measure_flare(flcc,5280,5280+66)
+
+    # get pandas.Series
+    measured_flare = flcc.flares.iloc[0]
+
+    # do checks
+    assert measured_flare.istart == 5280
+    assert measured_flare.istop == 5346
+    assert measured_flare.tstart == pytest.approx(14.224)
+    assert measured_flare.tstop ==  pytest.approx(14.276800)
+    assert measured_flare.ed_rec == pytest.approx((250 + 750 * 0.5) / 3400 * 0.052800 * 24 * 3600, rel=.01)
+    assert measured_flare.ed_rec == pytest.approx(0.293085,0.1)
+    assert measured_flare.tstop -measured_flare.tstart == measured_flare.dur

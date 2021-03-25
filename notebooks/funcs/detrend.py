@@ -398,3 +398,48 @@ def fit_spline(flc, spline_coarseness=30, spline_order=3):
     
     return flcp, model
 
+
+def measure_flare(flc, sta, sto):
+    """Give start and stop indices into a de-trended
+    light curve, calculate flare properties assuming that
+    what's inbetween is a flares, and add the result
+    to FlareLightCurve.flares.
+    
+    Parameters:
+    -------------
+    flc : FlareLightCurve
+        de-trended light curve
+    sta : int
+        start index of flare
+    sto : int
+        stop index of flare
+    """
+    # get ED
+    ed_rec, ed_rec_err = equivalent_duration(flc, sta, sto, err=True)
+    
+    # get amplitude
+    ampl_rec = np.max(flc.detrended_flux[sta:sto]) / flc.it_med[sta] - 1. 
+    
+    # get cadence numbers
+    cstart = flc.cadenceno[sta]
+    cstop = flc.cadenceno[sto]
+    
+    # get time stamps 
+    tstart = flc.time[sta]
+    tstop = flc.time[sto]
+    
+    # add result to flare table
+    flc.flares = flc.flares.append(pd.Series(
+                                 {'ed_rec': ed_rec,
+                                  'ed_rec_err': ed_rec_err,
+                                  'ampl_rec': ampl_rec,
+                                  'istart': sta,
+                                  'istop': sto,
+                                  'cstart': cstart,
+                                  'cstop': cstop,
+                                  'tstart': tstart,
+                                  'tstop': tstop,
+                                  'dur': tstop - tstart,
+                                  'total_n_valid_data_points': flc.flux.shape[0]
+                                  }),ignore_index=True)
+    return 
