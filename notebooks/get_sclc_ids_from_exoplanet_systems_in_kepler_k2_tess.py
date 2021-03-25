@@ -52,12 +52,6 @@ def get_TIC(ID):
     res = f[(f["dataproduct_type"]=="timeseries") & (f["obs_collection"]=="TESS")].target_name.iloc[0]
     return res
 
-sep = "-----------------------------------------"
-
-def mprint(message):
-    print(sep)
-    print(message)
-    print(sep)
     
 def preselect_toi_catalog(tstamp):
 

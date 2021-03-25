@@ -1,6 +1,6 @@
 # utf-8
 # python3
-# basics for jupyter notebooks
+# basics for jupyter notebooks and scripts
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -18,3 +18,11 @@ font = {'weight' : 'normal',
         'size'   : 16}
 
 matplotlib.rc('font', **font)
+
+
+sep = "-----------------------------------------"
+
+def mprint(message):
+    print(sep)
+    print(message)
+    print(sep)
