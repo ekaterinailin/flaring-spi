@@ -46,6 +46,8 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     -------
     FlareLightCurve with detrended_flux attribute
     """
+# The commented lines will help with debugging, in case the tests in test_detrend.py fail.
+
     dt = np.mean(np.diff(lc.time))
 #     plt.figure(figsize=(16,8))
 #     plt.xlim(20,21)
