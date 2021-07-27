@@ -16,8 +16,9 @@ from altaipony.altai import find_iterative_median
 cases = [(.05, 0.005, 1.5, 24.4, 1.5, 0.1),
          (.1, 0.005, 1.5, 14.4, 1.5, 0.5),
          (.1, 0.05, 1.5, 8, 1.5, 0.5),
-         (.01, .1, 1.5, 8, -.5, 0.25),
+         (.01, .1, .5, 1, -.5, 1.5),
          (.3, .05, .5, 30, -.5, 0.25),
+         (.01, .1, .5, 2.2, -.1, .1),
          ]
 
 @pytest.mark.parametrize("a1,a2,period1,period2,quad,cube", cases)
@@ -72,10 +73,9 @@ def test_remove_sines_iteratively(a, b, c, d):
     x = np.linspace(10, 40, 1200)
     y1 = 20. + np.random.normal(0, .01, 1200) + a * np.sin(b * x) + c * np.sin(d * x)
     
-    flc = FlareLightCurve(time=x, flux=y1, 
-                          flux_err=np.full_like(y1, .01),
-                          detrended_flux=y1,
-                          detrended_flux_err=np.full_like(y1, .01),)
+    flc = FlareLightCurve(time=x, flux=y1, flux_err=np.full_like(y1, .01),)
+    flc.detrended_flux = y1
+    flc.detrended_flux_err = np.full_like(y1, .01)
 
     # find median
     flc = find_iterative_median(flc)
@@ -116,10 +116,9 @@ def test_remove_exponential_fringes(a,b,median,c,d):
     
 
     # define lightcurve
-    flc = FlareLightCurve(time=x, flux=y1, 
-                      flux_err=np.full_like(y1, .0005*median),
-                      detrended_flux=y1,
-                      detrended_flux_err=np.full_like(y1, .0005*median),)
+    flc = FlareLightCurve(time=x, flux=y1, flux_err=np.full_like(y1, .0005*median))
+    flc.detrended_flux = y1
+    flc.detrended_flux_err = np.full_like(y1, .0005*median)
     
     # get iterative median
     flc = find_iterative_median(flc)
@@ -192,40 +191,43 @@ def test_estimate_detrended_noise():
     flux = np.random.normal(0,40, time.shape[0]) + 200.
     
     # define light curve
-    flc = FlareLightCurve(time=time, detrended_flux=flux)
+    flc = FlareLightCurve(time=time)
+    flc.detrended_flux=flux
 
     # this should work
     flces = estimate_detrended_noise(flc, mask_pos_outliers_sigma=2.5, 
-                                 std_window=100, padleft=3, padright=10)
+                                 std_window=100)
     
     # error should be similar to input error of 40
-    np.median(flces.detrended_flux_err) == pytest.approx(41.38048677022836)
+    np.median(flces.detrended_flux_err.value) == pytest.approx(41.38048677022836)
 
     # re-seed and add a flare
     np.random.seed(30)
     flux = np.random.normal(0,40, time.shape[0]) + 200.
     flux[120:124] = [500,380,300,270]
-    flc = FlareLightCurve(time=time, detrended_flux=flux)
+    flc = FlareLightCurve(time=time)
+    flc.detrended_flux = flux
 
     # should mask flare, error should not grow
     flces = estimate_detrended_noise(flc, mask_pos_outliers_sigma=2.5, 
-                                 std_window=100, padleft=3, padright=10)
+                                 std_window=100)
 
-    np.median(flces.detrended_flux_err) == pytest.approx(41.24232394552432)
+    np.median(flces.detrended_flux_err.value) == pytest.approx(41.24232394552432)
 
     # re-seed and add some NaNs
     np.random.seed(30)
     flux = np.random.normal(0,40, time.shape[0]) + 200.
     flux[120:124] = [500,380,300,270]
     flux[30:40] = np.nan
-    flc = FlareLightCurve(time=time, detrended_flux=flux)
+    flc = FlareLightCurve(time=time) 
+    flc.detrended_flux = flux
 
     # should work regardless
     flces = estimate_detrended_noise(flc, mask_pos_outliers_sigma=2.5, 
-                                     std_window=100, padleft=3, padright=10)
+                                     std_window=100)
 
     # error should not change too much
-    np.median(flces.detrended_flux_err) == pytest.approx(41.23144256208637)
+    np.median(flces.detrended_flux_err.value) == pytest.approx(41.23144256208637)
     
     
     
@@ -251,5 +253,4 @@ def test_measure_flare():
     assert measured_flare.tstart == pytest.approx(14.224)
     assert measured_flare.tstop ==  pytest.approx(14.276800)
     assert measured_flare.ed_rec == pytest.approx((250 + 750 * 0.5) / 3400 * 0.052800 * 24 * 3600, rel=.01)
-    assert measured_flare.ed_rec == pytest.approx(0.293085,0.1)
     assert measured_flare.tstop -measured_flare.tstart == measured_flare.dur

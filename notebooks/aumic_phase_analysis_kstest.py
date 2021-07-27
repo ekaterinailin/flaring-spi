@@ -28,18 +28,24 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode):
     aumic_, get_secs_cadences = data[sector]
 
     # Fetch the orbital phases for AU Mic b
-    aumic_ = get_flare_phases(aumic_, mode, rotper=ROTPER)
+    aumic_ = get_flare_phases(aumic_, mode, rotper=ROTPER).reset_index()
 
     # for the subsamples we need to define some parameters
     setupsubsamples = {"total": [None,False],
                        "high energy half":[aumic_.shape[0]//2,False], 
-                       "low energy half":[aumic_.shape[0]//2,True]}
+                       "low energy half":[aumic_.shape[0]//2,True],
+                    }
 
-    # ... and pick the right one
-    index, ascending = setupsubsamples[subsample]
-
-    # ... and finally apply it
-    aumic = aumic_.sort_values(by="ed_rec", ascending=ascending).iloc[:index]
+  
+    if subsample == "random half":
+        indices = np.random.choice(aumic_.index.values, size=aumic_.shape[0]//2, replace=False)
+        
+        aumic = aumic_.iloc[indices,]
+        print(indices, indices.shape[0], aumic_.shape[0], aumic.shape[0])
+    else:
+        
+        index, ascending = setupsubsamples[subsample]
+        aumic = aumic_.sort_values(by="ed_rec", ascending=ascending).iloc[:index]
 
     # Finally sort the flares by their phases in ascending order
     aumic = aumic.sort_values(by="phases", ascending=True)
@@ -58,11 +64,13 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode):
     # add the (0,0) and (1,1) points to the cdf
     cphases = np.insert(aumic.phases.values, 0, 0)
     cphases = np.insert(cphases, -1, 1)
-    vals = np.insert(cum_n_exp, 0,0)
+    vals = np.insert(cum_n_exp, 0, 0)
     vals = np.insert(vals, -1, 1)
 
     # Interpolate!
     f = interpolate.interp1d(cphases, vals)
+    
+    
 
     # plot diagnostic with the interpolated callable cdf for the KS test
     plt.figure(figsize=(8, 7))
@@ -78,20 +86,30 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode):
     plt.ylabel("cumul. fraction of observed flares")
     tst = tstamp.replace("-","_")
     plt.savefig(f"../results/plots/{tst}_AUMic_KS_Test_cumdist_{subsample}_{sector}_{mode}.png", dpi=300)
+    
+    # write out cum dist data
+    if (mode=="Orbit") & (sector=="Both Sectors"):
+        pd.DataFrame({"phase":aumic.phases.values,
+                         "exp_cum":cum_n_exp,
+                         "meas_cum":cum_n_i}).to_csv(f"../results/plots/{tst}_AUMic_KS_Test_cumdist_{subsample}_{sector}_{mode}.csv", index=False)
 
     # Finally, the K-S test
     Dp, pp = ks_1samp(p, f, alternative="greater")
     Dm, pm = ks_1samp(p, f, alternative="less")
     D, p = ks_1samp(p, f)
-
+    
+    # write out results
     with open("../results/kstests.csv", "a") as f:
-        stri = f"{tstamp},{mode},{sector},{subsample},{Dp},{pp},{Dm},{pm},{D},{p}\n"
+        #tstamp	period	sector	subsample	D+	p+	D-	p-	D	p	nflares	totobs_days
+        stri = (f"{tstamp},{mode},{sector},{subsample},{Dp},"
+                f"{pp},{Dm},{pm},{D},{p},{aumic.shape[0]},"
+                f"{aumicphases.sum().sum()/60./24.}\n")
         f.write(stri)
         
 def paper_figure_kstest(tstamp):
     
     # Get the data
-    kss_ = pd.read_csv("../results/kstests.csv")
+    kss_ = pd.read_csv("../results/kstests.csv").drop_duplicates()
     kss_ = kss_[kss_.tstamp == tstamp]
     
     
@@ -173,14 +191,14 @@ if __name__ == "__main__":
 
     # Sector 1
     aumic1 = pd.read_csv("../results/2021_02_18_AUMic_flares_1.csv")
-    aumic1 = aumic1[aumic1.final==1]
+    aumic1 = aumic1[(aumic1.final==1) & (aumic1["real?"]==1)]
 
     # Sector 27
     aumic27 = pd.read_csv("../results/2021_02_11_AUMic_flares_27.csv")
-    aumic27 = aumic27[aumic27.final==1]
+    aumic27 = aumic27[(aumic27.final==1) & (aumic27["real?"]==1)]
 
     # Both Sectors
-    aumic127 = pd.concat([aumic1,aumic27])
+    aumic127 = pd.concat([aumic1, aumic27])
 
     # Define the sector number and observing cadence for each light curve and link to selection
     data = {"Both Sectors": [aumic127,[(1, 2), (27, 1/3)]], 
@@ -206,10 +224,9 @@ if __name__ == "__main__":
         for sector in sectors:
             analyse_phase_distribution(subsample, sector, data, tstamp, mode)
 
-
     mode = "Rotation"
     for subsample in subsamples:
-        for sector in sectors[1:]: #don't loop over both Sector in Rotation mode
+        for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
             analyse_phase_distribution(subsample, sector, data, tstamp, mode)
 
 

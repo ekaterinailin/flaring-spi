@@ -6,6 +6,7 @@ from ..phaseanalysis import (get_observed_phases,
                              get_flare_phases,
                              get_cumulative_distributions,)
 
+
 def test_get_cumulative_distributions():
     """Test two setup of two-Sector datasets.
     

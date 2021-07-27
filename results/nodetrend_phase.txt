@@ -31,3 +31,8 @@ HAT-P-11,14,Kepler,11_03_2021_07_36_24,0,Optimal parameters not found: Number of
 TOI-216,1,TESS,11_03_2021_07_53_06,0,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
 Kepler-367,17,Kepler,11_03_2021_08_32_51,1,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
 Kepler-211,17,Kepler,11_03_2021_08_56_08,1,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
+HATS-68,29,TESS,26_07_2021_12_43_32,0,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
+HATS-68,29,TESS,26_07_2021_12_44_27,0,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
+HATS-68,29,TESS,26_07_2021_12_46_42,0,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
+HATS-68,29,TESS,26_07_2021_13_05_47,0,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
+HATS-68,29,TESS,26_07_2021_13_06_03,0,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
