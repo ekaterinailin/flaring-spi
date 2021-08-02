@@ -15,11 +15,14 @@ from scipy.interpolate import UnivariateSpline
 from scipy import optimize
 from scipy.fftpack import fft
 
+import transitleastsquares as tls
+from .transitmask import fit_and_remove_transits
+
 import matplotlib.pyplot as plt
 
 
 def custom_detrending(lc, spline_coarseness=30, spline_order=3,
-                      savgol1=6., savgol2=3., pad=3):
+                      savgol1=6., savgol2=3., pad=3, system=None):
     """Custom de-trending for TESS and Kepler 
     short cadence light curves, including TESS Cycle 3 20s
     cadence.
@@ -53,42 +56,42 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     dt = np.mean(np.diff(lc.time.value))
     plt.figure(figsize=(16,8))
    
-    plt.plot(lc.time.value, lc.flux.value + 2500, c="c", label="original light curve")
-    t0 = time.clock()
+    plt.plot(lc.time.value, lc.flux.value + 400, c="c", label="original light curve")
+    t0 = time.process_time()
     # fit a spline to the general trends
     lc1, model = fit_spline(lc, spline_order=spline_order,
                             spline_coarseness=spline_coarseness)
     
     # replace for next step
     lc1.flux = lc1.detrended_flux.value
-    t1 = time.clock()
-    plt.plot(lc1.time.value, model+2500, c="r", label="rough trends")
-    plt.plot(lc1.time.value, lc1.detrended_flux.value+500, c="orange", label="rough trends removed")
+    t1 = time.process_time()
+    plt.plot(lc1.time.value, model+600, c="r", label="rough trends")
+    plt.plot(lc1.time.value, lc1.detrended_flux.value+300, c="yellow", label="rough trends removed")
 
     # removes strong and fast variability on 5 day to 4.8 hours 
     # simple sines are probably because rotational variability is 
     # either weak and transient or strong and persistent on the timescales
     lc2 = remove_sines_iteratively(lc1)
-    t2 = time.clock()
-    plt.plot(lc2.time.value, lc2.detrended_flux.value-200, label="sines removed")
+    t2 = time.process_time()
+    plt.plot(lc2.time.value, lc2.detrended_flux.value+200, c="grey", label="sines removed")
     
     # choose a 6 hour window
     w = int((np.rint(savgol1 / 24. / dt) // 2) * 2 + 1)
 
     # use Savitzy-Golay to iron out the rest
     lc3 = lc2.detrend("savgol", window_length=w, pad=pad)
-    t3 = time.clock()
+    t3 = time.process_time()
     # choose a three hour window
     w = int((np.rint(savgol2 / 24. / dt) // 2) * 2 + 1)
 
     # use Savitzy-Golay to iron out the rest
     lc4 = lc3.detrend("savgol", window_length=w, pad=pad)
-    t4 = time.clock()
-    plt.plot(lc4.time.value, lc4.detrended_flux.value-800, c="k", label="SavGol applied")
+    t4 = time.process_time()
+    plt.plot(lc4.time.value, lc4.detrended_flux.value, c="k", label="SavGol applied")
     
     # find median value
     lc4 = find_iterative_median(lc4)
-    t41 = time.clock()
+    t41 = time.process_time()
     # replace for next step
     lc4.flux = lc4.detrended_flux.value
     
@@ -96,8 +99,8 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     # nor sines, nor SavGol 
     # can remove.
     lc5 = remove_exponential_fringes(lc4)
-    t5 = time.clock()
-    plt.plot(lc5.time.value, lc5.detrended_flux.value, c="magenta", label="expfunc applied")
+    t5 = time.process_time()
+    plt.plot(lc5.time.value, lc5.detrended_flux.value-100, c="magenta", label="expfunc applied")
     print(t1-t0, t2-t1, t3-t2, t4-t3, t41-t4, t5-t41, t5-t0)
 #     plt.xlim(10,40)
 #     plt.xlabel("time [days]")
@@ -175,7 +178,7 @@ def remove_sines_iteratively(flcd, niter=5, freq_unit=1/u.day,
             
             # iterate while there is signal, but not more than n times
             while ((snr > 1) & (n < niter)):
-                t = time.clock()
+                t = time.process_time()
                 # mask NaNs and outliers
                 cond = np.invert(np.isnan(flc.time.value)) & np.invert(np.isnan(flc.flux.value)) & mask
                 
@@ -189,7 +192,7 @@ def remove_sines_iteratively(flcd, niter=5, freq_unit=1/u.day,
                                               p0=[np.nanstd(flc.flux.value),
                                               2*np.pi*pg.frequency_at_max_power.value,
                                               0, np.nanmean(flc.flux.value)], ftol=1e-6)
-                t1 = time.clock()
+                t1 = time.process_time()
                 # replace with de-trended flux but without subtracting the median
                 flc.flux = flc.flux.value - cosine(flc.time.value, p[0], p[1], p[2], 0.)
 
@@ -198,7 +201,7 @@ def remove_sines_iteratively(flcd, niter=5, freq_unit=1/u.day,
                 
                 # bump iterator
                 n += 1
-                tf = time.clock()
+                tf = time.process_time()
 #                 print(snr, n, tf-t, tf-t1, t1-t)
       
             # replace the empty array with the fitted detrended flux

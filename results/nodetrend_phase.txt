@@ -36,3 +36,12 @@ HATS-68,29,TESS,26_07_2021_12_44_27,0,Optimal parameters not found: Number of ca
 HATS-68,29,TESS,26_07_2021_12_46_42,0,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
 HATS-68,29,TESS,26_07_2021_13_05_47,0,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
 HATS-68,29,TESS,26_07_2021_13_06_03,0,Optimal parameters not found: Number of calls to function has reached maxfev = 1000.
+HATS-68,29,TESS,30_07_2021_08_25_29,0,name 'fit_and_remove_transits' is not defined
+HATS-68,29,TESS,30_07_2021_08_27_21,0,name 'fit_and_remove_transits' is not defined
+LHS 1140,30,TESS,30_07_2021_08_29_04,0,name 'fit_and_remove_transits' is not defined
+LHS 1140,30,TESS,30_07_2021_08_29_45,0,name 'fit_and_remove_transits' is not defined
+LHS 1140,30,TESS,30_07_2021_08_30_15,0,'list' object has no attribute 'time'
+LHS 1140,30,TESS,30_07_2021_08_30_41,0,name 'catalog_info' is not defined
+LHS 1140,30,TESS,30_07_2021_08_38_47,0,TIC_ID ID must be of type "int"
+LHS 1140,30,TESS,30_07_2021_08_43_30,0,'<=' not supported between instances of 'tuple' and 'int'
+LHS 1140,30,TESS,30_07_2021_08_45_38,0,'<=' not supported between instances of 'tuple' and 'int'
