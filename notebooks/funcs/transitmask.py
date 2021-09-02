@@ -140,7 +140,7 @@ def fit_and_remove_transits(time, flux, ID=None, mission=None, pl_orbper=None,  
     dt = np.diff(time).mean() 
     one_min = 1. / 60. / 24.
     if dt < one_min:
-        new_time, new_flux = tls.resample(time, flux / np.median(flux), factor=onemin/dt)
+        new_time, new_flux = tls.resample(time, flux / np.median(flux), factor=one_min/dt)
     else:
         new_time, new_flux = time, flux / np.median(flux)
 
@@ -167,11 +167,12 @@ def fit_and_remove_transits(time, flux, ID=None, mission=None, pl_orbper=None,  
         m, mmin, mmax = 1, 0.08, 1.3
         r, rmin, rmax = 1, 0.13, 1.3 # roughly everything with a convection zone
         
-    if pl_orbper is None:
+    if (pl_orbper is None) | (np.isnan(pl_orbper)):
         print("No transit duration given.")
         n_transits_min = 2
         period_min, period_max =  0., np.inf
     else:
+        print(new_time[-1], new_time[0], pl_orbper)
         n_transits_min = int((new_time[-1] - new_time[0]) // pl_orbper)
         if pl_orbpererr is None:
             print("No transit duration uncertainty given.")

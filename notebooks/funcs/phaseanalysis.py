@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 
 
+import matplotlib.pyplot as plt
+
 def get_cumulative_distributions(df, dfphases, get_secs_cadences):
     # Measured number of flares in each bin
     F = dfphases.shape[0]
@@ -53,8 +55,43 @@ def get_flare_phases(df, mode, rotper=None, starname="AU Mic", lcn=0, mission="T
     return df
 
 def get_observed_phases(mode, p, get_secs_cadences, rotper=None, phaseshift=0., 
-                        starname="AU Mic", lcn=0, mission="TESS"):
+                        starname="AU Mic", lcn=0, mission="TESS", test="AD"):
+    """Takes 
     
+    
+    Parameters:
+    -----------
+    mode : str
+        either "Rotation" or "Orbit"
+    p : array
+        array of phases, for the KS-test it should be the 
+        measured flare phases, for the AD test, any well 
+        sampled grid of phases works
+    get_secs_cadences : list
+        format: [(Sector, cadence in minutes), (.., ..), (.., ..)]
+        Sector is an int
+        cadence is a float
+    rotper : float
+        Rotation period
+    phaseshift : float
+        default = 0, the starting phase is arbitrary, 
+        so adding a phaseshift should not change the result for
+        the AD-test, but for the KS-test
+    starname : str
+        name of the object, needed to identify dataset
+    lcn : int
+        number of light curve, needed to identify dataset
+    mission : str
+        mission name, needed to identify dataset
+    test : str
+        "KS" or "AD"
+        
+    Return:
+    -------
+    pandas.DataFrame - one column per Sector or Quarter,
+                       and observing time per phase in each row
+    list - mids of bins for each phase row in the DataFrame
+    """
     # bin array is two elements longer than the number of bins
     # to include 0 and 1
     bins = np.zeros(len(p) +2) 
@@ -65,9 +102,9 @@ def get_observed_phases(mode, p, get_secs_cadences, rotper=None, phaseshift=0.,
     
     # and the others are kept as defined by observations
     bins[1:-1] = p 
-    
+#     print(bins)
     aumicphases = pd.DataFrame()
-
+#     plt.figure(figsize=(8, 3))
     for qcs, cadence in get_secs_cadences:
         lc = pd.read_csv(f"../results/observedtimes/{starname}_{qcs}_{lcn}_{mission}.csv")
         
@@ -79,13 +116,22 @@ def get_observed_phases(mode, p, get_secs_cadences, rotper=None, phaseshift=0.,
             # add phaseshift as modulo 1 to wrap phases > 1 back
             counts, bins = np.histogram(((lc.time % rotper) / rotper + phaseshift) % 1, bins=bins)
             
-        # circular boundary condition
-        counts[0] = counts[0] + counts[-1]
+        if qcs==27:
+            linestyle="solid"
+        else:
+            linestyle = "dashed"
+#         plt.plot((bins[1:] + bins[:-1])/2, counts * cadence, c="k", linestyle=linestyle, label=qcs)
         
-        # remove last bin to avoid double counting
-        counts = counts[:-1]
-        
+        if test == "KS": 
+            # circular boundary condition
+            counts[0] = counts[0] + counts[-1]
+
+            # remove last bin to avoid double counting
+            counts = counts[:-1]
+
         # get observing times for each Sector
         aumicphases[qcs] = counts * cadence
 
-    return aumicphases
+        #     plt.legend()
+#     plt.savefig(f"../results/plots/{mode}_histogram_{phaseshift}.png", dpi=300)
+    return aumicphases, (bins[1:] + bins[:-1])/2

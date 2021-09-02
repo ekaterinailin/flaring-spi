@@ -71,7 +71,8 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     # removes strong and fast variability on 5 day to 4.8 hours 
     # simple sines are probably because rotational variability is 
     # either weak and transient or strong and persistent on the timescales
-    lc2 = remove_sines_iteratively(lc1)
+#     lc2 = remove_sines_iteratively(lc1)
+    lc2 = lc1
     t2 = time.process_time()
     plt.plot(lc2.time.value, lc2.detrended_flux.value+200, c="grey", label="sines removed")
     

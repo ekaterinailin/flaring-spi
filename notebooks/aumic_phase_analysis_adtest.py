@@ -20,7 +20,7 @@ ROTPER =  4.862 # martioli
 ORBPER =  8.463 # exoplanet.eu
 
 
-def analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, N, rotper=ROTPER):
+def analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, N, rotper=ROTPER, phaseshift=0):
     """Wrapper for the analysis of flare phases. 
     Generates the KS test value results.
     
@@ -54,6 +54,8 @@ def analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, N, rotp
         aumic = aumic_
         
 
+    aumic.phases = (aumic.phases.values + phaseshift) % 1.
+        
     # Finally sort the flares by their phases in ascending order
     aumic = aumic.sort_values(by="phases", ascending=True)
 
@@ -61,18 +63,19 @@ def analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, N, rotp
     p = aumic.phases.values
 
     # Get the observing times
-    aumicphases = get_observed_phases(mode, p, get_secs_cadences, rotper=rotper)
+    aumicphases, ph = get_observed_phases(mode, np.linspace(0.01,.99,100), get_secs_cadences, rotper=rotper, phaseshift=phaseshift)
     
     # observing times
     cobs = aumicphases.sum(axis=1).values
 
     # sample from the near-uniform expected distribution and get the AD statistic
-    A2 = sample_AD_for_custom_distribution(p, cobs, N)
+    A2 = sample_AD_for_custom_distribution(p, cobs, N, ph, l=phaseshift)
+    print(A2)
     
     # get p value and statistic value
     pvalue, adtestvalue = get_pvalue_from_AD_statistic(p, A2)
     
-    # plot diagnostic with the interpolated callable cdf for the KS test
+    # plot diagnostic with the interpolated callable cdf for the AD test
     plt.figure(figsize=(8, 7))
     plt.title(f"{subsample}, {sector}, {mode}")
     plt.hist(A2, bins=N//100, edgecolor="k", histtype="step", label="AD statistic distribution")
@@ -81,14 +84,14 @@ def analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, N, rotp
     plt.xlabel("AD")
     plt.ylabel("counts")
     tst = tstamp.replace("-","_")
-    plt.savefig(f"../results/plots/{tst}_AUMic_AD_Test_{subsample}_{sector}_{mode}.png", dpi=300)
+    plt.savefig(f"../results/plots/{tst}_AUMic_AD_Test_{subsample}_{sector}_{mode}_{phaseshift}.png", dpi=300)
     
     # write out results
     with open("../results/adtests.csv", "a") as f:
         #tstamp	period	sector	subsample	D+	p+	D-	p-	D	p	nflares	totobs_days
         stri = (f"{tstamp},{mode},{sector},{subsample},"
                 f"{adtestvalue},{pvalue},{N},{aumic.shape[0]},"
-                f"{aumicphases.sum().sum()/60./24.}\n")
+                f"{aumicphases.sum().sum()/60./24.},{phaseshift}\n")
         f.write(stri)
         
 def paper_figure_adtest(tstamp):
@@ -96,6 +99,7 @@ def paper_figure_adtest(tstamp):
     # Get the data
     kss_ = pd.read_csv("../results/adtests.csv").drop_duplicates()
     kss_ = kss_[kss_.tstamp == tstamp]
+    kss_ = kss_[kss_.nsteps_mcmc == 10000]
     
     
     # Set up figure
@@ -113,10 +117,16 @@ def paper_figure_adtest(tstamp):
     handles = []
     for label, g in kss.groupby("sector"):    
         c, m = colors[label]
-        plt.scatter(g.subsample, g["p"], marker=m, s=140, c=c)
+        for ll, h in g.groupby("shift"):
+            
+            plt.scatter(h.subsample, h["p"], marker=fr"${ll}$", s=240, c=c, alpha=1)
         handles.append((Line2D([0], [0], marker=m, color='w', 
                                label=label, markerfacecolor=c, 
                                markersize=15)))
+#         plt.scatter(g.subsample, g["p"], marker=m, s=140, c=c)
+#         handles.append((Line2D([0], [0], marker=m, color='w', 
+#                                label=label, markerfacecolor=c, 
+#                                markersize=15)))
 
     # make sigma thresholds    
     plt.axhline(1 - .342*2, c="k", linestyle="dashed")
@@ -130,7 +140,7 @@ def paper_figure_adtest(tstamp):
     plt.yscale("log")
     plt.ylabel(r"$p$ value")
 
-    plt.legend(handles=handles, frameon=False, loc=(0,0.1));
+    plt.legend(handles=handles, frameon=False, loc=(0.6,0.1));
 
     # Orbit to the right
     plt.subplot(122)
@@ -141,12 +151,18 @@ def paper_figure_adtest(tstamp):
     handles = []
     for label, g in kss.groupby("sector"):
         c, m = colors[label]
-        plt.scatter(g.subsample, g["p"], marker=m, s=140, c=c)
+        for ll, h in g.groupby("shift"):
+            
+            plt.scatter(h.subsample, h["p"], marker=fr"${ll}$", s=240, c=c, alpha=1)
         handles.append((Line2D([0], [0], marker=m, color='w', 
                                label=label, markerfacecolor=c, 
                                markersize=15)))
+#         plt.scatter(g.subsample, g["p"], marker=m, s=140, c=c)
+#         handles.append((Line2D([0], [0], marker=m, color='w', 
+#                                label=label, markerfacecolor=c, 
+#                                markersize=15)))
 
-    plt.legend(handles=handles, frameon=False, loc=(0,0.1))
+    plt.legend(handles=handles, frameon=False, loc=(0.6,0.1))
 
     # make sigma thresholds    
     plt.axhline(1 - .342*2, c="k", linestyle="dashed")
@@ -195,6 +211,9 @@ if __name__ == "__main__":
 
     # get the keys to loop
     sectors = list(data.keys())
+    
+    # list phaseshifts
+    shifts = [.0, .2, .4, .6, .8,]
 
     # timestamp for unique rows in results table
     tstamp = datetime.date.today().isoformat()
@@ -205,14 +224,18 @@ if __name__ == "__main__":
     
     # Loop over all configurations
     mode = "Orbit"
-    for subsample in subsamples:
+    for subsample in subsamples[1:]:
         for sector in sectors:
-            analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, 10000)
+            for shift in shifts:
+                print(f"{mode}: Analyzing sector {sector}, shift {shift}, subsample {subsample}")
+                analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, 10000, phaseshift=shift)
 
-    mode = "Rotation"
-    for subsample in subsamples:
-        for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
-            analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, 10000)
+#     mode = "Rotation"
+#     for subsample in subsamples[:1]:
+#         for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
+#             for shift in shifts:
+#                 print(f"{mode}: Analyzing sector {sector}, shift {shift} subsample {subsample}")
+#                 analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, 10000, phaseshift=shift)
 
 
     # Generate paper figure

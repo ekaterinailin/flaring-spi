@@ -22,6 +22,8 @@ from scipy.interpolate import interp1d
 from scipy.stats import percentileofscore
 
 
+import matplotlib.pyplot as plt
+
 def anderson_darling_statistic(c):
     """Compute the AD statistic 
     from a sample of flare phases.
@@ -80,7 +82,7 @@ def get_pvalue_from_AD_statistic(cphases, A2):
 
 
     
-def sample_AD_for_custom_distribution(cphases, cobs, N):
+def sample_AD_for_custom_distribution(cphases, cobs, N, ph, l=0.):
     """
     
     Parameters:
@@ -97,17 +99,20 @@ def sample_AD_for_custom_distribution(cphases, cobs, N):
 
     # Interpolate!
     # for values near 0 and near 1  - extrapolate! 
-    f = interp1d(cphases, cobs, bounds_error=False, 
+    f = interp1d(ph, cobs, bounds_error=False, 
                  fill_value=(cobs[0],cobs[-1]))
 
-    # plot diagnostic with the interpolated callable cdf for the KS test
-#     plt.figure(figsize=(8, 3))
-#     x = np.sort(np.random.rand(100))
-#     y = f(x)
-#     plt.plot(x,y)
-#     plt.scatter(cphases, cobs)
-#     plt.xlim(0,1)
-
+    # plot diagnostic with the interpolated callable cdf for the AD test
+    plt.figure(figsize=(8, 3))
+    x = np.sort(np.random.rand(100))
+    y = f(x)
+    plt.plot(x,y, label="interpolation")
+    plt.plot(np.linspace(0,1,101), cobs,c="r")
+    plt.scatter(ph, cobs)
+    plt.xlim(0,1)
+    plt.legend()
+    plt.savefig(f"../results/plots/{len(cphases)}_interpolation_{l}.png", dpi=300)
+#     print(cobs[0])
     # define the of the distribution function to draw samples from
     def func(x):
         if (x > 1) | (x < 0):

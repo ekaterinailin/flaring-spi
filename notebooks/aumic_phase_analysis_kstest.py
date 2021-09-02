@@ -10,7 +10,7 @@ from matplotlib.lines import Line2D
 import datetime
 
 ROTPER =  4.862 # martioli
-ORBPER =  8.463 # exoplanet.eu
+ORBPER =  8.463 # exoplanet.eu 
 
 
 def analyse_phase_distribution(subsample, sector, data, tstamp, mode):
@@ -29,82 +29,94 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode):
 
     # Fetch the orbital phases for AU Mic b
     aumic_ = get_flare_phases(aumic_, mode, rotper=ROTPER).reset_index()
-
-    # for the subsamples we need to define some parameters
-    setupsubsamples = {"total": [None,False],
-                       "high energy half":[aumic_.shape[0]//2,False], 
-                       "low energy half":[aumic_.shape[0]//2,True],
-                    }
-
   
     if subsample == "random half":
+        
         indices = np.random.choice(aumic_.index.values, size=aumic_.shape[0]//2, replace=False)
-        
         aumic = aumic_.iloc[indices,]
-        print(indices, indices.shape[0], aumic_.shape[0], aumic.shape[0])
-    else:
+#         print(indices, indices.shape[0], aumic_.shape[0], aumic.shape[0])
         
-        index, ascending = setupsubsamples[subsample]
-        aumic = aumic_.sort_values(by="ed_rec", ascending=ascending).iloc[:index]
+    if subsample == "low energy half":
+        aumic__ = aumic_[aumic_.ed_rec < 0.93] # ED = 0.93 s splits the Sector 1 sample in two halves
+        
+    if subsample == "high energy half":
+        aumic__ = aumic_[aumic_.ed_rec > 0.93] # ED = 0.93 s splits the Sector 1 sample in two halves
+        
+    if subsample == "total":
+        aumic__ = aumic_
+        
+    # Introduce artificial phase shift
+    for phaseshift in [0., .1, .2, .3, .4, .5, .6, .7, .8, .9]:
+        print(f"Shift phase by {phaseshift}.")
+        
+        aumic = aumic__.copy()
+        
+        # shift phases    
+        aumic.phases = (aumic.phases + phaseshift) % 1
 
-    # Finally sort the flares by their phases in ascending order
-    aumic = aumic.sort_values(by="phases", ascending=True)
+        # Finally sort the flares by their phases in ascending order
+        aumic = aumic.sort_values(by="phases", ascending=True)
 
-    # define the "bins" as phase differences between the flare phases
-    p = aumic.phases.values
+        # define the "bins" as phase differences between the flare phases
+        p = aumic.phases.values
 
-    # Get the observing times
-    aumicphases = get_observed_phases(mode, p, get_secs_cadences, rotper=ROTPER)
+        # Get the observing times
+        aumicphases, binmids = get_observed_phases(mode, p, get_secs_cadences,
+                                          rotper=ROTPER, phaseshift=phaseshift, test="KS")
 
-    # Get the (cumulative) flare phase distributions 
-    n_i, n_exp, cum_n_exp, cum_n_i = get_cumulative_distributions(aumic, aumicphases, get_secs_cadences)
-    
-    # Define a cumulative cdf to pass to the K-S test
+         # shift phases here too. NO THEY WERE SHIFTED ALREADY, see line above
+#         aumicphases =  aumicphases + phaseshift
 
-    # add the (0,0) and (1,1) points to the cdf
-    cphases = np.insert(aumic.phases.values, 0, 0)
-    cphases = np.insert(cphases, -1, 1)
-    vals = np.insert(cum_n_exp, 0, 0)
-    vals = np.insert(vals, -1, 1)
+        # Get the (cumulative) flare phase distributions 
+        n_i, n_exp, cum_n_exp, cum_n_i = get_cumulative_distributions(aumic, aumicphases, get_secs_cadences)
 
-    # Interpolate!
-    f = interpolate.interp1d(cphases, vals)
-    
-    
+        # Define a cumulative cdf to pass to the K-S test
 
-    # plot diagnostic with the interpolated callable cdf for the KS test
-    plt.figure(figsize=(8, 7))
-    x = np.linspace(0, 1, 500)
-    y = f(x)
-    plt.scatter(aumic.phases, cum_n_exp, s=20, c="k", marker="x", label="expected distribution")
-    plt.scatter(aumic.phases, cum_n_i, s=30, c="r", label="measured distibution")
-    plt.plot(x, y, label="interpolation", zorder=-10, c="grey");
-    plt.xlim(0,1)
-    plt.ylim(0,1)
-    plt.legend(loc=2, frameon=False)
-    plt.xlabel("phase")
-    plt.ylabel("cumul. fraction of observed flares")
-    tst = tstamp.replace("-","_")
-    plt.savefig(f"../results/plots/{tst}_AUMic_KS_Test_cumdist_{subsample}_{sector}_{mode}.png", dpi=300)
-    
-    # write out cum dist data
-    if (mode=="Orbit") & (sector=="Both Sectors"):
-        pd.DataFrame({"phase":aumic.phases.values,
-                         "exp_cum":cum_n_exp,
-                         "meas_cum":cum_n_i}).to_csv(f"../results/plots/{tst}_AUMic_KS_Test_cumdist_{subsample}_{sector}_{mode}.csv", index=False)
+        # add the (0,0) and (1,1) points to the cdf
+        cphases = np.insert(aumic.phases.values, 0, 0)
+        cphases = np.insert(cphases, -1, 1)
+        vals = np.insert(cum_n_exp, 0, 0)
+        vals = np.insert(vals, -1, 1)
 
-    # Finally, the K-S test
-    Dp, pp = ks_1samp(p, f, alternative="greater")
-    Dm, pm = ks_1samp(p, f, alternative="less")
-    D, p = ks_1samp(p, f)
-    
-    # write out results
-    with open("../results/kstests.csv", "a") as f:
-        #tstamp	period	sector	subsample	D+	p+	D-	p-	D	p	nflares	totobs_days
-        stri = (f"{tstamp},{mode},{sector},{subsample},{Dp},"
-                f"{pp},{Dm},{pm},{D},{p},{aumic.shape[0]},"
-                f"{aumicphases.sum().sum()/60./24.}\n")
-        f.write(stri)
+        # Interpolate!
+        f = interpolate.interp1d(cphases, vals)
+
+        # plot diagnostic with the interpolated callable cdf for the KS test
+        plt.figure(figsize=(8, 7))
+        x = np.linspace(0, 1, 500)
+        y = f(x)
+        plt.scatter(aumic.phases, cum_n_exp, s=20, c="k", marker="x", label="expected distribution")
+        plt.scatter(aumic.phases, cum_n_i, s=30, c="r", label="measured distibution")
+        plt.plot(x, y, label="interpolation", zorder=-10, c="grey");
+        plt.xlim(0,1)
+        plt.ylim(0,1)
+        plt.legend(loc=2, frameon=False)
+        plt.xlabel("phase")
+        plt.ylabel("cumul. fraction of observed flares")
+        tst = tstamp.replace("-","_")
+        plt.savefig(f"../results/plots/{tst}_AUMic_KS_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}.png", dpi=300)
+
+        # write out cum dist data
+        if (mode=="Orbit") & (sector=="Both Sectors"):
+            pd.DataFrame({"phase":aumic.phases.values,
+                          "exp_cum":cum_n_exp,
+                          "meas_cum":cum_n_i}).to_csv(f"../results/plots/{tst}_AUMic_KS_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}.csv", index=False)
+
+        # Finally, the K-S test
+        Dp, pp = ks_1samp(p, f, alternative="greater")
+        Dm, pm = ks_1samp(p, f, alternative="less")
+        D, p = ks_1samp(p, f)
+
+        # write out results
+        with open("../results/kstests.csv", "a") as f:
+            #tstamp	period	sector	subsample	D+	p+	D-	p-	D	p	nflares	totobs_days
+            stri = (f"{tstamp},{mode},{sector},{subsample},{Dp},"
+                    f"{pp},{Dm},{pm},{D},{p},{aumic.shape[0]},"
+                    f"{aumicphases.sum().sum()/60./24.},{phaseshift}\n")
+            f.write(stri)
+            
+        # free up space for next iteration, just being nice to your cache
+        del aumic
         
 def paper_figure_kstest(tstamp):
     
@@ -127,8 +139,11 @@ def paper_figure_kstest(tstamp):
 
     handles = []
     for label, g in kss.groupby("sector"):    
+
         c, m = colors[label]
-        plt.scatter(g.subsample, g["p"], marker=m, s=140, c=c)
+        for ll, h in g.groupby("phaseshift"):
+            
+            plt.scatter(h.subsample, h["p"], marker=fr"${ll}$", s=240, c=c, alpha=1)
         handles.append((Line2D([0], [0], marker=m, color='w', 
                                label=label, markerfacecolor=c, 
                                markersize=15)))
@@ -145,23 +160,28 @@ def paper_figure_kstest(tstamp):
     plt.yscale("log")
     plt.ylabel(r"$p$ value")
 
-    plt.legend(handles=handles, frameon=False, loc=(0,0.1));
+    plt.legend(handles=handles, frameon=False, loc=(0.07,0.1));
 
     # Orbit to the right
     plt.subplot(122)
 
     kss = kss_[kss_.period == "Orbit"]
 
-
     handles = []
     for label, g in kss.groupby("sector"):
         c, m = colors[label]
-        plt.scatter(g.subsample, g["p"], marker=m, s=140, c=c)
+        if label != "Both Sectors":
+            zorder = -10
+        else:
+            zorder=1
+        for ll, h in g.groupby("phaseshift"):
+            plt.scatter(h.subsample, h["p"],  marker=fr"${ll}$", s=240,
+                        c=c, alpha=1, zorder=zorder)
         handles.append((Line2D([0], [0], marker=m, color='w', 
                                label=label, markerfacecolor=c, 
                                markersize=15)))
 
-    plt.legend(handles=handles, frameon=False, loc=(0,0.1))
+    plt.legend(handles=handles, frameon=False, loc=(0.07,0.1))
 
     # make sigma thresholds    
     plt.axhline(1 - .342*2, c="k", linestyle="dashed")
@@ -219,15 +239,17 @@ if __name__ == "__main__":
     
     
     # Loop over all configurations
-    mode = "Orbit"
-    for subsample in subsamples:
-        for sector in sectors:
-            analyse_phase_distribution(subsample, sector, data, tstamp, mode)
+#     mode = "Orbit"
+#     for subsample in subsamples:
+#         for sector in sectors:
+#             print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
+#             analyse_phase_distribution(subsample, sector, data, tstamp, mode)
 
-    mode = "Rotation"
-    for subsample in subsamples:
-        for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
-            analyse_phase_distribution(subsample, sector, data, tstamp, mode)
+#     mode = "Rotation"
+#     for subsample in subsamples:
+#         for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
+#             print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
+#             analyse_phase_distribution(subsample, sector, data, tstamp, mode)
 
 
     # Generate paper figure
