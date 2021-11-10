@@ -13,7 +13,7 @@ ROTPER =  4.862 # martioli
 ORBPER =  8.463 # exoplanet.eu 
 
 
-def analyse_phase_distribution(subsample, sector, data, tstamp, mode):
+def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER):
     """Wrapper for the analysis of flare phases. 
     Generates the KS test value results.
     
@@ -28,7 +28,11 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode):
     aumic_, get_secs_cadences = data[sector]
 
     # Fetch the orbital phases for AU Mic b
-    aumic_ = get_flare_phases(aumic_, mode, rotper=ROTPER).reset_index()
+    if mode != "Orbit":
+        aumic_ = get_flare_phases(aumic_, "Rotation", rotper=rotper).reset_index()
+    elif mode == "Orbit":
+        aumic_ = get_flare_phases(aumic_, mode).reset_index()
+    print(aumic_.columns)
   
     if subsample == "random half":
         
@@ -52,6 +56,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode):
         aumic = aumic__.copy()
         
         # shift phases    
+        #print(aumic.columns)
         aumic.phases = (aumic.phases + phaseshift) % 1
 
         # Finally sort the flares by their phases in ascending order
@@ -61,9 +66,13 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode):
         p = aumic.phases.values
 
         # Get the observing times
-        aumicphases, binmids = get_observed_phases(mode, p, get_secs_cadences,
-                                          rotper=ROTPER, phaseshift=phaseshift, test="KS")
-
+        if mode !="Orbit":
+            aumicphases, binmids = get_observed_phases("Rotation", p, get_secs_cadences,
+                                                        rotper=rotper, phaseshift=phaseshift, test="KS")
+        elif mode == "Orbit":
+            aumicphases, binmids = get_observed_phases(mode, p, get_secs_cadences,
+                                                      phaseshift=phaseshift, test="KS")
+    
          # shift phases here too. NO THEY WERE SHIFTED ALREADY, see line above
 #         aumicphases =  aumicphases + phaseshift
 
@@ -122,7 +131,7 @@ def paper_figure_kstest(tstamp):
     
     # Get the data
     kss_ = pd.read_csv("../results/kstests.csv").drop_duplicates()
-    kss_ = kss_[kss_.tstamp == tstamp]
+   # kss_ = kss_[kss_.tstamp == tstamp]
     
     
     # Set up figure
@@ -181,7 +190,7 @@ def paper_figure_kstest(tstamp):
                                label=label, markerfacecolor=c, 
                                markersize=15)))
 
-    plt.legend(handles=handles, frameon=False, loc=(0.07,0.1))
+    plt.legend(handles=handles, frameon=False, loc=(0.3,0.1))
 
     # make sigma thresholds    
     plt.axhline(1 - .342*2, c="k", linestyle="dashed")
@@ -201,6 +210,59 @@ def paper_figure_kstest(tstamp):
     plt.savefig(f"../results/plots/{tst}_AUMic_KStests_meta.png", dpi=300)
     plt.savefig(f"/home/ekaterina/Documents/002_writing/aumic-flaring-spi-draft/figures/{tst}_AUMic_KStests_meta.png",
                 dpi=300)
+
+def paper_figure_kstest_mode(tstamp, mode):
+    
+    # Get the data
+    kss_ = pd.read_csv("../results/kstests.csv").drop_duplicates()
+    kss_ = kss_[kss_.tstamp == tstamp]
+    
+    # Set up figure
+    plt.figure(figsize=(7,7))
+
+
+    kss = kss_[kss_.period == mode]
+
+    colors = {"Both Sectors" : ("k","o"),
+              "Sector 27" : ("r","d"),
+              "Sector 1" : ("c","X")}
+
+    handles = []
+    for label, g in kss.groupby("sector"):    
+        c, m = colors[label]
+        for ll, h in g.groupby("phaseshift"):
+            
+            plt.scatter(h.subsample, h["p"], marker=fr"${ll}$", s=240, c=c, alpha=1)
+        handles.append((Line2D([0], [0], marker=m, color='w', 
+                               label=label, markerfacecolor=c, 
+                               markersize=15)))
+#         plt.scatter(g.subsample, g["p"], marker=m, s=140, c=c)
+#         handles.append((Line2D([0], [0], marker=m, color='w', 
+#                                label=label, markerfacecolor=c, 
+#                                markersize=15)))
+
+    # make sigma thresholds    
+    plt.axhline(1 - .342*2, c="k", linestyle="dashed")
+    plt.axhline(1 - .342*2 - .136*2, c="k", linestyle="dotted")
+    plt.axhline(1 - .342*2 - .136*2 - .021*2, c="k", linestyle="dashdot")
+
+
+    plt.title(f"{mode} modulation")
+
+    plt.ylim(1e-3,1)
+    plt.yscale("log")
+    plt.ylabel(r"$p$ value")
+
+    plt.legend(handles=handles, frameon=False, loc=(0.55,0.1));
+
+
+    plt.tight_layout()
+    tst = tstamp.replace("-","_")
+    plt.savefig(f"../results/plots/{tst}_AUMic_KStests_meta_{mode}.png", dpi=300)
+#    plt.savefig(f"/home/ekaterina/Documents/002_writing/aumic-flaring-spi-draft/figures/{tst}_AUMic_ADtests_meta.png",
+#                dpi=300)
+
+
 
 
 if __name__ == "__main__":
@@ -237,20 +299,23 @@ if __name__ == "__main__":
     
     # ANALYSIS
     
-    
     # Loop over all configurations
-#     mode = "Orbit"
-#     for subsample in subsamples:
-#         for sector in sectors:
-#             print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
-#             analyse_phase_distribution(subsample, sector, data, tstamp, mode)
+    mode = "Orbit"
+#    for subsample in subsamples[2:]:
+#        for sector in sectors:
+#            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
+#            analyse_phase_distribution(subsample, sector, data, tstamp, mode)
 
-#     mode = "Rotation"
-#     for subsample in subsamples:
-#         for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
-#             print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
-#             analyse_phase_distribution(subsample, sector, data, tstamp, mode)
+  
+    mode = "Beat Period"
+#    per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
+#    for subsample in subsamples[2:]:
+#        for sector in sectors: #DO loop over both Sectors in Rotation mode
+#            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
+#            analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER)
 
 
     # Generate paper figure
-    paper_figure_kstest(tstamp)
+    paper_figure_kstest_mode(tstamp, "Beat Period")
+    paper_figure_kstest_mode(tstamp, "Rotation")
+    paper_figure_kstest_mode(tstamp, "Orbit")

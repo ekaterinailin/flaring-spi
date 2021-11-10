@@ -150,7 +150,7 @@ def paper_figure_adtest(tstamp):
     plt.yscale("log")
     plt.ylabel(r"$p$ value")
 
-    plt.legend(handles=handles, frameon=False, loc=(0.6,0.1));
+    plt.legend(handles=handles, frameon=False, loc=(0.5,0.1));
 
     # Orbit to the right
     plt.subplot(122)
@@ -198,7 +198,8 @@ def paper_figure_adtest_mode(tstamp, mode):
     
     # Get the data
     kss_ = pd.read_csv("../results/adtests.csv").drop_duplicates()
-    kss_ = kss_[kss_.tstamp == tstamp]
+    kss_ = kss_[kss_.tstamp >= '2021-09-01']
+    print(kss_.shape)
     kss_ = kss_[kss_.nsteps_mcmc == 10000]
     
     
@@ -238,7 +239,7 @@ def paper_figure_adtest_mode(tstamp, mode):
     plt.yscale("log")
     plt.ylabel(r"$p$ value")
 
-    plt.legend(handles=handles, frameon=False, loc=(0.6,0.1));
+    plt.legend(handles=handles, frameon=False, loc=(0.5,0.1));
 
 
     plt.tight_layout()
@@ -321,9 +322,13 @@ if __name__ == "__main__":
 #                                              mode, 10000, phaseshift=shift, rotper=per)
 #                time.sleep(20)
 
+    mode = "Beat Period"
+    paper_figure_adtest_mode(tstamp, mode)
 
-#    paper_figure_adtest_mode(tstamp, mode)
+    mode = "Rotation"
+    paper_figure_adtest_mode(tstamp, mode)
 
-
+    mode = "Orbit"
+    paper_figure_adtest_mode(tstamp, mode)
 
                 
