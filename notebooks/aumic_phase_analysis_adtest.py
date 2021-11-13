@@ -75,12 +75,18 @@ def analyse_phase_distribution_ad(subsample, sector, data, tstamp, mode, N, rotp
         aumicphases, ph = get_observed_phases(mode, np.linspace(0.01,.99,100), 
                                       get_secs_cadences, rotper=rotper, 
                                        phaseshift=phaseshift)
-    # observing times
+    # observing times weighted by number of flares per sector to account for detection threshold variability
+    #cobs = aumicphases.sum(axis=1).values
+    for qcs, cadence in get_secs_cadences:
+#        print(aumicphases[qcs])
+        aumicphases[qcs] = aumicphases[qcs] * aumic[aumic.qcs == qcs].shape[0] / aumic.shape[0]
+#        print(aumicphases[qcs])
     cobs = aumicphases.sum(axis=1).values
 
     # sample from the near-uniform expected distribution and get the AD statistic
+
     A2 = sample_AD_for_custom_distribution(p, cobs, N, ph, l=phaseshift)
-    print(A2)
+#    print(A2)
     
     # get p value and statistic value
     pvalue, adtestvalue = get_pvalue_from_AD_statistic(p, A2)
@@ -314,21 +320,21 @@ if __name__ == "__main__":
     mode = "Beat Period"
     per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
     print(per)
-#    for subsample in subsamples[2:]:
-#        for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
-#            for shift in shifts:
-#                print(f"{mode}: Analyzing sector {sector}, shift {shift} subsample {subsample}")
-#                analyse_phase_distribution_ad(subsample, sector, data, tstamp, 
-#                                              mode, 10000, phaseshift=shift, rotper=per)
+    for subsample in subsamples[:1]:
+        for sector in sectors[:1]: #DO loop over both Sectors in Rotation mode
+            for shift in shifts:
+                print(f"{mode}: Analyzing sector {sector}, shift {shift} subsample {subsample}")
+                analyse_phase_distribution_ad(subsample, sector, data, tstamp, 
+                                              mode, 10000, phaseshift=shift, rotper=per)
 #                time.sleep(20)
 
-    mode = "Beat Period"
-    paper_figure_adtest_mode(tstamp, mode)
+#    mode = "Beat Period"
+#    paper_figure_adtest_mode(tstamp, mode)
 
-    mode = "Rotation"
-    paper_figure_adtest_mode(tstamp, mode)
+#    mode = "Rotation"
+#    paper_figure_adtest_mode(tstamp, mode)
 
-    mode = "Orbit"
-    paper_figure_adtest_mode(tstamp, mode)
+#    mode = "Orbit"
+#    paper_figure_adtest_mode(tstamp, mode)
 
                 

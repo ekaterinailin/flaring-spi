@@ -108,6 +108,7 @@ def sample_AD_for_custom_distribution(cphases, cobs, N, ph, l=0.):
     y = f(x)
     plt.plot(x,y, label="interpolation")
     plt.plot(np.linspace(0,1,101), cobs,c="r")
+    plt.hist(cphases, bins=100)
     plt.scatter(ph, cobs)
     plt.xlim(0,1)
     plt.legend()
