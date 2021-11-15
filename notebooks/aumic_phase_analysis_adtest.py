@@ -285,8 +285,8 @@ if __name__ == "__main__":
     sectors = list(data.keys())
     
     # list phaseshifts
-#    shifts = [.0, .2, .4, .6, .8,]
-    shifts = [.1, .3, .5, .7, .9,]
+    shifts = [.0, .2, .4, .6, .8, .1, .3, .5, .7, .9,]
+#   shifts = [.1, .3, .5, .7, .9,]
 
     # timestamp for unique rows in results table
     tstamp = datetime.date.today().isoformat()
@@ -319,9 +319,15 @@ if __name__ == "__main__":
 
     mode = "Beat Period"
     per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
-    print(per)
-    for subsample in subsamples[:1]:
-        for sector in sectors[:1]: #DO loop over both Sectors in Rotation mode
+
+    mode = "Rotation"
+    per = ROTPER
+
+    mode = "Orbit"
+    per = ORBPER
+
+    for subsample in subsamples[1:]:
+        for sector in sectors[2:]: #DO loop over both Sectors in Rotation mode
             for shift in shifts:
                 print(f"{mode}: Analyzing sector {sector}, shift {shift} subsample {subsample}")
                 analyse_phase_distribution_ad(subsample, sector, data, tstamp, 
