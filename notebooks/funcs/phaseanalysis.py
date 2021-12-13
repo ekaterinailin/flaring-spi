@@ -5,6 +5,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def get_cumulative_distributions(df, dfphases, get_secs_cadences):
+    """Calculate the cumulative distribution function of observed
+    flares, while accounting for the number of observed flares in
+    a light curve with a given detection threshold.
+
+    Parameters:
+    -----------
+    df : DataFrame
+        detected flares table, with a flag qcs that denotes the LC
+    dfphases : DataFrame
+        table that lists the observed phases, with a column for each LC
+    get_secs_cadences : list
+        format: [(Sector, cadence in minutes), (.., ..), (.., ..)]
+        Sector is an int
+        cadence is a float
+    """
     # Measured number of flares in each bin
     F = dfphases.shape[0]
     n_i = np.full(F, 1)
