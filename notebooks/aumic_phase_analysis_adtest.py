@@ -204,7 +204,7 @@ def paper_figure_adtest_mode(tstamp, mode):
     
     # Get the data
     kss_ = pd.read_csv("../results/adtests.csv").drop_duplicates()
-    kss_ = kss_[kss_.tstamp >= '2021-09-01']
+    kss_ = kss_[kss_.tstamp >= tstamp]
     print(kss_.shape)
     kss_ = kss_[kss_.nsteps_mcmc == 10000]
     
@@ -289,7 +289,7 @@ if __name__ == "__main__":
 #   shifts = [.1, .3, .5, .7, .9,]
 
     # timestamp for unique rows in results table
-    tstamp = datetime.date.today().isoformat()
+    tstamp = "2021-11-13"#datetime.date.today().isoformat()
 
     
     # ANALYSIS
@@ -317,30 +317,30 @@ if __name__ == "__main__":
 
 
 
-    mode = "Beat Period"
-    per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
-
-    mode = "Rotation"
-    per = ROTPER
-
-    mode = "Orbit"
-    per = ORBPER
-
-    for subsample in subsamples[1:]:
-        for sector in sectors[2:]: #DO loop over both Sectors in Rotation mode
-            for shift in shifts:
-                print(f"{mode}: Analyzing sector {sector}, shift {shift} subsample {subsample}")
-                analyse_phase_distribution_ad(subsample, sector, data, tstamp, 
-                                              mode, 10000, phaseshift=shift, rotper=per)
-#                time.sleep(20)
-
 #    mode = "Beat Period"
-#    paper_figure_adtest_mode(tstamp, mode)
+#    per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
 
 #    mode = "Rotation"
-#    paper_figure_adtest_mode(tstamp, mode)
+#    per = ROTPER
 
 #    mode = "Orbit"
-#    paper_figure_adtest_mode(tstamp, mode)
+#    per = ORBPER
+
+#    for subsample in subsamples[1:]:
+#        for sector in sectors[2:]: #DO loop over both Sectors in Rotation mode
+#            for shift in shifts:
+#                print(f"{mode}: Analyzing sector {sector}, shift {shift} subsample {subsample}")
+#                analyse_phase_distribution_ad(subsample, sector, data, tstamp, 
+#                                              mode, 10000, phaseshift=shift, rotper=per)
+#                time.sleep(20)
+
+    mode = "Beat Period"
+    paper_figure_adtest_mode(tstamp, mode)
+
+    mode = "Rotation"
+    paper_figure_adtest_mode(tstamp, mode)
+
+    mode = "Orbit"
+    paper_figure_adtest_mode(tstamp, mode)
 
                 
