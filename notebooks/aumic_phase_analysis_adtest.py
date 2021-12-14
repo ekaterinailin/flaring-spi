@@ -323,17 +323,22 @@ if __name__ == "__main__":
     # ANALYSIS
     
     # Loop over all configurations
-    mode = "Orbit"
+#    mode = "Orbit"
 #    for subsample in subsamples[:1]:
 #        for sector in sectors[1:2]:
 #            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
 #            analyse_phase_distribution(subsample, sector, data, tstamp, mode)
 
   
-    mode = "Rotation"
+
     if sys.argv[3]=="b":
+        mode = "Beat Period"
         per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
     elif sys.argv[3]=="r":
+        mode = "Rotation"
+        per = ROTPER
+    elif sys.argv[3]=="o":
+        mode = "Orbit"
         per = ROTPER
 #    for subsample in subsamples[2:]:
 #        for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
