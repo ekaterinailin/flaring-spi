@@ -11,6 +11,8 @@ from matplotlib.lines import Line2D
 
 import datetime
 
+import sys
+
 ROTPER =  4.862 # martioli
 ORBPER =  8.463 # exoplanet.eu 
 
@@ -52,7 +54,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         aumic__ = aumic_
         
     # Introduce artificial phase shift
-    for phaseshift in [.0,.1,.2,.3,.4,.5,.6,.7,.8,.9]:#.7, .8]:.3, .4, .5, .6, .8,0.,  .5, .9
+    for phaseshift in [0.,.1,.2,.3,.4,.5,.6,.7,.8,.9]:#.7, .8]:.3, .4, .5, .6, .8,0.,  .5, .9
         print(f"Shift phase by {phaseshift}.")
         
         aumic = aumic__.copy()
@@ -117,8 +119,10 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         N = 10000
         A2 = sample_AD_for_custom_distribution(f, p.shape[0], N)
         A2 = A2[np.isfinite(A2)]
-
+    
+    
         pval, atest = get_pvalue_from_AD_statistic(p, f, A2)
+        print(pval, atest)
 
         # plot diagnostic with the A2 distribution
         plt.figure(figsize=(8, 7))
@@ -286,6 +290,8 @@ def paper_figure_kstest_mode(tstamp, mode):
 if __name__ == "__main__":
     
     # SETUP
+    sector = int(sys.argv[1])
+    subs = int(sys.argv[2])
 
     # Load data and select the final vetted flares
 
@@ -325,14 +331,20 @@ if __name__ == "__main__":
 
   
     mode = "Rotation"
-#    per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
-    for subsample in subsamples[:]:
-        for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
-            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
-            analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER)
+    if sys.argv[3]=="b":
+        per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
+    elif sys.argv[3]=="r":
+        per = ROTPER
+#    for subsample in subsamples[2:]:
+#        for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
+#            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
+#            analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER)
+
+    analyse_phase_distribution(subsamples[subs], sectors[sector], data, tstamp, mode, rotper=per)
+            
 
 
     # Generate paper figure
-#    paper_figure_kstest_mode(tstamp, "Beat Period")
-#    paper_figure_kstest_mode(tstamp, "Rotation")
-    paper_figure_kstest_mode(tstamp, "Orbit")
+    paper_figure_kstest_mode(tstamp, "Beat Period")
+    paper_figure_kstest_mode(tstamp, "Rotation")
+#    paper_figure_kstest_mode(tstamp, "Orbit")

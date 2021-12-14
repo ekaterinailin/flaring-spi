@@ -71,6 +71,7 @@ def get_pvalue_from_AD_statistic(x, dist, A2):
     ---------
     pval, atest - p-value and measured AD statistic
     """
+#    print(x)
     # AD statistic of the observed flare phases
     atest = anderson_custom(x, dist)
     
@@ -180,9 +181,8 @@ def anderson_custom(x, dist):
     z = dist(y)
 
     # A2 statistic is undefined for 1 and 0
-    z = z[(z<=1.) & (z>=0.)]
+    z = z[(z<1.) & (z>0.)]
   
-#    print(z)
     N = len(z)
     i = np.arange(1, N + 1)
     S = np.sum((2 * i - 1.0) / N * (np.log(z) + np.log(1 - z[::-1])), axis=0)
