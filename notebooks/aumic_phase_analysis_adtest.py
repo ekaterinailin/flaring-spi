@@ -34,7 +34,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         aumic_ = get_flare_phases(aumic_, "Rotation", rotper=rotper).reset_index()
     elif mode == "Orbit":
         aumic_ = get_flare_phases(aumic_, mode).reset_index()
-    print(aumic_.columns)
+    
   
     if subsample == "random half":
         
@@ -52,7 +52,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         aumic__ = aumic_
         
     # Introduce artificial phase shift
-    for phaseshift in [0., .1, .2, .3, .4, .5, .6, .7, .8, .9]:
+    for phaseshift in [.0,.1,.2,.3,.4,.5,.6,.7,.8,.9]:#.7, .8]:.3, .4, .5, .6, .8,0.,  .5, .9
         print(f"Shift phase by {phaseshift}.")
         
         aumic = aumic__.copy()
@@ -90,14 +90,14 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         vals = np.insert(vals, -1, 1)
 
         # Interpolate!
-        f = interpolate.interp1d(cphases, vals)
+        f = interpolate.interp1d(cphases, vals, fill_value="extrapolate")
 
         # plot diagnostic with the interpolated callable cdf for the KS test
         plt.figure(figsize=(8, 7))
         x = np.linspace(0, 1, 500)
         y = f(x)
         plt.scatter(aumic.phases, cum_n_exp, s=20, c="k", marker="x", label="expected distribution")
-        plt.scatter(aumic.phases, cum_n_i, s=30, c="r", label="measured distibution")
+        plt.scatter(aumic.phases, cum_n_i, s=30, c="r", label="measured distribution")
         plt.plot(x, y, label="interpolation", zorder=-10, c="grey");
         plt.xlim(0,1)
         plt.ylim(0,1)
@@ -105,19 +105,34 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         plt.xlabel("phase")
         plt.ylabel("cumul. fraction of observed flares")
         tst = tstamp.replace("-","_")
-        plt.savefig(f"../results/plots/{tst}_AUMic_KS_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}.png", dpi=300)
+        plt.savefig(f"../results/plots/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}.png", dpi=300)
 
         # write out cum dist data
         if (mode=="Orbit") & (sector=="Both Sectors"):
             pd.DataFrame({"phase":aumic.phases.values,
                           "exp_cum":cum_n_exp,
-                          "meas_cum":cum_n_i}).to_csv(f"../results/plots/{tst}_AUMic_KS_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}.csv", index=False)
+                          "meas_cum":cum_n_i}).to_csv(f"../results/plots/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}.csv", index=False)
 
-        # Finally, the A-D test
-	N = 10000
+        # Finally, the A-D tes
+        N = 10000
         A2 = sample_AD_for_custom_distribution(f, p.shape[0], N)
+        A2 = A2[np.isfinite(A2)]
 
-	pval, atest = get_pvalue_from_AD_statistic(p, f, A2)
+        pval, atest = get_pvalue_from_AD_statistic(p, f, A2)
+
+        # plot diagnostic with the A2 distribution
+        plt.figure(figsize=(8, 7))
+        
+        plt.hist(A2, bins=np.linspace(np.min(A2),np.max(A2),N//100))
+        plt.axvline(atest,c="k")    
+        plt.xlim(np.min(A2),np.max(A2))
+        
+        plt.xlabel("A2")
+        tst = tstamp.replace("-","_")
+        plt.savefig(f"../results/plots/{tst}_AUMic_AD_Test_A2dist_{subsample}_{sector}_{mode}_shift{phaseshift}.png", dpi=300)
+
+
+        
 
         # write out results
         with open("../results/adtests.csv", "a") as f:
@@ -233,7 +248,7 @@ def paper_figure_kstest_mode(tstamp, mode):
     handles = []
     for label, g in kss.groupby("sector"):    
         c, m = colors[label]
-        for ll, h in g.groupby("phaseshift"):
+        for ll, h in g.groupby("shift"):
             
             plt.scatter(h.subsample, h["p"], marker=fr"${ll}$", s=240, c=c, alpha=1)
         handles.append((Line2D([0], [0], marker=m, color='w', 
@@ -252,8 +267,8 @@ def paper_figure_kstest_mode(tstamp, mode):
 
     plt.title(f"{mode} modulation")
 
-    plt.ylim(1e-3,1)
-    plt.yscale("log")
+    plt.ylim(1e-5,1)
+#    plt.yscale("log")
     plt.ylabel(r"$p$ value")
 
     plt.legend(handles=handles, frameon=False, loc=(0.55,0.1));
@@ -304,21 +319,21 @@ if __name__ == "__main__":
     
     # Loop over all configurations
     mode = "Orbit"
-    for subsample in subsamples[:1]:
-        for sector in sectors[:1]:
-            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
-            analyse_phase_distribution(subsample, sector, data, tstamp, mode)
+#    for subsample in subsamples[:1]:
+#        for sector in sectors[1:2]:
+#            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
+#            analyse_phase_distribution(subsample, sector, data, tstamp, mode)
 
   
-    mode = "Beat Period"
+    mode = "Rotation"
 #    per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
-#    for subsample in subsamples[2:]:
-#        for sector in sectors: #DO loop over both Sectors in Rotation mode
-#            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
-#            analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER)
+    for subsample in subsamples[:1]:
+        for sector in sectors[:1]: #DO loop over both Sectors in Rotation mode
+            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
+            analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER)
 
 
     # Generate paper figure
 #    paper_figure_kstest_mode(tstamp, "Beat Period")
 #    paper_figure_kstest_mode(tstamp, "Rotation")
-#    paper_figure_kstest_mode(tstamp, "Orbit")
+    paper_figure_kstest_mode(tstamp, "Orbit")

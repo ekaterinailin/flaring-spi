@@ -17,9 +17,11 @@ the custom flare phase distribution.
 
 import numpy as np
 import emcee
+import corner
 
 from scipy.interpolate import interp1d
 from scipy.stats import percentileofscore
+from scipy.misc import derivative
 
 
 import matplotlib.pyplot as plt
@@ -77,19 +79,20 @@ def get_pvalue_from_AD_statistic(x, dist, A2):
     
     # calculate p-value for a two sided test
     pval = 2 * np.min([100 - perc, perc]) / 100
+
     
     return pval, atest
 
 
     
-def sample_AD_for_custom_distribution(f, n, N):
+def sample_AD_for_custom_distribution(f, nobs, N):
     """
     
     Parameters:
     ------------
     f : func
         expected cum. dist. function (EDF)
-    n : int
+    nobs : int
         size of data sample
     N : int
         number of samples to draw from the expected 
@@ -98,10 +101,14 @@ def sample_AD_for_custom_distribution(f, n, N):
 
    
     def func(x):
-        if (x > 1) | (x < 0):
+        if (x >= 1) | (x <= 0):
             return -np.inf
         else:
-            return np.log(f(x))
+            lp =  np.log(derivative(f, x, dx=np.min([1e-4, (1-x)/3, x/3])))
+            if np.isnan(lp):
+                return -np.inf
+            else:
+                return lp
         
 
     # Apply ensemble sampler from emcee
@@ -124,11 +131,19 @@ def sample_AD_for_custom_distribution(f, n, N):
     # Get the samples
     samples = sampler.get_chain()
 
-    # remove third dimension in samples: (N,nobs,1) --> (N, nobs)
+    # replace infs
+    missing = np.where(~np.isfinite(samples))[0]
+    print(missing)
+    if len(missing)>0:
+        samples[missing] = f(np.random.rand(*missing.shape))
     c = samples.reshape((N,nobs))
+    fig = corner.corner(sampler.get_chain(discard=100, thin=15, flat=True))
+    plt.savefig(f"../results/plots/emcee_corner_{N}_{nobs}.png",dpi=200)
+    # remove third dimension in samples: (N,nobs,1) --> (N, nobs)
+    
     
     # calculate the AD statistic for all samples
-    A2 = anderson_custom(c, f)
+    A2 = np.array([anderson_custom(c[i,:], f) for i in range(N)])
     
     # make sure that converting shapes and calculating the statistic
     # preserved the number of samples correctly
@@ -158,13 +173,21 @@ def anderson_custom(x, dist):
         The Anderson-Darling test statistic
     """
 
-    y = sort(x)
+    y = np.sort(x)
 
-    N = len(y)
-
+    
+#    print("Y",y)
     z = dist(y)
 
-    i = arange(1,N+1)
-    S = sum((2*i-1.0)/N*(log(z)+log(1-z[::-1])),axis=0)
-    A2 = -N-S
+    # A2 statistic is undefined for 1 and 0
+    z = z[(z<=1.) & (z>=0.)]
+  
+#    print(z)
+    N = len(z)
+    i = np.arange(1, N + 1)
+    S = np.sum((2 * i - 1.0) / N * (np.log(z) + np.log(1 - z[::-1])), axis=0)
+    A2 = - N - S
+   
+#    if ~np.isfinite(S):
+ #       print(S,y,z)
     return A2
