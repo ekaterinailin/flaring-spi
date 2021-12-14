@@ -307,7 +307,6 @@ if __name__ == "__main__":
 
     # list the subsamples you want to analyse
     subsamples = ["total", "high energy half", "low energy half"]
-
     # get the keys to loop
     sectors = list(data.keys())
 
@@ -327,8 +326,8 @@ if __name__ == "__main__":
   
     mode = "Rotation"
 #    per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
-    for subsample in subsamples[:1]:
-        for sector in sectors[:1]: #DO loop over both Sectors in Rotation mode
+    for subsample in subsamples[:]:
+        for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
             print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
             analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER)
 
