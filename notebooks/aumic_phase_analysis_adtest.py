@@ -54,7 +54,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         aumic__ = aumic_
         
     # Introduce artificial phase shift
-    for phaseshift in [0.,.1,.2,.3,.4,.5,.6,.7,.8,.9]:#.7, .8]:.3, .4, .5, .6, .8,0.,  .5, .9
+    for phaseshift in [0.]:#,.1,.2,.3,.4,.5,.6,.7,.8,.9
         print(f"Shift phase by {phaseshift}.")
         
         aumic = aumic__.copy()
@@ -116,11 +116,12 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
                           "meas_cum":cum_n_i}).to_csv(f"../results/plots/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}.csv", index=False)
 
         # Finally, the A-D tes
-        N = 10000
+        N = 200
         A2 = sample_AD_for_custom_distribution(f, p.shape[0], N)
         A2 = A2[np.isfinite(A2)]
     
-    
+        with open("a2.txt", "w") as file:
+            np.savetxt(file, A2) 
         pval, atest = get_pvalue_from_AD_statistic(p, f, A2)
         print(pval, atest)
 
@@ -290,8 +291,8 @@ def paper_figure_kstest_mode(tstamp, mode):
 if __name__ == "__main__":
     
     # SETUP
-    sector = int(sys.argv[1])
-    subs = int(sys.argv[2])
+#    sector = int(sys.argv[1])
+#    subs = int(sys.argv[2])
 
     # Load data and select the final vetted flares
 
@@ -317,7 +318,7 @@ if __name__ == "__main__":
     sectors = list(data.keys())
 
     # timestamp for unique rows in results table
-    tstamp = datetime.date.today().isoformat()
+    tstamp = "2021_12_14"#datetime.date.today().isoformat()
 
     
     # ANALYSIS
@@ -331,25 +332,25 @@ if __name__ == "__main__":
 
   
 
-    if sys.argv[3]=="b":
-        mode = "Beat Period"
-        per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
-    elif sys.argv[3]=="r":
-        mode = "Rotation"
-        per = ROTPER
-    elif sys.argv[3]=="o":
-        mode = "Orbit"
-        per = ROTPER
+#    if sys.argv[3]=="b":
+#        mode = "Beat Period"
+#        per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
+#    elif sys.argv[3]=="r":
+#        mode = "Rotation"
+#        per = ROTPER
+#    elif sys.argv[3]=="o":
+#        mode = "Orbit"
+#        per = ROTPER
 #    for subsample in subsamples[2:]:
 #        for sector in sectors[:]: #DO loop over both Sectors in Rotation mode
 #            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
 #            analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER)
 
-    analyse_phase_distribution(subsamples[subs], sectors[sector], data, tstamp, mode, rotper=per)
+#    analyse_phase_distribution(subsamples[subs], sectors[sector], data, tstamp, mode, rotper=per)
             
-
+ #   analyse_phase_distribution("total", "Both Sectors", data, tstamp, "Orbit", rotper=ROTPER)
 
     # Generate paper figure
     paper_figure_kstest_mode(tstamp, "Beat Period")
     paper_figure_kstest_mode(tstamp, "Rotation")
-#    paper_figure_kstest_mode(tstamp, "Orbit")
+    paper_figure_kstest_mode(tstamp, "Orbit")
