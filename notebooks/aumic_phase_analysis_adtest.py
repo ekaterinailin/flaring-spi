@@ -120,8 +120,8 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         A2 = sample_AD_for_custom_distribution(f, p.shape[0], N)
         A2 = A2[np.isfinite(A2)]
     
-        with open("a2.txt", "w") as file:
-            np.savetxt(file, A2) 
+#        with open("a2.txt", "w") as file:
+#            np.savetxt(file, A2) 
         pval, atest = get_pvalue_from_AD_statistic(p, f, A2)
         print(pval, atest)
 
