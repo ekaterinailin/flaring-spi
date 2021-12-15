@@ -250,7 +250,7 @@ def paper_figure_kstest_mode(tstamp, mode):
     plt.title(f"{mode} modulation")
 
     plt.ylim(1e-3,1)
-    plt.yscale("log")
+#    plt.yscale("log")
     plt.ylabel(r"$p$ value")
 
     plt.legend(handles=handles, frameon=False, loc=(0.55,0.1));
@@ -294,7 +294,7 @@ if __name__ == "__main__":
     sectors = list(data.keys())
 
     # timestamp for unique rows in results table
-    tstamp = datetime.date.today().isoformat()
+    tstamp = "2021-11-10"#datetime.date.today().isoformat()
 
     
     # ANALYSIS
