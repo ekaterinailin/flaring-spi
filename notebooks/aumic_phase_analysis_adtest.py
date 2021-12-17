@@ -54,7 +54,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         aumic__ = aumic_
         
     # Introduce artificial phase shift
-    for phaseshift in [0.05,.15,.25,.35,.45,.55,.65,.75,.85,.95]:#[0.,.1,.2,.3,.4,.5,.6,.7,.8,.9]
+    for phaseshift in [.65,.75,.85,.95]:#[0.,.1,.2,.3,.4,.5,.6,.7,.8,.9]0.05,.15,.25,.35,.45,.55,
         print(f"Shift phase by {phaseshift}.")
         
         aumic = aumic__.copy()
