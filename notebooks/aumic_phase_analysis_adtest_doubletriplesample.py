@@ -110,14 +110,16 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         plt.xlabel("phase")
         plt.ylabel("cumul. fraction of observed flares")
         tst = tstamp.replace("-","_")
-        plt.savefig(f"../results/plots/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_double.png", dpi=300)
+        plt.savefig(f"../results/plots/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_triple.png", dpi=300)
 
         # double the sample size
         supp = np.random.normal((p[:-1] + p[1:]) / 2., np.abs(np.diff(p)) / 2., len(p) - 1)
         newp = np.sort(np.append(p, supp))
 
+        # triple the sample size
+        
         # Finally, the A-D tes
-        N = 10000
+        N = 30000
         A2 = sample_AD_for_custom_distribution(f, newp.shape[0], N)
         A2 = A2[np.isfinite(A2)]
     
