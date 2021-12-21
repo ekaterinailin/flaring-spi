@@ -17,7 +17,8 @@ ROTPER =  4.862 # martioli
 ORBPER =  8.463 # exoplanet.eu 
 
 
-def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER):
+def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROTPER, phaseshifts=[0.,.1,.2,.3,.4,.5,.6,.7,.8,.9,
+                       0.05,.15,.25,.35,.45,.55,.65,.75,.85,.95]):
     """Wrapper for the analysis of flare phases. 
     Generates the KS test value results.
     
@@ -54,8 +55,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         aumic__ = aumic_
         
     # Introduce artificial phase shift
-    for phaseshift in [0.,.1,.2,.3,.4,.5,.6,.7,.8,.9,
-                       0.05,.15,.25,.35,.45,.55,.65,.75,.85,.95]:#
+    for phaseshift in phaseshifts:#
         print(f"Shift phase by {phaseshift}.")
         
         aumic = aumic__.copy()
@@ -113,18 +113,23 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         plt.savefig(f"../results/plots/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_triple.png", dpi=300)
 
         # double the sample size
-        supp = np.random.normal((p[:-1] + p[1:]) / 2., np.abs(np.diff(p)) / 2., len(p) - 1)
-        newp = np.sort(np.append(p, supp))
+        #supp = np.random.normal((p[:-1] + p[1:]) / 2., np.abs(np.diff(p)) / 2., len(p) - 1)
+        #newp = np.sort(np.append(p, supp))
 
         # triple the sample size
+        newx1 = np.random.normal((p[:-1] * 2 + p[1:])/3.,np.abs(np.diff(p)) / 3.,len(p)-1)
+        newx2 = np.random.normal((p[:-1] + p[1:] * 2)/3.,np.abs(np.diff(p)) / 3.,len(p)-1)
+        newp = np.sort(np.concatenate([p, newx1, newx2]))
+        print(newx1.shape[0],newx2.shape[0],p.shape[0],newp.shape[0])
         
         # Finally, the A-D tes
-        N = 30000
+        N = 50000
         A2 = sample_AD_for_custom_distribution(f, newp.shape[0], N)
         A2 = A2[np.isfinite(A2)]
     
-#        with open("a2.txt", "w") as file:
-#            np.savetxt(file, A2) 
+        with open(f"../results/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_{N}_triple_A2.txt", "w") as file:
+            np.savetxt(file, A2) 
+
         pval, atest = get_pvalue_from_AD_statistic(newp, f, A2)
         print(pval, atest)
 
@@ -146,7 +151,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         with open("../results/adtests.csv", "a") as f:
             #tstamp	period	sector	subsample	AD	p	nsteps_mcmc	nflares	totobs_days	shift
             stri = (f"{tstamp},{mode},{sector},{subsample},{atest},"
-                    f"{pval},{p.shape[0]},{N},"
+                    f"{pval},{newp.shape[0]},{N},"
                     f"{aumicphases.sum().sum()/60./24.},{phaseshift}\n")
             f.write(stri)
             
@@ -349,7 +354,11 @@ if __name__ == "__main__":
 #            print(f"{mode}: Analyzing sumbsample {subsample}, Sector {sector}")
 #            analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=per)
 
-    analyse_phase_distribution(subsamples[subs], sectors[sector], data, tstamp, mode, rotper=per)
+    phaseshifts = [float(sys.argv[4])]
+
+    print(f"phase shift {phaseshifts}")
+
+    analyse_phase_distribution(subsamples[subs], sectors[sector], data, tstamp, mode, rotper=per, phaseshifts=phaseshifts)
             
  #   analyse_phase_distribution("total", "Both Sectors", data, tstamp, "Orbit", rotper=ROTPER)
 
