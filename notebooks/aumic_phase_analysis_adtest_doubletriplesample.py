@@ -124,10 +124,13 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         
         # Finally, the A-D tes
         N = 50000
-        A2 = sample_AD_for_custom_distribution(f, newp.shape[0], N)
-        A2 = A2[np.isfinite(A2)]
-    
-        with open(f"../results/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_{N}_triple_A2.txt", "w") as file:
+        A2old = sample_AD_for_custom_distribution(f, newp.shape[0], N)
+        A2old = A2old[np.isfinite(A2old)]
+        A2extra = np.loadtxt(f"../results/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_50000_triple_A2.txt")
+
+        A2 = np.concatenate([A2old, A2extra])
+        print(A2.shape)
+        with open(f"../results/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_50000_triple_A2.txt", "w") as file:
             np.savetxt(file, A2) 
 
         pval, atest = get_pvalue_from_AD_statistic(newp, f, A2)
@@ -136,7 +139,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         # plot diagnostic with the A2 distribution
         plt.figure(figsize=(8, 7))
         
-        plt.hist(A2, bins=np.linspace(np.min(A2),np.max(A2),N//100))
+        plt.hist(A2, bins=np.linspace(np.min(A2),np.max(A2),N//1000))
         plt.axvline(atest,c="k")    
         plt.xlim(np.min(A2),np.max(A2))
         
@@ -151,7 +154,7 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         with open("../results/adtests.csv", "a") as f:
             #tstamp	period	sector	subsample	AD	p	nsteps_mcmc	nflares	totobs_days	shift
             stri = (f"{tstamp},{mode},{sector},{subsample},{atest},"
-                    f"{pval},{newp.shape[0]},{N},"
+                    f"{pval},{newp.shape[0]},{A2.shape[0]},"
                     f"{aumicphases.sum().sum()/60./24.},{phaseshift}\n")
             f.write(stri)
             
