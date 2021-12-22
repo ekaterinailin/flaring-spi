@@ -113,24 +113,25 @@ def analyse_phase_distribution(subsample, sector, data, tstamp, mode, rotper=ROT
         plt.savefig(f"../results/plots/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_triple.png", dpi=300)
 
         # double the sample size
-        #supp = np.random.normal((p[:-1] + p[1:]) / 2., np.abs(np.diff(p)) / 2., len(p) - 1)
-        #newp = np.sort(np.append(p, supp))
-
+        supp = np.random.normal((p[:-1] + p[1:]) / 2., np.abs(np.diff(p)) / 2., len(p) - 1)
+        supp = np.insert(supp, -1, np.random.normal((p[-1] + p[0] + 1) / 2., (p[0] + 1 - p[-1]) / 2) % 1.)
+        newp = np.sort(np.append(p, supp))
+        
         # triple the sample size
-        newx1 = np.random.normal((p[:-1] * 2 + p[1:])/3.,np.abs(np.diff(p)) / 3.,len(p)-1)
-        newx2 = np.random.normal((p[:-1] + p[1:] * 2)/3.,np.abs(np.diff(p)) / 3.,len(p)-1)
-        newp = np.sort(np.concatenate([p, newx1, newx2]))
-        print(newx1.shape[0],newx2.shape[0],p.shape[0],newp.shape[0])
+#        newx1 = np.random.normal((p[:-1] * 2 + p[1:])/3.,np.abs(np.diff(p)) / 3.,len(p)-1)
+#        newx2 = np.random.normal((p[:-1] + p[1:] * 2)/3.,np.abs(np.diff(p)) / 3.,len(p)-1)
+#        newp = np.sort(np.concatenate([p, newx1, newx2]))
+        print(newp.shape[0], p.shape[0], supp.shape[0])
         
         # Finally, the A-D tes
-        N = 50000
-        A2old = sample_AD_for_custom_distribution(f, newp.shape[0], N)
-        A2old = A2old[np.isfinite(A2old)]
-        A2extra = np.loadtxt(f"../results/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_50000_triple_A2.txt")
+        N = 200000
+        A2  = sample_AD_for_custom_distribution(f, newp.shape[0], N)
+        #A2old = A2old[np.isfinite(A2old)]
+        #A2extra = np.loadtxt(f"../results/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_50000_triple_A2.txt")
 
-        A2 = np.concatenate([A2old, A2extra])
-        print(A2.shape)
-        with open(f"../results/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_50000_triple_A2.txt", "w") as file:
+        #A2 = np.concatenate([A2old, A2extra])
+       # print(A2.shape)
+        with open(f"../results/{tst}_AUMic_AD_Test_cumdist_{subsample}_{sector}_{mode}_shift{phaseshift}_{N}_double_A2.txt", "w") as file:
             np.savetxt(file, A2) 
 
         pval, atest = get_pvalue_from_AD_statistic(newp, f, A2)
