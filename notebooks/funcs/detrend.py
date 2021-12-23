@@ -6,23 +6,23 @@ import pandas as pd
 
 from altaipony.altai import find_iterative_median, equivalent_duration
 from altaipony.utils import sigma_clip
+from altaipony.flarelc import FlareLightCurve
 
 from collections import defaultdict
 
 import astropy.units as u
 
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, interp1d
 from scipy import optimize
 from scipy.fftpack import fft
 
-import transitleastsquares as tls
-from .transitmask import fit_and_remove_transits
 
 import matplotlib.pyplot as plt
 
 
 def custom_detrending(lc, spline_coarseness=30, spline_order=3,
-                      savgol1=6., savgol2=3., pad=3, system=None):
+                      savgol1=6., savgol2=3., pad=6, max_sigma=2.5,
+                      remove_exp_fringe=True):
     """Custom de-trending for TESS and Kepler 
     short cadence light curves, including TESS Cycle 3 20s
     cadence.
@@ -43,9 +43,16 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     savgol2 : float
         Window size for second Savitzky-Golay filter application.
         Unit is hours, defaults to 3 hours.
-    pad : 3
+    pad : int
         Outliers in Savitzky-Golay filter are padded with this
-        number of data points. Defaults to 3.
+        number of data points. Defaults to 6.
+    max_sigma : float
+        sigma value at which to cap outliers and flare candidates. 
+        Default is 2.5. Choose 1.5 for very active stars.
+    remove_exp_fringe : bool
+        removes un-detrended fringes in the light curve with an exponential 
+        function. Default is True.
+    
         
     Return:
     -------
@@ -54,61 +61,181 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
 # The commented lines will help with debugging, in case the tests in test_detrend.py fail.
 
     dt = np.mean(np.diff(lc.time.value))
-    plt.figure(figsize=(16,8))
-   
-    plt.plot(lc.time.value, lc.flux.value + 400, c="c", label="original light curve")
-    t0 = time.process_time()
+    
+    # diag plot init
+    fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(16,8))
+    
+    lc = lc.normalize()
+    offset = (np.mean(lc.flux.value) - np.min(lc.flux.value))
+    plt.plot(lc.time.value, lc.flux.value, c="c", label="original light curve")
+    
+#     start timing
+#     t0 = time.process_time()
+    
     # fit a spline to the general trends
     lc1, model = fit_spline(lc, spline_order=spline_order,
                             spline_coarseness=spline_coarseness)
     
     # replace for next step
     lc1.flux = lc1.detrended_flux.value
-    t1 = time.process_time()
-    plt.plot(lc1.time.value, model+600, c="r", label="rough trends")
-    plt.plot(lc1.time.value, lc1.detrended_flux.value+300, c="yellow", label="rough trends removed")
+    
+#     t1 = time.process_time()
+    
+    # diag plot
+    plt.plot(lc1.time.value, model, c="r", label="rough trends")
+    plt.plot(lc1.time.value, lc1.detrended_flux.value + 1 * offset, c="yellow", label="rough trends removed")
 
     # removes strong and fast variability on 5 day to 4.8 hours 
     # simple sines are probably because rotational variability is 
     # either weak and transient or strong and persistent on the timescales
-#     lc2 = remove_sines_iteratively(lc1)
-    lc2 = lc1
-    t2 = time.process_time()
-    plt.plot(lc2.time.value, lc2.detrended_flux.value+200, c="grey", label="sines removed")
+    lc2 = remove_sines_iteratively(lc1)
     
+#     t2 = time.process_time()
+    
+    # diag plot
+    plt.plot(lc2.time.value, lc2.detrended_flux.value + 2 * offset, c="grey", label="sines removed")
+    # mask flares
+#     mask = sigma_clip(lc2.detrended_flux.value, max_sigma=3.5, longdecay=2)
+#     plt.scatter(lc2.time.value[~mask], lc2.detrended_flux.value[~mask] + 2 * offset, c="k", label="masked")
+
     # choose a 6 hour window
     w = int((np.rint(savgol1 / 24. / dt) // 2) * 2 + 1)
-
+  
     # use Savitzy-Golay to iron out the rest
-    lc3 = lc2.detrend("savgol", window_length=w, pad=pad)
-    t3 = time.process_time()
+#     lc2.flux[mask] = np.nan
+    lc3 = detrend_savgol(lc2, max_sigma=max_sigma, longdecay=pad, w=w)
+#     t3 = time.process_time()
+
     # choose a three hour window
-    w = int((np.rint(savgol2 / 24. / dt) // 2) * 2 + 1)
+    w = int((np.rint(savgol2 / 24. / dt) // 2) * 2 + 1) 
 
     # use Savitzy-Golay to iron out the rest
-    lc4 = lc3.detrend("savgol", window_length=w, pad=pad)
-    t4 = time.process_time()
-    plt.plot(lc4.time.value, lc4.detrended_flux.value, c="k", label="SavGol applied")
-    
+    lc4 = detrend_savgol(lc3, max_sigma=max_sigma, longdecay=pad, w=w)
+
+#     t4 = time.process_time()
+
+    # diag plot
+    plt.plot(lc4.time.value, lc4.flux.value  + 3 * offset, c="k", label="SavGol applied")
+
     # find median value
+    lc4.detrended_flux = lc4.flux
+    lc4.detrended_flux_err = lc4.flux_err
     lc4 = find_iterative_median(lc4)
-    t41 = time.process_time()
-    # replace for next step
-    lc4.flux = lc4.detrended_flux.value
+    
+#     t41 = time.process_time()
     
     # remove exopential fringes that neither spline, 
-    # nor sines, nor SavGol 
-    # can remove.
-    lc5 = remove_exponential_fringes(lc4)
-    t5 = time.process_time()
-    plt.plot(lc5.time.value, lc5.detrended_flux.value-100, c="magenta", label="expfunc applied")
-    print(t1-t0, t2-t1, t3-t2, t4-t3, t41-t4, t5-t41, t5-t0)
+    # nor sines, nor SavGol can remove.
+    if remove_exp_fringe==True:
+        lc5 = remove_exponential_fringes(lc4.remove_nans())
+    else:
+        lc5 = lc4.remove_nans()
+#     t5 = time.process_time()
+    
+    plt.plot(lc5.time.value, lc5.detrended_flux.value + 4 * offset, c="magenta", label="expfunc applied")
+   # print(t1-t0, t2-t1, t3-t2, t4-t3, t41-t4, t5-t41, t5-t0)
 #     plt.xlim(10,40)
-#     plt.xlabel("time [days]")
-#     plt.ylabel("flux")
-#     plt.legend()    
-    return lc5
+    return lc5, ax
 
+
+def detrend_savgol(lc, max_sigma=2.5, longdecay=6, 
+                   w=121, break_tolerance=10, **kwargs):
+    """New detrending with savgol filter.
+    
+    Parameters:
+    -----------
+    
+    max_sigma: float>0
+        sigma clipping threshold
+    longdecay: int
+        adding masked datapoints to the tail if
+        multiple outliers occur in a row
+    w : odd int
+        window length for savgol filter
+    break_tolerance : int
+        If there are large gaps in time, flatten will split the flux into several sub-lightcurves and apply savgol_filter to each individually. A gap is defined as a period in time larger than break_tolerance times the median gap. To disable this feature, set break_tolerance to None.
+    kwargs : dict
+        keyword arguments to feed LightCurve.flatten()
+    """
+    # fill missing cadences
+    lc = interpolate_missing_cadences(lc)
+    
+    # normalize
+    lcn = lc.normalize()
+    
+    # sigma clip
+    m = sigma_clip(lcn.flux.value, max_sigma=2.5, longdecay=6)
+
+    # convert bool to int
+    mask = ~m * 1
+
+    # from Appaloosa:
+    # convert mask to start and stop
+    reverse_counts = np.zeros_like(lcn.flux.value, dtype='int')
+    for k in range(2, len(lcn.flux.value)):
+        reverse_counts[-k] = (mask[-k]
+                                * (reverse_counts[-(k-1)]
+                                + mask[-k]))
+
+    # find flare start where values in reverse_counts switch from 0 to >=N3 
+    # SET N3=2 because we care about all longer outliers!
+    istart_i = np.where((reverse_counts[1:] >= 2) &
+                        (reverse_counts[:-1] - reverse_counts[1:] < 0))[0] + 1
+
+    # use the value of reverse_counts to determine how many points away stop is
+    istop_i = istart_i + (reverse_counts[istart_i])
+
+    # get a list of masked candidates to extrapolate
+    candidates = list(zip(istart_i, istop_i))
+
+    # save the flare flux
+    fluxold = lcn.flux
+
+    # remove the flares candidates for now
+    lcn.flux[mask] = np.nan
+
+    # SAVGOL APPLIED HERE
+    # https://docs.lightkurve.org/reference/api/lightkurve.LightCurve.flatten.html?highlight=flatten#lightkurve.LightCurve.flatten
+    # flatten with light curve
+    # set break_tolerance to 10 by default, i.e. 20 min in a 2min cadence LC
+    lcrsf  = lcn.flatten(window_length=w, break_tolerance=break_tolerance) #replace with 6h or 3h window
+
+    # cycle over all candidates
+    for i, j in candidates:
+
+        # span the data
+        mask_ij = np.arange(i,j)
+
+        # linearinterpolate below the flare
+        interpolation_ij = np.interp(lcn.time.value[mask_ij],
+                                     [lcn.time.value[i],lcn.time.value[j]],
+                                     [lcn.flux.value[i],lcn.flux.value[j]])
+        # plt.plot(lcn.time.value[mask], fill)
+        # plt.plot(lcn.time.value[mask], x)
+        # plt.scatter( [lcn.time.value[mask[0]],lcn.time.value[mask[-1]]],
+        #                    [lcn.flux.value[mask[0]-1],lcn.flux.value[mask[-1]+1]])
+
+        # fill in the masked data again
+        lcrsf.flux[mask_ij] = fluxold[mask_ij] / interpolation_ij
+    
+    # deugging helper lines:
+    # %matplotlib inline
+    # plt.figure(figsize=(15,4))
+    # plt.plot(lcrsf.time.value, lcrsf.flux.value, color="k")
+    # # plt.plot(lcrsf2.time.value, lcrsf2.flux.value, color="grey")
+    # plt.plot(lcn.time.value, lcn.flux.value + 0.02, color="r")
+    # plt.scatter(lcn.time[mask].value, lcn.flux[mask].value)
+    # # plt.xlim(1945,1946)
+    # # plt.ylim(0.98,1.03)
+    
+    # finally remove interpolated values
+    # first, set them to NaNs
+    lcrsf.flux[np.where(lcrsf.interpolated.value==1)[0]] = np.nan 
+    
+    # then remove
+    lcrsf = lcrsf.remove_nans() 
+    
+    return lcrsf
 
 def remove_sines_iteratively(flcd, niter=5, freq_unit=1/u.day, 
                              maximum_frequency=12., 
@@ -382,13 +509,14 @@ def fit_spline(flc, spline_coarseness=30, spline_order=3):
     flux_med = np.nanmedian(flcp.flux.value)
     n = int(np.rint(spline_coarseness/ 24 / (flcp.time.value[1] - flcp.time.value[0]))) #default 30h window
     k = spline_order
+#     print(n)
     #do a first round
     model = np.full_like(flcp.flux.value, np.nan)
     for le, ri in flcp.gaps:
 
         rip = flcp.flux[le:ri].value.shape[0] + le
         t, f = np.zeros((rip - le)//n+2), np.zeros((rip - le)//n+2)
-    
+#         print(len(t), len(f), rip, le, n+2)
         t[1:-1] = np.mean(flcp.time.value[le:rip - (rip - le)%n].reshape((rip - le)//n, n), axis=1)
         f[1:-1] =  np.median(flcp.flux.value[le:rip - (rip - le)%n].reshape((rip - le)//n, n), axis=1)
         t[0], t[-1] = flcp.time.value[le], flcp.time.value[rip-1]
@@ -400,7 +528,7 @@ def fit_spline(flc, spline_coarseness=30, spline_order=3):
             
         # otherwise fit a spline
         else:
-            p3 = UnivariateSpline(t, f, k=k)
+            p3 = UnivariateSpline(t, f, k=k, s=0)
             flcp.detrended_flux[le:ri] = flcp.flux.value[le:ri] - p3(flcp.time.value[le:ri]) + flux_med
             model[le:ri] = p3(flcp.time.value[le:ri])
     
@@ -451,3 +579,70 @@ def measure_flare(flc, sta, sto):
                                   'total_n_valid_data_points': flc.flux.value.shape[0]
                                   }),ignore_index=True)
     return 
+
+
+def interpolate_missing_cadences(lc, **kwargs):
+    """Interpolate missing cadences in 
+    light curve, skipping larger gaps in data.
+    
+    Parameters:
+    -----------
+    lc : FlareLightCurve
+        the light curve
+    kwargs : dict
+        keyword arguments to pass to find_gaps method
+    
+    Return:
+    -------
+    interpolated FlareLightCurve
+    """
+
+    # find gaps that are too big to be interpolated with a good conscience
+    gaps = lc.find_gaps().gaps
+
+    # set up interpolated array
+    time, flux, flux_err, newcadence = [], [], [], []
+
+    # interpolate within each gap
+    for i, j in gaps:
+
+        # select gap
+        gaplc = lc[i:j]
+
+        # get old cadence
+        oldx = gaplc.cadenceno.value
+
+        # cadenceno are complete in uncorrected flux, 
+        # so we fill in the removed cadences
+        newx = np.arange(gaplc.cadenceno.value[0], gaplc.cadenceno.value[-1])
+        newcadence.append(newx)
+
+        # interpolate flux error
+        f = interp1d(oldx, gaplc.flux_err.value)
+        flux_err.append(f(newx))
+
+        # interpolate time
+        f = interp1d(oldx, gaplc.time.value)
+        time.append(f(newx))
+
+        # interpolate flux
+        f = interp1d(oldx, gaplc.flux.value)
+        flux.append(f(newx))
+
+    # stitch together new light curve
+    newlc = FlareLightCurve(time=np.concatenate(time),
+                            flux=np.concatenate(flux),
+                            flux_err=np.concatenate(flux_err),
+                            targetid=lc.targetid)
+
+    # add new cadence array
+    newcadenceno = np.concatenate(newcadence)
+    newlc["cadenceno"] = newcadenceno
+
+    # flag values that have been interpolated in the new light curve
+    newvals = np.sort(list(set(newcadenceno) - set(lc.cadenceno.value)))
+    newvalindx = np.searchsorted(newcadenceno, newvals)
+    newlc["interpolated"] = 0 # not interpolated values
+    newlc.interpolated[newvalindx] = 1 # interpolated values
+
+    return newlc
