@@ -7,9 +7,10 @@ This repository contains the statistical analysis modules, and scripts to produc
 
 #### How to navigate this repository
 
-All file names than contain `AU_Mic` belong to project 1. The other files mostly belong to project 2., but can also be modules or scripts that are used in both.
+All file names than contain `AU_Mic` belong to project 1. The other files mostly belong to project 2., but can also be modules or scripts that are used in both, like `notebooks/findflares.py`
 
-- `notebooks/` contains all the notebooks and scripts as well as all the modules stored in `funcs/`
+- `notebooks/` contains all the notebooks and scripts 
+  - also contains the modules used in both, stored in `funcs/`
 - `data/` contains ancillary data, such as the TESS transmission curve
 - `results/` contain the flare table, the results of the A-D tests
 
@@ -18,6 +19,8 @@ All file names than contain `AU_Mic` belong to project 1. The other files mostly
 Notebooks that produce the figures and tables in the paper found in `notebooks/`:
 
 - `AU_Mic_flare_catalog_with_phases_TABLE1.ipynb`
+  - example script of how to use the de-trending and flare finding described in Methods: `notebooks/findflares.py`
+  - flaring finding method described in 2.1: `notebooks/funs/detrend.py`
   - electronic table of all flares: `results/2021_12_AU_Mic_2021_12_AU_Mic_final_flare_table.csv`
 - `AU_Mic_AD_test_analysis_TABLE2.ipynb`
   - all A-D tests: `results/adtests.csv` (time stamped within the table) 
