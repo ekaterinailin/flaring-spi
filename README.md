@@ -7,7 +7,14 @@ This repository contains the statistical analysis modules, and scripts to produc
 
 #### How to navigate this repository
 
-All file names than contain `AU_Mic` belong to project 1. The other files mostly belong to project 2., but can also be modules or scripts that are used in both, like `notebooks/findflares.py`
+**Nomenclature:**
+
+- File names that contain `AU_Mic` belong to project 1. 
+- File names that contain `ALL` belong to project 2.
+- File names with neither belong to both, like `notebooks/findflares.py`.
+- File names with a `_` prefix are work in progress.
+
+**Folders:**
 
 - `notebooks/` contains all the notebooks and scripts 
   - also contains the modules used in both, stored in `funcs/`
