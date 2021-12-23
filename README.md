@@ -9,7 +9,7 @@ This repository contains the statistical analysis modules, and scripts to produc
 
 **Nomenclature:**
 
-- File names that contain `AU_Mic` belong to project 1. 
+- File names that contain `AU_Mic` or `AUMic` belong to project 1. 
 - File names that contain `ALL` belong to project 2.
 - File names with neither belong to both, like `notebooks/findflares.py`.
 - File names with a `_` prefix are work in progress.
