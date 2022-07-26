@@ -337,7 +337,7 @@ if __name__ == "__main__":
         per =  1. / ((1. / ROTPER) - (1. / ORBPER)) # martioli
     elif sys.argv[3]=="r":
         mode = "Rotation"
-        per = ROTPER
+        per = ROTPER / 4.
     elif sys.argv[3]=="o":
         mode = "Orbit"
         per = ROTPER
