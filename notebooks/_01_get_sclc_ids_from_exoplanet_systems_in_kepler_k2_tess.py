@@ -5,22 +5,23 @@ UTF-8, Python 3
 Flaring SPI
 ------------------
 
-Ekaterina Ilin, 2021, MIT License
+Ekaterina Ilin, 2022, MIT License
 
 This script uses the Composite Table of confirmed exoplanets
 from the NASA Exoplanet Archive* (column description**) AND 
-the TESS-TOI table of planet candidates and known planets***
-to compile a sample of all Kepler/K2/TESS short cadence 
-light curves available for all currently known exoplanet
-systems.
+the TESS-TOI table of confirmed planets and known planets***
+(column description****) to compile a sample of all 
+Kepler/K2/TESS short cadence light curves available 
+for all currently known exoplanet systems.
 
 * https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=PSCompPars
 ** https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html
-*** https://tev.mit.edu/data/collection/193/
+*** https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=TOI
+**** https://exoplanetarchive.ipac.caltech.edu/docs/API_toi_columns.html
 
-1. Preselect NASA table: uncontroversial confirmed systems with transits.
+1. Preselect TOI table: exclude FPs, binaries, etc.
 1b. Search the preselected table for LCs.
-2. Preselect TOI table: exclude FPs, binaries, etc.
+2. Preselect NASA table: uncontroversial confirmed systems with transits.
 2b. Search the preselected table for LCs.
 3. Match TIC IDs to star identifiers into 1b. result
 4. Merge TESS entries from 3. and 2b.
@@ -56,38 +57,20 @@ def get_TIC(ID):
 def preselect_toi_catalog(tstamp):
 
     # read in TESS-TOI sample
-    path = "../data/2021_01_13_TESS_TOI_CATALOG.csv"
+    path = "../data/2022_07_26_TESS_TOI_CATALOG.csv"
     mprint(f"[UP] Using TESS-TOI Table from {path}")
-    df = pd.read_csv(path, skiprows=4)
+    df = pd.read_csv(path, skiprows=90)
 
     # remove EB, V, O flagged entries
-    df1 = df[~df["TOI Disposition"].isin(["EB","V","O"])]
-    assert (df1["TOI Disposition"].unique() == ["PC","KP"]).all()
-    assert df1.shape[0] == 2436
-
-    # flag (likely) FPSs, EBs (nearby EB and blended EB included) and SBs
-    notSB = ~df1["Public Comment"].fillna("").str.contains("SB")
-    notEB = ~df1["Public Comment"].fillna("").str.contains("EB")
-    notFP =  ~df1["Public Comment"].fillna("").str.contains("FP") 
-
-    # 205 EB flags, 4 SB flags, 71 FP flags, not mutually exclusive
-    assert df1.loc[~notEB, "Public Comment"].shape[0] == 205
-    assert df1.loc[~notSB, "Public Comment"].shape[0] == 4
-    assert df1.loc[~notFP, "Public Comment"].shape[0]  == 71
-
-    # select (likely) FPSs, EBs (nearby EB and blended EB included) and SBs
-    df2 = df1[notSB & notEB & notFP]
-    assert df2.shape[0] == 2176
-
-    # no other retired candidates left
-    assert df2[df2["Public Comment"].fillna("").str.contains("retired", case=False)].shape[0] == 0
-
+    df1 = df[df["tfopwg_disp"].isin(["KP","CP"])]
+     
     # one entry per system
-    dfs = df2.groupby("TIC").first()
+    dfs = df1.groupby("tid").first()
+    dfs = dfs.rename(index=str, columns={"tid":"TIC"})
 
     # save to file
     path = f"../data/{tstamp}_tess_toi_candidates_known_planets.csv"
-    mprint(f"[DOWN] Saving PC and KP sample from TESS TOI to {path}")
+    mprint(f"[DOWN] Saving CP and KP sample of {dfs.shape[0]} planet hosts from TESS TOI to {path}")
     dfs.to_csv(path)
     
     return dfs  
@@ -159,7 +142,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------
 
     # # search for light curves
-    # # last update: 13/01/2021
+    # # last update: 2022/07/26
 
     # # -----------------------------------------------------------------------
     # # read in confirmed and unconroversial NASA exoplanets and find LCs
