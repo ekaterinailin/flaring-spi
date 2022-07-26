@@ -65,13 +65,13 @@ def preselect_toi_catalog(tstamp):
     df1 = df[df["tfopwg_disp"].isin(["KP","CP"])]
      
     # one entry per system
-    dfs = df1.groupby("tid").first()
+    dfs = df1.groupby("tid").first().reset_index()
     dfs = dfs.rename(index=str, columns={"tid":"TIC"})
 
     # save to file
     path = f"../data/{tstamp}_tess_toi_candidates_known_planets.csv"
     mprint(f"[DOWN] Saving CP and KP sample of {dfs.shape[0]} planet hosts from TESS TOI to {path}")
-    dfs.to_csv(path)
+    dfs.to_csv(path, index=False)
     
     return dfs  
 
@@ -81,7 +81,7 @@ def preselect_nasa_catalog(tstamp):
     # Composite Table of confirmed exoplanets
     path = "../data/2022_07_26_NASA_COMPOSITE.csv"
     mprint(f"[UP] Using NASA Composite Table from {path}")
-    df = pd.read_csv(path, skiprows=318) # composite table
+    df = pd.read_csv(path, skiprows=320) # composite table
     # df.columns.values
 
     # select only uncontroversial detections
@@ -90,8 +90,8 @@ def preselect_nasa_catalog(tstamp):
 
     dfs = sel.groupby("hostname").first()
     path =f"../data/{tstamp}_confirmed_uncontroversial_transiting_exoplanet_systems.csv"
-    mprint(f"[DOWN] Saving uncontroversial transiting exosystems from NASA Composite Table to {path}")
-    dfs.to_csv(path)
+    mprint(f"[DOWN] Saving {dfs.shape[0]} uncontroversial transiting exosystems from NASA Composite Table to {path}")
+    dfs.to_csv(path, index=False)
     
     return dfs
 
@@ -112,28 +112,31 @@ if __name__ == "__main__":
     # 1b. MAST SEARCH in TESS-TOI CATALOG
     # -----------------------------------------------------------------------
 
-    mprint("Beginning search for SC LCs in TOI catalog.")
-    x = 0
-    N = dfs.shape[0]
-    # save first row:
-    with open(f"../data/{tstamp}_nasa_gotlc.csv", "a") as f:
-               f.write("sector,mission,TIC\n")
-    for i, row in dfs.iterrows():
-        TIC = row.name
-        x += 1
-        try:
-            lst = search_lightcurvefile(f"TIC {TIC}", cadence="short")
-            _ = {"sector":lst.table.to_pandas()["observation"].str[-2:].values,
-                 "mission":lst.table.to_pandas()["observation"].str[:4].values,
-                 "TIC":TIC}
-            r = pd.DataFrame(_)
-            with open(f"../data/{tstamp}_toi_gotlc.csv", "a") as f:
-                r.to_csv(f,header=False, index=False)
-            print(f"[{x / N * 100:.0f} %]", "TIC ", i, r.shape[0], x)
-        except:
-            with open(f"../data/{tstamp}_toi_nolc.txt", "a") as f:
-                f.write(f"TIC {TIC}\n")
-    mprint("Finished search for SC LCs in TOI catalog.")
+#     mprint("Beginning search for SC LCs in TOI catalog.")
+#     x = 0
+#     N = dfs.shape[0]
+#     # save first row:
+#     with open(f"../data/{tstamp}_toi_gotlc.csv", "w") as f:
+#                f.write("sector,mission,TIC\n")
+#     for i, row in dfs.iterrows():
+#         TIC = row.TIC
+#         x += 1
+#         try:
+#             lst = search_lightcurvefile(f"TIC {TIC}", cadence="short")
+#             print("TIC")
+#             print(lst.table.to_pandas()[["mission","project"]])
+#             print(lst.table.to_pandas().head().T)
+#             _ = {"sector":lst.table.to_pandas()["mission"].str[-2:].values,
+#                  "mission":lst.table.to_pandas()["project"].values,
+#                  "TIC":TIC}
+#             r = pd.DataFrame(_)
+#             with open(f"../data/{tstamp}_toi_gotlc.csv", "a") as f:
+#                 r.to_csv(f,header=False, index=False)
+#             print(f"[{x / N * 100:.0f} %]", "TIC ", i, r.shape[0], x)
+#         except:
+#             with open(f"../data/{tstamp}_toi_nolc.txt", "a") as f:
+#                 f.write(f"TIC {TIC}\n")
+#     mprint("Finished search for SC LCs in TOI catalog.")
 
 
     # -----------------------------------------------------------------------
@@ -160,16 +163,18 @@ if __name__ == "__main__":
     N = dfs.shape[0]
     print(N)
     # save first row:
-    with open(f"../data/{tstamp}_nasa_gotlc.csv", "a") as f:
+    with open(f"../data/{tstamp}_nasa_gotlc.csv", "w") as f:
                f.write("qcs,mission,ID\n")
-    for i, row in dfs.iterrows():
+    for i, row in dfs.iterrows()[1000:]:
         hostname = row.name
         x += 1
         try:
             lst = search_lightcurvefile(hostname, cadence="short")
-            _ = {"qcs":lst.table.to_pandas()["observation"].str[-2:].values,
-                 "mission":lst.table.to_pandas()["observation"].str[:4].values,
-             "ID":hostname}
+            print(hostname)
+            print(lst.table.to_pandas()[["mission","project"]])
+            _ = {"qcs":lst.table.to_pandas()["mission"].str[-2:].values,
+                 "mission":lst.table.to_pandas()["project"].values,
+                 "ID":hostname}
             r = pd.DataFrame(_)
             mprint(r)
             with open(f"../data/{tstamp}_nasa_gotlc.csv", "a") as f:
