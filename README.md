@@ -2,8 +2,8 @@
 
 This repository contains the statistical analysis modules, and scripts to produce the figures and tables in the two following works in progress:
 
-1. Ilin, E. and Poppenhäger K., (2022, in prep.). *Searching for flaring star-planet interactions in AU Mic TESS observations.*
-2. Ilin, E., Poppenhäger K. et al. (2022, in prep.) *Searching for flaring star-planet interactions in Kepler and TESS observations.*
+1. [Ilin, E. and Poppenhäger K., (2022). *Searching for flaring star-planet interactions in AU Mic TESS observations.*](https://ui.adsabs.harvard.edu/abs/2022MNRAS.513.4579I/abstract)
+2. Ilin, E., Poppenhäger K. et al. (2023, in prep.) *Searching for flaring star-planet interactions in Kepler and TESS observations.*
 
 #### How to navigate this repository
 
@@ -39,6 +39,14 @@ Notebooks that produce the figures and tables in the paper found in `notebooks/`
 Look into A-D tests with doubled and tripled sample: `AU_Mic_AD_test_doubled_sample_DISCUSSION.ipynb`
 
 Calculation of quiescent flux in the TESS band: `AU_Mic_quiescent_flux_in_TESS_band_RESULTS.ipynb`
+
+## Project 2: Searching for flaring star-planet interactions in Kepler and TESS observations
+
+*work in progress*
+
+`notebooks/`
+
+
 
 
 
