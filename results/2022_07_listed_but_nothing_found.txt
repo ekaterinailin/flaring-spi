@@ -870,3 +870,10 @@ Kepler,Kepler-1658,TIC 377873569,07,short
 Kepler,Kepler-1658,TIC 377873569,08,short
 Kepler,Kepler-1756,TIC 377910183,09,short
 Kepler,Kepler-1756,TIC 377910183,11,short
+Kepler,Kepler-444,TIC 394172596,04,short
+Kepler,Kepler-444,TIC 394172596,06,short
+Kepler,Kepler-635,TIC 394174221,08,short
+Kepler,Kepler-30,TIC 399794329,07,short
+Kepler,Kepler-30,TIC 399794329,08,short
+Kepler,Kepler-30,TIC 399794329,09,short
+Kepler,Kepler-205,TIC 399822422,07,short
