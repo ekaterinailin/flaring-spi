@@ -21,8 +21,7 @@ import matplotlib.pyplot as plt
 
 
 def custom_detrending(lc, spline_coarseness=30, spline_order=3,
-                      savgol1=6., savgol2=3., pad=6, max_sigma=2.5,
-                      remove_exp_fringe=True):
+                      savgol1=6., savgol2=3., pad=3):
     """Custom de-trending for TESS and Kepler 
     short cadence light curves, including TESS Cycle 3 20s
     cadence.
@@ -43,99 +42,51 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     savgol2 : float
         Window size for second Savitzky-Golay filter application.
         Unit is hours, defaults to 3 hours.
-    pad : int
+    pad : 3
         Outliers in Savitzky-Golay filter are padded with this
-        number of data points. Defaults to 6.
-    max_sigma : float
-        sigma value at which to cap outliers and flare candidates. 
-        Default is 2.5. Choose 1.5 for very active stars.
-    remove_exp_fringe : bool
-        removes un-detrended fringes in the light curve with an exponential 
-        function. Default is True.
-    
+        number of data points. Defaults to 3.
         
     Return:
     -------
     FlareLightCurve with detrended_flux attribute
     """
-# The commented lines will help with debugging, in case the tests in test_detrend.py fail.
-
     dt = np.mean(np.diff(lc.time.value))
-    
-    # diag plot init
-    fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(16,8))
-    
-    lc = lc.normalize()
-    offset = (np.mean(lc.flux.value) - np.min(lc.flux.value))
-    plt.plot(lc.time.value, lc.flux.value, c="c", label="original light curve")
-    
-#     start timing
-#     t0 = time.process_time()
-    
+
     # fit a spline to the general trends
     lc1, model = fit_spline(lc, spline_order=spline_order,
                             spline_coarseness=spline_coarseness)
     
     # replace for next step
     lc1.flux = lc1.detrended_flux.value
-    
-#     t1 = time.process_time()
-    
-    # diag plot
-    plt.plot(lc1.time.value, model, c="r", label="rough trends")
-    plt.plot(lc1.time.value, lc1.detrended_flux.value + 1 * offset, c="yellow", label="rough trends removed")
 
     # removes strong and fast variability on 5 day to 4.8 hours 
     # simple sines are probably because rotational variability is 
     # either weak and transient or strong and persistent on the timescales
     lc2 = remove_sines_iteratively(lc1)
     
-#     t2 = time.process_time()
-    
-    # diag plot
-    plt.plot(lc2.time.value, lc2.detrended_flux.value + 2 * offset, c="grey", label="sines removed")
-    # mask flares
-#     mask = sigma_clip(lc2.detrended_flux.value, max_sigma=3.5, longdecay=2)
-#     plt.scatter(lc2.time.value[~mask], lc2.detrended_flux.value[~mask] + 2 * offset, c="k", label="masked")
-
     # choose a 6 hour window
     w = int((np.rint(savgol1 / 24. / dt) // 2) * 2 + 1)
-  
+
     # use Savitzy-Golay to iron out the rest
-#     lc2.flux[mask] = np.nan
-    lc3 = detrend_savgol(lc2, max_sigma=max_sigma, longdecay=pad, w=w)
-#     t3 = time.process_time()
+    lc3 = lc2.detrend("savgol", window_length=w, pad=pad)
 
     # choose a three hour window
-    w = int((np.rint(savgol2 / 24. / dt) // 2) * 2 + 1) 
+    w = int((np.rint(savgol2 / 24. / dt) // 2) * 2 + 1)
 
     # use Savitzy-Golay to iron out the rest
-    lc4 = detrend_savgol(lc3, max_sigma=max_sigma, longdecay=pad, w=w)
-
-#     t4 = time.process_time()
-
-    # diag plot
-    plt.plot(lc4.time.value, lc4.flux.value  + 3 * offset, c="k", label="SavGol applied")
+    lc4 = lc3.detrend("savgol", window_length=w, pad=pad)
 
     # find median value
-    lc4.detrended_flux = lc4.flux
-    lc4.detrended_flux_err = lc4.flux_err
     lc4 = find_iterative_median(lc4)
-    
-#     t41 = time.process_time()
+
+    # replace for next step
+    lc4.flux = lc4.detrended_flux.value
     
     # remove exopential fringes that neither spline, 
     # nor sines, nor SavGol can remove.
-    if remove_exp_fringe==True:
-        lc5 = remove_exponential_fringes(lc4.remove_nans())
-    else:
-        lc5 = lc4.remove_nans()
-#     t5 = time.process_time()
-    
-    plt.plot(lc5.time.value, lc5.detrended_flux.value + 4 * offset, c="magenta", label="expfunc applied")
-   # print(t1-t0, t2-t1, t3-t2, t4-t3, t41-t4, t5-t41, t5-t0)
-#     plt.xlim(10,40)
-    return lc5, ax
+    lc5 = remove_exponential_fringes(lc4)
+  
+    return lc5
 
 
 def detrend_savgol(lc, max_sigma=2.5, longdecay=6, 
