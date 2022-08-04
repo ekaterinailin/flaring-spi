@@ -18,25 +18,131 @@ De-trending Kepler and TESS
 - save results
 """
 
-import copy
 import time
+import os
 
 from funcs.notebook import *
 from funcs.detrend import (custom_detrending,
                            estimate_detrended_noise)
 
+from altaipony.lcio import from_mast
 
-from altaipony.lcio import from_mast, from_path
-from altaipony.flarelc import FlareLightCurve
-from altaipony.altai import find_iterative_median
+from lightkurve import search_lightcurve
 
-from lightkurve import search_lightcurvefile
 
-from astropy.io import fits
+def get_flare_phases(flare_cadenceno, observed_phases, observed_cadenceno):
+    """Get flare phases for flare candidates.
+
+    Parameters
+    ----------
+    flare_cadenceno : array_like
+        Cadence numbers of flare candidates.
+    observed_phases : array_like
+        Observed phases in light curve.
+    observed_cadenceno : array_like
+        Cadence numbers of observed phases in light curve.
+
+    Returns
+    -------
+    flare_phases : array_like
+        Flare phases.
+    """
+    # convert to integers for quick and precise search
+    observed_cadenceno = observed_cadenceno.astype(int)
+    flare_cadenceno = flare_cadenceno.astype(int)
+
+    # get indices into observed phases array
+    indices = np.where(np.isin(observed_cadenceno, flare_cadenceno, 
+                               assume_unique=True))[0]
+    # get flare phases
+    flare_phases = observed_phases[indices]
+    
+    print(flare_phases)
+    # output should be same length as flare_cadenceno
+    message = ("Input and output number of flares do not match."
+               "Any NaN? Any out of range cadence numbers?")
+    assert len(flare_phases) == len(flare_cadenceno), message
+
+    # check if flare phases are finite
+    if np.isfinite(flare_phases).all():
+        return flare_phases
+    else:
+        raise ValueError("Flare phases are not finite.")
+    
+   
+
+def get_observed_phases(time, transit_midtime, orbital_period):
+    """Get observed phases of a light curve.
+    
+    Parameters:
+    -----------
+    time: numpy.array
+        time of light curve
+    transit_midtime: float
+        transit midtime of the planet
+    orbital_period: float
+        orbital period of the planet
+    
+    Return:
+    -------
+    phases: numpy.array
+        observed phases of the light curve
+    """
+    # check if inputs are all finite
+    assert np.isfinite(time).all(), "Time is not finite."
+    assert np.isfinite(transit_midtime), "Transit midtime is not finite."
+    assert np.isfinite(orbital_period), "Orbital period is not finite."
+    assert orbital_period > 0, "Orbital period is not positive."
+
+    # return the observed phases
+    phases = ((time - transit_midtime) % orbital_period) / orbital_period
+    
+    if np.isfinite(phases).all():
+        return phases
+    else:
+        raise ValueError("Observed phases are not finite.")
+
+
+def get_midtime(input_target, mission):
+    """Get transit midtime of innermost planet of the target in BKJD or BTJD.
+    
+    Parameters:
+    -----------
+    input_target: pandas.Series
+        target info including pl_tranmid and/or pl_tranmid_tess
+    mission: string
+        mission name, either 'Kepler' or 'TESS'
+
+    Return:
+    -------
+    midtime: float
+
+    """
+    # calculate the observed phases
+    # calculate midtime of transit in TESS or Kepler time
+    if mission == "TESS":
+        # if transit has been measured in TESS
+        if np.isfinite(input_target.pl_tranmid_tess):
+            return input_target.pl_tranmid_tess - offset[mission]
+        # else transit has not been measured in TESS but only in Kepler
+        # still use TESS offset because the light curve is from TESS
+        elif np.isfinite(input_target.pl_tranmid):
+            return input_target.pl_tranmid - offset[mission]
+        else:
+            raise ValueError("No transit midtime found. Neither"
+                             "pl_tranmid_tess nor pl_tranmid found.")
+    # if transit has been measured in Kepler
+    elif mission == "Kepler":
+        if np.isfinite(input_target.pl_tranmid):
+            return input_target.pl_tranmid - offset[mission]
+        else:
+            raise ValueError("No transit midtime found. No pl_tranmid found.")
 
 
 def add_meta_data_and_write(ff, dflcn, ID, TIC, sector, mission,
-                            lc_n, w, tstamp, mask_pos_outliers_sigma):
+                            lc_n, w, tstamp, mask_pos_outliers_sigma,
+                            path="../results/2022_07_flares.csv",
+                            header=False):
     """Write out flare table to file.
     
     Parameters:
@@ -62,6 +168,8 @@ def add_meta_data_and_write(ff, dflcn, ID, TIC, sector, mission,
         timestamp of this run
     mask_pos_outliers_sigma: float
         number of sigma to mask positive outliers
+    path: string
+        path to save flare table
 
     Return:
     -------
@@ -107,8 +215,8 @@ def add_meta_data_and_write(ff, dflcn, ID, TIC, sector, mission,
         ff["mask_pos_outliers_sigma"] = mask_pos_outliers_sigma
 
     # add results to file
-    with open("../results/2022_07_flares.csv", "a") as file:
-        ff.to_csv(file, index=False, header=False)
+    with open(path, "a") as file:
+        ff.to_csv(file, index=False, header=header)
             
 
 def write_flc_to_file(dflcn, flc, path_dflcn, overwrite=True):
@@ -158,24 +266,97 @@ def write_flc_to_file(dflcn, flc, path_dflcn, overwrite=True):
                   PHASE = dflcn.phase,
                   overwrite=True)
 
-def write_no_lc(input_target):
+def write_no_lc(input_target, path="../results/2022_07_nolc.txt"):
     """Write TIC to file if no light curve is found.
     
     Parameters:
     -----------
     input_target: pd.Series
         input target with TIC column
+    path: string
+        path to save file
 
     Return:
     -------
     None
     """
-    with open("../results/2022_07_nolc.txt","a") as f:
-        s = f"TIC {input_target.TIC}\n"
+    # check if file at path exists
+    # if not write header "TIC" to path
+    if ~os.path.exists(path):
+        with open(path, "w") as f:
+            f.write("TIC\n")
+
+    with open(path, "a") as f:
+        s = f"{input_target.TIC}\n"
         f.write(s)
+
+
+def get_table_of_light_curves(input_target, path="../results/2022_07_nolc.txt"):
+    """Get table of light curves for a given target using lightkurve query.
+    
+    Parameters:
+    -----------
+    input_target: pd.Series
+        input catalog row
+    path: string
+        path to save file
+    
+    Return:
+    -------
+    lc_table: pd.DataFrame
+    """
+    try:
+        # search for light curves
+        lcs  = search_lightcurve(input_target.hostname) 
+        # only keep short and fast cadence
+        # no K2 data, no TASOC asteroseismic light curves
+        conditions = (lcs.exptime.value < 130)  & (lcs.author != "TASOC") & (lcs.author != "K2")
+        lc_table = lcs[conditions]
+    
+    except KeyError:
+     
+        try:
+            # search for light curves using TESS TIC if ID fails
+            lcs  = search_lightcurve(f"TIC {input_target.TIC}")
+
+            # only keep short and fast cadence
+            # no K2 data, no TASOC asteroseismic light curves
+            conditions = (lcs.exptime.value < 130) & (lcs.author != "TASOC") & (lcs.author != "K2")
+            lc_table = lcs[conditions]
+        
+        except KeyError:
+            # if no light curve is found, write TIC to file
+            write_no_lc(input_target, path=path)
+            return None
+
+    # if lc_table is empty, write TIC to file and return
+    if len(lc_table)==0:
+        write_no_lc(input_target, path=path)
+        return None
+   
+    # if lc_table is not empty, convert to pandas dataframe 
+    # and sort by increasing exposure time
+    lc_table = lc_table.table.to_pandas().sort_values(by="t_exptime",
+                                                      ascending=True)
+    
+    # select only the first light curve in the TESS subset, i.e.
+    # the one with the shortest cadence
+    lcs_sel_tess = lc_table.loc[lc_table.mission.str[:4]=="TESS",:]
+    lcs_sel_tess = lcs_sel_tess.drop_duplicates(subset=["mission"], 
+                                                keep="first")
+    # select only the first light curve in the Kepler subset, i.e.
+    # the one with the shortest cadence
+    lcs_sel_kepler = lc_table[lc_table.mission.str[:6]=="Kepler"]
+    lcs_sel_kepler = lcs_sel_kepler.drop_duplicates(subset=["mission"])
+
+    # combine the two tables
+    lc_table = pd.concat([lcs_sel_kepler,lcs_sel_tess])
+   
+    return lc_table
+
     
 def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
-                 i=0, mask_pos_outliers_sigma = 2.5, addtail = True):
+                 i=0, mask_pos_outliers_sigma=2.5, addtail = True):
 
     """Run de-trending and flare finding on a single light curve. 
     Get orbital phases for all observed times and flare times as well.
@@ -212,12 +393,18 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
 
     
     """    
+    # -------------------------------------------------------------------------
     # get timestamp for result
     tstamp = time.strftime("%Y_%m_%d", time.localtime())
     print(f"date: {tstamp}")
 
+    # -------------------------------------------------------------------------
+    # detrend light curve
     dflc = custom_detrending(flc)
     print("LC successfully detrended.")
+
+    # -------------------------------------------------------------------------
+    # get an estimate for flux uncertainty
 
     # define two hour window for rolling std
     w = np.floor(1. / 12. / np.nanmin(np.diff(dflc.time.value)))
@@ -228,29 +415,29 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
     dflcn = estimate_detrended_noise(dflc, std_window=int(w), 
                                   mask_pos_outliers_sigma=mask_pos_outliers_sigma)
 
-    # search the residual for flares
+    # -------------------------------------------------------------------------
+    # search the residual for flare candidates
     ff = dflcn.find_flares(addtail=addtail).flares
 
-
-    # calculate the observed phases
-    # calculate midtime of transit in TESS or Kepler time
-    if mission == "TESS":
-        if np.isfinite(input_target.pl_tranmid_tess):
-            midtime = input_target.pl_tranmid_tess - offset[mission]
-        else:
-            midtime = input_target.pl_tranmid - offset[mission]
-    elif mission == "Kepler":
-        midtime = input_target.pl_tranmid - offset[mission]
+    # -------------------------------------------------------------------------
+    # get orbital phases for all observed times and the flare candidate times
+    # get midtime in BTJD or BKJD, depending on mission
+    midtime = get_midtime(input_target, mission)
     print(f"Transit midtime in {mission} time: {midtime}")
 
     # calculate phases for the light curve
-    dflcn['phase'] = ((dflcn.time.value - midtime) % input_target.pl_orbper) / input_target.pl_orbper
+    # we always take the Kepler one, as it uses the longer baseline, and is
+    # otherwise filled in from the TESS one in input_catalog
+    dflcn['phase'] = get_observed_phases(dflcn.time.value, midtime, 
+                                         input_target.pl_orbper)
 
     # calculate the phase at which the flare was observed
-    ff["phase"] = ff.cstart.apply(lambda x: dflcn["phase"][np.where(x==dflcn.cadenceno)][0])
+    ff['phase'] = get_flare_phases(ff.cstart, dflcn["phase"], dflcn["cadenceno"],
+                                   midtime)
     
 
-    # this is just to get the order of columns right, will be added later again
+    # The next line is just to get the order of columns right, 
+    # will be added later again
     if ff.shape[0]>0:
         del ff["total_n_valid_data_points"]
 
@@ -265,6 +452,7 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
     else:
         print(f'No flares found in LC.')
 
+    # -------------------------------------------------------------------------
     # add meta info to flare table
     # if no flares found, add empty row and write to file
     add_meta_data_and_write(ff, dflcn, input_target.hostname, 
@@ -272,8 +460,8 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
                             mission, lc_n, w, tstamp,
                             mask_pos_outliers_sigma)
 
-
-    #write out detrended light curve
+    # -------------------------------------------------------------------------
+    # write out detrended light curve with observed phases
     if mission=="TESS":
         path_dflcn = f"{download_dir}/{tstamp}_{input_target.TIC}_{sector}_altai_{i}.fits"
     elif mission=="Kepler":
@@ -286,66 +474,6 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
 
     return ff.shape[0]
 
-def get_table_of_light_curves(input_target):
-    """Get table of light curves for a given target using lightkurve query.
-    
-    Parameters:
-    -----------
-    input_target: pd.Series
-        input catalog row
-    
-    Return:
-    -------
-    lc_table: pd.DataFrame
-    """
-    try:
-        # search for light curves
-        lcs  = search_lightcurvefile(input_target.hostname) 
-        # only keep short and fast cadence
-        # no K2 data, no TASOC asteroseismic light curves
-        conditions = (lcs.exptime.value < 130)  & (lcs.author != "TASOC") & (lcs.author != "K2")
-        lc_table = lcs[conditions]
-    
-    except KeyError:
-     
-        try:
-            # search for light curves using TESS TIC if ID fails
-            lcs  = search_lightcurvefile(f"TIC {input_target.TIC}")
-
-            # only keep short and fast cadence
-            # no K2 data, no TASOC asteroseismic light curves
-            conditions = (lcs.exptime.value < 130) & (lcs.author != "TASOC") & (lcs.author != "K2")
-            lc_table = lcs[conditions]
-        
-        except KeyError:
-            # if no light curve is found, write TIC to file
-            write_no_lc(input_target)
-            return
-
-    # if lc_table is empty, write TIC to file and return
-    if len(lc_table)==0:
-        write_no_lc(input_target)
-        return
-   
-    # if lc_table is not empty, convert to pandas dataframe 
-    # and sort by increasing exposure time
-    lc_table = lc_table.table.to_pandas().sort_values(by="t_exptime",
-                                                      ascending=True)
-    
-    # select only the first light curve in the TESS subset, i.e.
-    # the one with the shortest cadence
-    lcs_sel_tess = lc_table.loc[lc_table.mission.str[:4]=="TESS",:]
-    lcs_sel_tess = lcs_sel_tess.drop_duplicates(subset=["mission"], 
-                                                keep="first")
-    # select only the first light curve in the Kepler subset, i.e.
-    # the one with the shortest cadence
-    lcs_sel_kepler = lc_table[lc_table.mission.str[:6]=="Kepler"]
-    lcs_sel_kepler = lcs_sel_kepler.drop_duplicates(subset=["mission"])
-
-    # combine the two tables
-    lc_table = pd.concat([lcs_sel_kepler,lcs_sel_tess])
-   
-    return lc_table
 
 # separator for logging    
 sep = "-----------------------------------------"
@@ -372,125 +500,77 @@ if __name__=="__main__":
 
     input_catalog = pd.read_csv(path) 
 
-    # init counter for target
-    counter = 0
-
-    # init counter for light curve
-    Nflares = 0 
-
     # define download directory
     download_dir = "/home/ekaterina/Documents/001_science/lcs"
 
     # stop if too many flares are found, bc it's sus
-    while Nflares < 100:
+    for n, input_target in input_catalog.iterrows():
 
         # init analysis
-        print(f"\nCOUNT: {count}\n")
-        lcs_sel=pd.DataFrame()
+        print(f"\nCOUNT: {n}\n")
         
-        # move while no light curve is found
-        while lcs_sel.shape[0]==0:
+        lcs_sel = get_table_of_light_curves(input_target)
 
-            # get next target
-            input_target = input_catalog.iloc[count]
-            
-            # get table of light curves
-            lcs_sel = get_table_of_light_curves(input_target)
-
-            # if no light curve is found, move to next target
-            if lcs_sel is None:
-                lcs_sel=pd.DataFrame()
-            
-            # advance counter to move to next target
-            count+=1
+        # if no light curve is found, move to next target
+        if lcs_sel is None:
+            continue
 
         # format TIC
         TIC = "TIC " + str(input_target.TIC)
         ID = input_target.hostname
-
-        # loop over the table of light curves
-        n = 0
-
-        # reset number of flares
         Nflares = 0
 
         # move until all light curves are analyzed
-        while n < lcs_sel.shape[0]:
+        for lc_idx, lc_row in lcs_sel.iterrows():
             
             # get sector and mission
-            sector = lcs_sel.iloc[n].mission[-2:]
-            mission = lcs_sel.iloc[n].mission.split(" ")[0]
+            sector = lc_row.mission[-2:]
+            mission = lc_row.mission.split(" ")[0]
 
             # light curve number starts with 1
-            lc_n = n + 1
+            lc_n = lc_idx + 1
 
             # disambiguate short and fast cadence
-            if lcs_sel.iloc[n].exptime < 30:
+            if lc_row.exptime < 30:
                 cadence = "fast"
             else: 
                 cadence = "short"
 
-            print(f"Get {mission} Sector/Quarter {sector}, {TIC}, {ID}, {cadence} cadence.")
+            print(f"Get {mission} Sector/Quarter {sector}, {TIC}, {ID}, "
+                  f"{cadence} cadence.")
 
             # fetch light curve from MAST and analyze
-
+            parameters = {"sector":sector, "mission":mission,
+                          "cadence":cadence,"download_dir":download_dir}
             if mission=="TESS":
-
-                flc = from_mast(TIC, mission=mission, c=sector,
-                            cadence=cadence, author="SPOC",
-                            download_dir=download_dir)
-
-                # handle case when no light curve is found
-                if flc is None:
-                    print(f"No LC found for {mission}, {ID}, Quarter {sector}.")
-                    with open("../results/2022_07_listed_but_nothing_found.txt", "a") as f:
-                        string = f"{mission},{ID},{TIC},{sector},{cadence}\n"
-                        f.write(string)
-                    # advance to next light curve
-                    n += 1
-                # otherwise, analyze light curve
-                else:
-                    Nflares += run_analysis(flc, input_target, sector, mission, lc_n, download_dir, i=0)
-                    # advance to next light curve
-                    n += 1
-
+                flc = from_mast(TIC, author="SPOC", **parameters)
             elif mission=="Kepler":
+                flc = from_mast(ID, **parameters)
 
-                flcl = from_mast(ID, mission=mission, c=sector,
-                            cadence=cadence,
-                            download_dir=download_dir)
+            # handle case when no light curve is found
+            if flc is None:
+                print(f"No LC found for {mission}, {ID}, TIC {TIC} "
+                      f"Quarter/Sector {sector}.")
+                with open("../results/2022_07_listed_but_nothing_found.txt", "a") as f:
+                    string = f"{mission},{ID},{TIC},{sector},{cadence}\n"
+                    f.write(string)
+                
 
-                # handle case when no light curve is found
-                if flcl is None:
-                    print(f"No LC found for {mission}, {ID}, Quarter {sector}.")
-                    with open("../results/2022_07_listed_but_nothing_found.txt", "a") as f:
-                        string = f"{mission},{ID},{TIC},{sector},{cadence}\n"
-                        f.write(string)
-                        
-                    # advance to next light curve
-                    n += 1
-
-                # handle case when only one light curve is found
-                elif type(flcl) != list:
+            # otherwise, analyze light curve(s)
+            elif type(flcl) != list:
 
                     print(f"1 LC found for {mission}, {ID}, Quarter {sector}.")
-                    Nflares += run_analysis(flcl, input_target, sector, mission, lc_n, download_dir, i=0)
-                    
-                    # advance to next light curve
-                    n += 1
+                    Nflares += run_analysis(flcl, input_target, sector, mission,
+                                            lc_n, download_dir, i=0)
 
-                # handle case when multiple light curves are found
-                else:
-                    print(f"{len(flcl)} LCs found for {mission}, {ID}, Quarter {sector}.")
-                    # analyze all light curves
-                    for i, flc in enumerate(flcl):
-                        Nflares += run_analysis(flc, input_target, sector, mission, lc_n, download_dir, i=i)
-                    
-                    # advance to next light curve
-                    n += 1
-
+            # handle case when multiple light curves are found
+            else:
+                print(f"{len(flcl)} LCs found for {mission}, {ID}, Quarter {sector}.")
+                # analyze all light curves
+                for i, flc in enumerate(flcl):
+                    Nflares += run_analysis(flc, input_target, sector, mission,
+                                            lc_n, download_dir, i=i)
+        
         print(f"\n---------------------\n{Nflares} flares found!\n-------------------\n")
-    print(f"\nNext count is {count}.\n")
 
-
-
+    print(f"\nNext input target is row index {n+1}.\n")
