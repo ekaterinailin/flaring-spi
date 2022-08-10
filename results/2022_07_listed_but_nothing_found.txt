@@ -232,3 +232,7 @@ TESS,Kepler-63,TIC 299158887,41,short
 TESS,Kepler-63,TIC 299158887,14,short
 TESS,Kepler-63,TIC 299158887,40,short
 TESS,Kepler-63,TIC 299158887,53,short
+Kepler,Kepler-1874,TIC 158219569,13,short
+Kepler,Kepler-1874,TIC 158219569,14,short
+Kepler,Kepler-1874,TIC 158219569,15,short
+Kepler,Kepler-1874,TIC 158219569,16,short
