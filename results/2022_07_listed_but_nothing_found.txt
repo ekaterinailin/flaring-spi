@@ -226,3 +226,9 @@ Kepler,Kepler-422,TIC 123495874,03,short
 Kepler,Kepler-422,TIC 123495874,07,short
 Kepler,Kepler-422,TIC 123495874,05,short
 Kepler,Kepler-422,TIC 123495874,06,short
+Kepler,Kepler-211,TIC 352007758,08,short
+Kepler,Kepler-63,TIC 299158887,02,short
+TESS,Kepler-63,TIC 299158887,41,short
+TESS,Kepler-63,TIC 299158887,14,short
+TESS,Kepler-63,TIC 299158887,40,short
+TESS,Kepler-63,TIC 299158887,53,short

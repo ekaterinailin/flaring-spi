@@ -57,7 +57,6 @@ def get_flare_phases(flare_cadenceno, observed_phases, observed_cadenceno):
     # get flare phases
     flare_phases = observed_phases[indices]
     
-    print(flare_phases)
     # output should be same length as flare_cadenceno
     message = ("Input and output number of flares do not match."
                "Any NaN? Any out of range cadence numbers?")
@@ -280,16 +279,19 @@ def write_no_lc(input_target, path="../results/2022_07_nolc.txt"):
     -------
     None
     """
+    # string to write
+    s = f"{input_target.TIC}\n"
+
     # check if file at path exists
     # if not write header "TIC" to path
-    if ~os.path.exists(path):
+    if os.path.exists(path):
+        with open(path, "a") as f:
+            f.write(s)  
+    else:
         with open(path, "w") as f:
             f.write("TIC\n")
-
-    with open(path, "a") as f:
-        s = f"{input_target.TIC}\n"
-        f.write(s)
-
+            f.write(s)
+        
 
 def get_table_of_light_curves(input_target, path="../results/2022_07_nolc.txt"):
     """Get table of light curves for a given target using lightkurve query.
@@ -312,13 +314,13 @@ def get_table_of_light_curves(input_target, path="../results/2022_07_nolc.txt"):
         # no K2 data, no TASOC asteroseismic light curves
         conditions = (lcs.exptime.value < 130)  & (lcs.author != "TASOC") & (lcs.author != "K2")
         lc_table = lcs[conditions]
-    
+        
     except KeyError:
      
         try:
             # search for light curves using TESS TIC if ID fails
             lcs  = search_lightcurve(f"TIC {input_target.TIC}")
-
+            
             # only keep short and fast cadence
             # no K2 data, no TASOC asteroseismic light curves
             conditions = (lcs.exptime.value < 130) & (lcs.author != "TASOC") & (lcs.author != "K2")
@@ -432,9 +434,8 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
                                          input_target.pl_orbper)
 
     # calculate the phase at which the flare was observed
-    ff['phase'] = get_flare_phases(ff.cstart, dflcn["phase"], dflcn["cadenceno"],
-                                   midtime)
-    
+    ff['phase'] = get_flare_phases(ff.cstart, dflcn["phase"], 
+                                   dflcn["cadenceno"])
 
     # The next line is just to get the order of columns right, 
     # will be added later again
@@ -495,6 +496,7 @@ if __name__=="__main__":
 
     # Composite Table of confirmed exoplanets
     path = "../data/2022_07_27_input_catalog_star_planet_systems.csv"
+    # path = "../data/2022_08_04_input_catalog_left_over_systems.csv"
 
     mprint(f"[UP] Using compiled input catalog from {path}")
 
@@ -503,6 +505,13 @@ if __name__=="__main__":
     # define download directory
     download_dir = "/home/ekaterina/Documents/001_science/lcs"
 
+    # read in table of already found flares
+    found_flares = pd.read_csv("../results/2022_07_flares.csv")
+
+    # make an ID list of all stars that have already been processed
+    g = lambda x: f"{x.ID}_{x.mission}_{x.qcs}"
+    found_flares["helpid"] = found_flares.apply(g, axis=1)
+
     # stop if too many flares are found, bc it's sus
     for n, input_target in input_catalog.iterrows():
 
@@ -510,7 +519,7 @@ if __name__=="__main__":
         print(f"\nCOUNT: {n}\n")
         
         lcs_sel = get_table_of_light_curves(input_target)
-
+        print(lcs_sel)
         # if no light curve is found, move to next target
         if lcs_sel is None:
             continue
@@ -526,6 +535,7 @@ if __name__=="__main__":
             # get sector and mission
             sector = lc_row.mission[-2:]
             mission = lc_row.mission.split(" ")[0]
+            print(f"\nSECTOR: {sector}\n")
 
             # light curve number starts with 1
             lc_n = lc_idx + 1
@@ -536,41 +546,50 @@ if __name__=="__main__":
             else: 
                 cadence = "short"
 
-            print(f"Get {mission} Sector/Quarter {sector}, {TIC}, {ID}, "
-                  f"{cadence} cadence.")
+            # Check whether this light curve has already been searched
+            id_str = f"{ID}_{mission}_{sector}"
+            # If not, start analysis:
+            if len(np.where(found_flares["helpid"].str.contains(id_str))[0]) == 0:
 
-            # fetch light curve from MAST and analyze
-            parameters = {"sector":sector, "mission":mission,
-                          "cadence":cadence,"download_dir":download_dir}
-            if mission=="TESS":
-                flc = from_mast(TIC, author="SPOC", **parameters)
-            elif mission=="Kepler":
-                flc = from_mast(ID, **parameters)
 
-            # handle case when no light curve is found
-            if flc is None:
-                print(f"No LC found for {mission}, {ID}, TIC {TIC} "
-                      f"Quarter/Sector {sector}.")
-                with open("../results/2022_07_listed_but_nothing_found.txt", "a") as f:
-                    string = f"{mission},{ID},{TIC},{sector},{cadence}\n"
-                    f.write(string)
-                
+                print(f"Get {mission} Sector/Quarter {sector}, {TIC}, {ID}, "
+                f"{cadence} cadence.")
 
-            # otherwise, analyze light curve(s)
-            elif type(flcl) != list:
+                # fetch light curve from MAST and analyze
+                parameters = {"c":int(sector), "mission":mission,
+                            "cadence":cadence,"download_dir":download_dir}
+                print(f"SECTOR/QUARTER {sector}")
+                if mission=="TESS":
+                    flc = from_mast(TIC, author="SPOC", **parameters)
+                elif mission=="Kepler":
+                    flc = from_mast(ID, **parameters)
 
-                    print(f"1 LC found for {mission}, {ID}, Quarter {sector}.")
-                    Nflares += run_analysis(flcl, input_target, sector, mission,
-                                            lc_n, download_dir, i=0)
+                # handle case when no light curve is found
+                if flc is None:
+                    print(f"No LC found for {mission}, {ID}, {TIC} "
+                        f"Quarter/Sector {sector}.")
+                    with open("../results/2022_07_listed_but_nothing_found.txt", "a") as f:
+                        string = f"{mission},{ID},{TIC},{sector},{cadence}\n"
+                        f.write(string)
+                    
 
-            # handle case when multiple light curves are found
+                # otherwise, analyze light curve(s)
+                elif type(flc) != list:
+
+                        print(f"1 LC found for {mission}, {ID}, Quarter {sector}.")
+                        Nflares += run_analysis(flc, input_target, sector, mission,
+                                                lc_n, download_dir, i=0)
+
+                # handle case when multiple light curves are found
+                else:
+                    print(f"{len(flc)} LCs found for {mission}, {ID}, Quarter {sector}.")
+                    # analyze all light curves
+                    for i, lc in enumerate(flc):
+                        Nflares += run_analysis(lc, input_target, sector, mission,
+                                                lc_n, download_dir, i=i)
             else:
-                print(f"{len(flcl)} LCs found for {mission}, {ID}, Quarter {sector}.")
-                # analyze all light curves
-                for i, flc in enumerate(flcl):
-                    Nflares += run_analysis(flc, input_target, sector, mission,
-                                            lc_n, download_dir, i=i)
-        
+                print(f"\nAlready searched {mission}, {ID}, Quarter/Sector {sector}.\n")
+                continue
         print(f"\n---------------------\n{Nflares} flares found!\n-------------------\n")
 
     print(f"\nNext input target is row index {n+1}.\n")
