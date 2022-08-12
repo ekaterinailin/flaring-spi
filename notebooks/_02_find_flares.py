@@ -513,7 +513,7 @@ if __name__=="__main__":
     found_flares["helpid"] = found_flares.apply(g, axis=1)
 
     # stop if too many flares are found, bc it's sus
-    for n, input_target in input_catalog.iloc[286:].iterrows():
+    for n, input_target in input_catalog.iterrows():
 
         # init analysis
         print(f"\nCOUNT: {n}\n")
