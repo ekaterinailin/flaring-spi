@@ -491,12 +491,29 @@ offset = {"K2":2454833.,
           "TESS":2457000.,
           'Transiting Exoplanet Survey Satellite (TESS)':2457000.}    
 
+def add_helpid(x):
+    """Add help ID to light curve table.
+    
+    Parameters:
+    -----------
+    x: pd.Series
+        input table row        
+
+    Return:
+    -------
+    string with help ID
+    """
+    if x.mission == "Kepler":
+        return f"{x.ID}_{x.mission}_{int(x.qcs)}"
+    elif x.mission == "TESS":
+        return f"{x.TIC}_{x.mission}_{int(x.qcs)}"
+
 
 if __name__=="__main__":
 
     # Composite Table of confirmed exoplanets
-    path = "../data/2022_07_27_input_catalog_star_planet_systems.csv"
-    # path = "../data/2022_08_04_input_catalog_left_over_systems.csv"
+    # path = "../data/2022_07_27_input_catalog_star_planet_systems.csv"
+    path = "../data/2022_08_04_input_catalog_left_over_systems.csv"
 
     mprint(f"[UP] Using compiled input catalog from {path}")
 
@@ -509,14 +526,15 @@ if __name__=="__main__":
     found_flares = pd.read_csv("../results/2022_07_flares.csv")
 
     # make an ID list of all stars that have already been processed
-    g = lambda x: f"{x.ID}_{x.mission}_{x.qcs}"
-    found_flares["helpid"] = found_flares.apply(g, axis=1)
+    found_flares["helpid"] = found_flares.apply(add_helpid, axis=1)
 
     # stop if too many flares are found, bc it's sus
-    for n, input_target in input_catalog.iterrows():
+    for n, input_target in input_catalog.iloc[:].iterrows():
 
         # init analysis
         print(f"\nCOUNT: {n}\n")
+
+        print(f"Target: {input_target.hostname}")
         
         lcs_sel = get_table_of_light_curves(input_target)
         print(lcs_sel)
@@ -547,14 +565,19 @@ if __name__=="__main__":
                 cadence = "short"
 
             # Check whether this light curve has already been searched
-            id_str = f"{ID}_{mission}_{sector}"
+            if mission == "Kepler":
+                id_str = f"{ID}_{mission}_{int(sector)}"
+            elif mission == "TESS":
+                id_str = f"{TIC[4:]}_{mission}_{int(sector)}"
+
+            print(f"\nID string: {id_str}")
+
             # If not, start analysis:
             if len(np.where(found_flares["helpid"].str.contains(id_str))[0]) == 0:
 
-
                 print(f"Get {mission} Sector/Quarter {sector}, {TIC}, {ID}, "
                 f"{cadence} cadence.")
-
+          
                 # fetch light curve from MAST and analyze
                 parameters = {"c":int(sector), "mission":mission,
                             "cadence":cadence,"download_dir":download_dir}
