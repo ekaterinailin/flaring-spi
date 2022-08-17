@@ -513,7 +513,7 @@ if __name__=="__main__":
 
     # Composite Table of confirmed exoplanets
     # path = "../data/2022_07_27_input_catalog_star_planet_systems.csv"
-    path = "../data/2022_08_04_input_catalog_left_over_systems.csv"
+    path = "../data/2022_08_16_input_catalog_systems_with_KOI_IDs.csv"
 
     mprint(f"[UP] Using compiled input catalog from {path}")
 
@@ -529,7 +529,7 @@ if __name__=="__main__":
     found_flares["helpid"] = found_flares.apply(add_helpid, axis=1)
 
     # stop if too many flares are found, bc it's sus
-    for n, input_target in input_catalog.iloc[:].iterrows():
+    for n, input_target in input_catalog.iloc[-2:].iterrows():
 
         # init analysis
         print(f"\nCOUNT: {n}\n")
