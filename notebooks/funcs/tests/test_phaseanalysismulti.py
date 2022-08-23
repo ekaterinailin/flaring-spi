@@ -9,13 +9,14 @@ from astropy.table import Table
 
 from ..phaseanalysismulti import (get_cumulative_distribution,
                                   get_observed_phases,
+                                  get_null_hypothesis_distribution,
                                   )
 
 
 def _make_lightcurve(length, duration, period, phaseshift=0., 
                      mission="Kepler", ID="123",TIC="456",qcs=1, i=0,
                      tstamp = "2019-01-01", save=False, location="./"):
-    """Make synthetic light curve and save to file.
+    """TEST HELPER FUNCTION. Make synthetic light curve and save to file.
 
     Parameters:
     -----------
@@ -203,8 +204,9 @@ def test_get_observed_phases():
     observedphases, binmids = get_observed_phases(phases, lcs, "./")
 
     # check that the observed phases are correct
-    assert observedphases.iloc[0,:].values == pytest.approx(7., rel=1e-3)
-    assert observedphases.iloc[1::,:].values == pytest.approx(1., rel=1e-3)
+    assert observedphases.iloc[0,:].values == pytest.approx(5., rel=1e-3)
+    assert observedphases.iloc[1:-1,:].values == pytest.approx(1., rel=1e-3)
+    assert observedphases.iloc[-1,:].values == pytest.approx(2., rel=1e-3)
 
     # total observing time should be correct
     assert (observedphases.sum(axis=0).values == pytest.approx(10.,rel=1e-2))
@@ -214,8 +216,27 @@ def test_get_observed_phases():
             ["Kepler_1_0", "Kepler_1_1", "TESS_1_0"]).all()
 
     # assert the number of bins is correct
-    assert observedphases.shape[0] == len(phases)
+    assert observedphases.shape[0] == len(phases) + 1
 
     # delete the file created
     for p in [path1, path2, path3]:
         os.remove(p)
+
+
+def test_get_null_hypothesis_distribution():
+    """Test the get_null_hypothesis_distribution function."""
+
+    p = [.1, .5, .6, .9]
+    cum_n_exp = [0.,.1, .3, .6, .9, 1.]
+
+    f = get_null_hypothesis_distribution(p, cum_n_exp)
+
+    # make sure the interpolation function is hitting the endpoints
+    assert f(0.) == 0.
+    assert f(1.) == 1.
+
+    # check a random value inbetween the endpoints
+    assert f(.5) == .3
+
+    #plt.plot(p, cum_n_exp[1:-1], "o")
+    #plt.plot(p, f(p))

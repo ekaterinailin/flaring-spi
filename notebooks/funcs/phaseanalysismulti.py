@@ -1,13 +1,12 @@
 import glob
 
-
 import pandas as pd 
 import numpy as np
 
 from astropy.io import fits
+from scipy import interpolate
 
 
-import glob
 def read_lightcurves_from_series(series, location):
     """
     Read lightcurves using the information in the pandas.Series.
@@ -46,6 +45,7 @@ def read_lightcurves_from_series(series, location):
         string = f"{ID}_{series.quarter_or_sector:02}_altai_0"
        
         return [fits.open(f"{location}{series.timestamp}_{string}.fits")[1].data]
+
 
 def get_cumulative_distribution(flare_table_single_star, observedphases, lcs):
     """Calculate the cumulative distribution function of observed
@@ -89,27 +89,41 @@ def get_cumulative_distribution(flare_table_single_star, observedphases, lcs):
         # throw an error
         try:
             allcols = observedphases.columns.values
-            cols = allcols[np.isin(allcols, lcid)]
+            
+            # cut off extenstions of the column name
+            allcols_cut = [c.split("_") for c in allcols]
+            allcols_cut = [f"{c[0]}_{c[1]}" for c in allcols_cut]
+
+            # find the columns that contain the LC id
+            cols = np.array(allcols)[np.isin(allcols_cut, lcid)]
+            
+            # get the observed phases for these LCs
             obstimes_k = observedphases[cols]
 
+            # if table is empty, something went wrong
             if len(cols) == 0:
                 raise ValueError(f"{lcid} column not found in observedphases table.")
+
         except KeyError:
-            print("no LC")
+            
+            # if the LC ID is not found in any of the columns otherwise, 
+            # throw an error
             raise KeyError(f"{lcid} column not found in observedphases table.")
 
         # Check that flare phases are correct:
-        assert (obstimes_k.values <= 1).all(), \
-               f"One or more observedphases[{lcid}] > 1!"
         assert (obstimes_k.values >= 0).all(), \
                f"One or more observedphases[{lcid}] < 0!"
 
+
         # Get the total number of obstimes in this LC
         tot_obstimes_k = obstimes_k.sum().sum()
+
+        # Get the number of flares in this LC
         pick_lc = ((flare_table_single_star.quarter_or_sector == row.quarter_or_sector) &
                    (flare_table_single_star.mission == row.mission))
         F_k = flare_table_single_star[pick_lc].shape[0]
       
+        # calculate the expected frequency of flare per time bin
         n_exp_k = (obstimes_k * F_k / tot_obstimes_k).sum(axis=1)
         n_exp += n_exp_k
         
@@ -125,7 +139,6 @@ def get_cumulative_distribution(flare_table_single_star, observedphases, lcs):
     cum_n_exp = _ / np.nanmax(_)
 
     # CDF minimum should be 0
-    print("cumnexp", cum_n_exp)
     cum_n_exp = np.insert(cum_n_exp, 0, 0)
     
     return n_exp, cum_n_exp#, cum_n_exp_alt return alternative only if necessary
@@ -180,10 +193,10 @@ def get_observed_phases(p, lcs, location):
             counts, bins = np.histogram(lightcurve["phase"], bins=bins)
 
             # circular boundary condition
-            counts[0] = counts[0] + counts[-1]
+            # counts[0] = counts[0] + counts[-1]
 
             # remove last bin to avoid double counting
-            counts = counts[:-1]
+            # counts = counts[:-1]
 
             # get observing times for each lightcurve using cadence
             cadence = np.nanmin(np.diff(lightcurve["time"]))
@@ -191,4 +204,27 @@ def get_observed_phases(p, lcs, location):
             observedphases[f"{row.mission}_{row.quarter_or_sector}_{i}"] = counts * cadence
 
     return observedphases, binmids
+
+
+def get_null_hypothesis_distribution(p, cum_n_exp):
+    """Calculate the null hypothesis distribution.
+    
+    Parameters:
+    -----------
+    p : array
+        array of phases for the flares
+    cum_n_exp : array
+        cumulative distribution of the observed phases
+    
+    Returns:
+    --------
+    null_hypothesis : scipy.interpolate.interpolate.interp1d
+        interpolation function for the null hypothesis distribution
+    """
+    # add the (0,0) and (1,1) points to the cdf
+    cphases = np.insert(p, 0, 0)
+    cphases = np.append(cphases, 1.)
+
+    # Interpolate!
+    return interpolate.interp1d(cphases, cum_n_exp, fill_value="extrapolate")
 
