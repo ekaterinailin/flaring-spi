@@ -71,7 +71,8 @@ def get_flare_phases(df, mode, rotper=None, starname="AU Mic", lcn=0, mission="T
     return df
 
 def get_observed_phases(mode, p, get_secs_cadences, rotper=None, phaseshift=0., 
-                        starname="AU Mic", lcn=0, mission="TESS", test="AD"):
+                        starname="AU Mic", lcn=0, mission="TESS", test="AD", 
+                        path="../results/observedtimes/"):
     """Takes 
     
     
@@ -122,7 +123,7 @@ def get_observed_phases(mode, p, get_secs_cadences, rotper=None, phaseshift=0.,
     aumicphases = pd.DataFrame()
 #     plt.figure(figsize=(8, 3))
     for qcs, cadence in get_secs_cadences:
-        lc = pd.read_csv(f"../results/observedtimes/{starname}_{qcs}_{lcn}_{mission}.csv")
+        lc = pd.read_csv(f"{path}{starname}_{qcs}_{lcn}_{mission}.csv")
         
         if mode=="Orbit":
             # add phaseshift as modulo 1 to wrap phases > 1 back
