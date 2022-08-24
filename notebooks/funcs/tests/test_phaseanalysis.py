@@ -80,7 +80,7 @@ def test_get_observed_phases():
     PER = 2.
     lc = pd.DataFrame({"time" : time, 
                        "phase" : (time % PER) / PER})
-    lc.to_csv(f"../results/observedtimes/AU Mic_999_0_TESS.csv")
+    lc.to_csv(f"./AU Mic_999_0_TESS.csv")
 
     # 
     mode = "Rotation"
@@ -90,11 +90,13 @@ def test_get_observed_phases():
 
     # fails if phases are not ordered
     with pytest.raises(ValueError):
-        get_observed_phases("Rotation", p, get_secs_cadences, rotper=PER)
+        get_observed_phases("Rotation", p, get_secs_cadences, rotper=PER, 
+                            path="./")
         
     # fails if phases are not ordered
     with pytest.raises(ValueError):
-        get_observed_phases("Orbit", p, get_secs_cadences, rotper=PER)
+        get_observed_phases("Orbit", p, get_secs_cadences, rotper=PER,
+                            path="./")
 
     # we defined the light curve phases such that 
     # both modes give the same results
@@ -106,19 +108,17 @@ def test_get_observed_phases():
 
         # fails if phases are not ordered
         with pytest.raises(ValueError):
-            get_observed_phases(mode, p, get_secs_cadences, rotper=PER)
+            get_observed_phases(mode, p, get_secs_cadences, rotper=PER,
+                                path="./")
             
         # TEST NR 2
         
         p = np.linspace(0.0198,.998,50)
         phasesobs, binmids = get_observed_phases(mode, p, get_secs_cadences, 
-                                                 rotper=PER)
+                                                 rotper=PER, path="./")
         # check that observing bins are filled with the right amount of data
         # the rhs value is the time resolution of the lc 
         # which should give the precision limit
-        print((time[-1] - time[0]) / len(p))
-        print(phasesobs.iloc[0],len(p))
-        print(get_secs_cadences[0][1])
         assert (((time[-1] - time[0]) / len(p) - phasesobs)[1:-1] 
                 < get_secs_cadences[0][1]).T.values.all()
 
