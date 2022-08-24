@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import pytest
@@ -132,14 +133,17 @@ def test_get_flare_phases():
     PER = 2.
     lc = pd.DataFrame({"time" : time, 
                        "phase" : (time % PER) / PER})
-    lc.to_csv(f"../results/observedtimes/AU Mic_999_0_TESS.csv")
+    lc.to_csv(f"AU Mic_999_0_TESS.csv")
 
     # define flare table with start times, and giving the Sector to pick it up
     df = pd.DataFrame({"tstart":np.linspace(10,20,21), "qcs":"999"})
 
     # apply function to both modes
     for mode in ["Orbit", "Rotation"]:
-        ph = get_flare_phases(df, mode, rotper=PER)
+        ph = get_flare_phases(df, mode, rotper=PER, path="./")
 
         # test exact results
         assert (ph.phases.values == np.array([0., .25, .5, 0.75] * 5 + [0])).all()
+    
+    # remove the created file in the end
+    os.remove("./AU Mic_999_0_TESS.csv")

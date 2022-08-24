@@ -50,13 +50,14 @@ def get_cumulative_distributions(df, dfphases, get_secs_cadences):
     
     return n_i, n_exp, cum_n_exp, cum_n_i#, cum_n_exp_alt return alternative only if necessary
 
-def get_flare_phases(df, mode, rotper=None, starname="AU Mic", lcn=0, mission="TESS"):
+def get_flare_phases(df, mode, rotper=None, starname="AU Mic", lcn=0, mission="TESS",
+                     path="../results/observedtimes/"):
     phases = []
     
     if mode=="Orbit":
         for j, row in df.iterrows():
             try:
-                lc = pd.read_csv(f"../results/observedtimes/{starname}_{row.qcs}_{lcn}_{mission}.csv")
+                lc = pd.read_csv(f"{path}{starname}_{row.qcs}_{lcn}_{mission}.csv")
                 phases.append(lc.phase[np.argmin(np.abs(lc.time - row.tstart))])
             except Exception as e:
                 print(e)

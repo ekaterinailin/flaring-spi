@@ -7,7 +7,8 @@ from astropy.io import fits
 from scipy import interpolate
 
 
-def read_lightcurves_from_series(series, location):
+def read_lightcurves_from_series(series, location, savelcpath=False,
+                                 savelcpathname="../data/lightcurves.txt"):
     """
     Read lightcurves using the information in the pandas.Series.
 
@@ -17,6 +18,12 @@ def read_lightcurves_from_series(series, location):
         Dataframe containing the lightcurve information.
     location : str
         Location of the lightcurves ending with a slash.
+    savelcpath : bool, optional
+        Whether to save the lightcurve path to a file. The default is False.    
+    savelcpathname : str, optional
+        Name of the file to save the lightcurve path to. The default is
+        '../data/lightcurves.txt'.
+
 
     Returns
     -------
@@ -40,10 +47,11 @@ def read_lightcurves_from_series(series, location):
         if len(lcs) > 0:
 
             # -----------------------------------------------------------------
-            # write out LCs used        
-            with open("../data/lightcurves.txt", "a") as f:
-                for path in paths:
-                    f.write(f"{path}\n")
+            # write out LCs used    
+            if savelcpath:    
+                with open(savelcpathname, "a") as f:
+                    for path in paths:
+                        f.write(f"{path}\n")
             # -----------------------------------------------------------------
         
             return lcs
@@ -54,9 +62,10 @@ def read_lightcurves_from_series(series, location):
         path = f"{location}{series.timestamp}_{string}.fits"
 
         # ---------------------------------------------------------------------
-        # write out LC used        
-        with open("../data/lightcurves.txt", "a") as f:
-            f.write(f"{path}\n")
+        # write out LC used      
+        if savelcpath:
+            with open("../data/lightcurves.txt", "a") as f:
+                f.write(f"{path}\n")
         # ---------------------------------------------------------------------
         
         return [fits.open(f"{location}{series.timestamp}_{string}.fits")[1].data]
