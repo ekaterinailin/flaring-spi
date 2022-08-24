@@ -233,9 +233,9 @@ def test_write_no_lc():
         write_no_lc(target, path="test.csv")
         # check if error message is correct.
         assert "TIC" in str(e.value)
+        # delete the file.
+        os.remove("test.csv")   
 
-    # delete the file.
-    os.remove("test.csv")
 
 
 def test_get_table_of_light_curves():

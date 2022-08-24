@@ -33,20 +33,25 @@ def test_anderson_darling_statistic():
     
 
 def test_get_pvalue_from_AD_statistic():
-    A2 = np.random.normal(2., .4, 10000)
+    # Test if the p-value is calculated correctly
+    A2 = np.random.normal(4., .4, 10000)
     cphases = np.linspace(0.05,0.95,100)
+    cum_exp = np.cumsum(np.ones(len(cphases)))
+    dist = interpolate.interp1d(cphases, cum_exp/cum_exp[-1],
+                                fill_value="extrapolate")
 
-    p, a = get_pvalue_from_AD_statistic(cphases, A2)
+    p, a = get_pvalue_from_AD_statistic(cphases, dist, A2)
 
     # this value should not depend on the randomness of A2
-    assert a == pytest.approx(.8329200828193137)
+    assert a == pytest.approx(.02944, rel=1e-4)
 
     # high significance because .83 is about 3 sigma outlier in A2
     assert p < .01
 
+    # try another distribution
     A2 = np.random.normal(.4, .1, 10000)
 
-    p, a = get_pvalue_from_AD_statistic(cphases, A2)
+    p, a = get_pvalue_from_AD_statistic(cphases,dist, A2)
     # high significance because .83 is a >4 sigma outlier in A2
     assert p < .01
     

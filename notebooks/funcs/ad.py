@@ -88,7 +88,8 @@ def get_pvalue_from_AD_statistic(x, dist, A2):
 
 
     
-def sample_AD_for_custom_distribution(f, nobs, N):
+def sample_AD_for_custom_distribution(f, nobs, N, savefig=False,
+                                      fig_name="AD_statistic.png"):
     """
     
     Parameters:
@@ -100,6 +101,14 @@ def sample_AD_for_custom_distribution(f, nobs, N):
     N : int
         number of samples to draw from the expected 
         distribution of flare phases
+    savefig : bool
+        whether to save the figure
+    fig_name : str
+        name of the figure to save
+
+    Returns:
+    ---------
+    A2 : N-array
     """
 
    
@@ -136,15 +145,19 @@ def sample_AD_for_custom_distribution(f, nobs, N):
 
     # replace infs
     missing = np.where(~np.isfinite(samples))[0]
-    print(missing)
     if len(missing)>0:
         samples[missing] = f(np.random.rand(*missing.shape))
     c = samples.reshape((N,nobs))
+
+    # Make a figure of the sampled distribution
     fig = corner.corner(sampler.get_chain(discard=100, thin=15, flat=True))
-    plt.savefig(f"../results/plots/emcee_corner_{N}_{nobs}.png",dpi=200)
-    # remove third dimension in samples: (N,nobs,1) --> (N, nobs)
+    yt = list(plt.yticks()[0])
+    plt.yticks(np.linspace(yt[0],yt[1],8))
+    plt.xlabel("phase")
     
-    
+    if savefig == True:
+        fig.savefig(fig_name, dpi=300)
+ 
     # calculate the AD statistic for all samples
     A2 = np.array([anderson_custom(c[i,:], f) for i in range(N)])
     
@@ -177,9 +190,6 @@ def anderson_custom(x, dist):
     """
 
     y = np.sort(x)
-
-    
-#    print("Y",y)
     z = dist(y)
 
     # A2 statistic is undefined for 1 and 0
@@ -189,7 +199,5 @@ def anderson_custom(x, dist):
     i = np.arange(1, N + 1)
     S = np.sum((2 * i - 1.0) / N * (np.log(z) + np.log(1 - z[::-1])), axis=0)
     A2 = - N - S
-   
-#    if ~np.isfinite(S):
- #       print(S,y,z)
+
     return A2
