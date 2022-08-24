@@ -38,12 +38,27 @@ def read_lightcurves_from_series(series, location):
        
         lcs = [fits.open(path)[1].data for path in paths]
         if len(lcs) > 0:
+
+            # -----------------------------------------------------------------
+            # write out LCs used        
+            with open("../data/lightcurves.txt", "a") as f:
+                for path in paths:
+                    f.write(f"{path}\n")
+            # -----------------------------------------------------------------
+        
             return lcs
         else:
             raise FileNotFoundError
     except FileNotFoundError:
         string = f"{ID}_{series.quarter_or_sector:02}_altai_0"
-       
+        path = f"{location}{series.timestamp}_{string}.fits"
+
+        # ---------------------------------------------------------------------
+        # write out LC used        
+        with open("../data/lightcurves.txt", "a") as f:
+            f.write(f"{path}\n")
+        # ---------------------------------------------------------------------
+        
         return [fits.open(f"{location}{series.timestamp}_{string}.fits")[1].data]
 
 

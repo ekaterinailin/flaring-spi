@@ -62,8 +62,10 @@ def get_pvalue_from_AD_statistic(x, dist, A2):
     
     Parameters:
     ------------
-    cphases : n-array
+    x : n-array
         n-long array of observed flare phases
+    dist : func
+        expected cum. distribution func (EDF)
     A2 : m-array
         distribution of the AD statistic (m values)
         
