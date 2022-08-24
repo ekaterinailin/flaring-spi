@@ -1,6 +1,7 @@
 import pytest
 
 import numpy as np
+from scipy import interpolate
 
 from ..ad import (anderson_darling_statistic,
                   get_pvalue_from_AD_statistic,
@@ -58,9 +59,13 @@ def test_sample_AD_for_custom_distribution():
     # define observing duration for each phase
     cobs = np.random.rand(100)/10 + 100
     cobs[70:80] -= 3
+    cum_n_exp = np.cumsum(cobs)
+    cum_n_exp = cum_n_exp / cum_n_exp[-1]
+
+    f = interpolate.interp1d(cphases, cum_n_exp, fill_value="extrapolate")
 
     # sample from distribution
-    A2  = sample_AD_for_custom_distribution(cphases, cobs, 1000)
+    A2  = sample_AD_for_custom_distribution(f, len(cphases), 1000)
 
     # number of samples is preserved
     assert A2.shape[0] == 1000

@@ -1,15 +1,14 @@
 import os
-from matplotlib.pyplot import get
 import pytest
 
 import pandas as pd
 import numpy as np
+
 from altaipony.flarelc import FlareLightCurve
 
-from _02_find_flares import (add_meta_data_and_write,
+from ..findflares import (add_meta_data_and_write,
                               write_flc_to_file,
                               write_no_lc,
-                              run_analysis,
                               get_table_of_light_curves,
                               get_midtime,
                               get_observed_phases,
