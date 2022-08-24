@@ -160,7 +160,7 @@ def get_cumulative_distribution(flare_table_single_star, observedphases, lcs):
 
 
 
-def get_observed_phases(p, lcs, location):
+def get_observed_phases(p, lcs, location, phaseshift=0.):
     """Calculate the observed phases for a given set of flares.
     
     Parameters:
@@ -171,6 +171,8 @@ def get_observed_phases(p, lcs, location):
         table that lists the target's LCs that were searched for flares
     location : str
         path to the folder with the LCs
+    phaseshift : float
+        shift the phases by this amount
 
     Returns:
     --------
@@ -204,14 +206,11 @@ def get_observed_phases(p, lcs, location):
        
         for i, lightcurve in enumerate(lightcurves):
          
+            # shift the phases by the phase shift
+            phases = (lightcurve["phase"] + phaseshift) % 1.
+
             # get the phases and bin them
-            counts, bins = np.histogram(lightcurve["phase"], bins=bins)
-
-            # circular boundary condition
-            # counts[0] = counts[0] + counts[-1]
-
-            # remove last bin to avoid double counting
-            # counts = counts[:-1]
+            counts, bins = np.histogram(phases, bins=bins)
 
             # get observing times for each lightcurve using cadence
             cadence = np.nanmin(np.diff(lightcurve["time"]))
