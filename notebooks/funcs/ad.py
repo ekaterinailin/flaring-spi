@@ -152,7 +152,6 @@ def sample_AD_for_custom_distribution(f, nobs, N, savefig=False,
     # Make a figure of the sampled distribution
     fig = corner.corner(sampler.get_chain(discard=100, thin=15, flat=True))
     yt = list(plt.yticks()[0])
-    plt.yticks(np.linspace(yt[0],yt[1],8))
     plt.xlabel("phase")
     
     if savefig == True:
