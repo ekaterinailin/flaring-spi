@@ -6,6 +6,12 @@ import numpy as np
 from astropy.io import fits
 from scipy import interpolate
 
+# offsets for BTJD and BKJD
+OFFSET = {"K2":2454833.,
+          "Kepler":2454833.,
+          "TESS":2457000.,
+          'Transiting Exoplanet Survey Satellite (TESS)':2457000.}  
+
 
 def read_lightcurves_from_series(series, location, savelcpath=False,
                                  savelcpathname="../data/lightcurves.txt"):
@@ -169,7 +175,8 @@ def get_cumulative_distribution(flare_table_single_star, observedphases, lcs):
 
 
 
-def get_observed_phases(p, lcs, location, phaseshift=0.):
+def get_observed_phases(p, lcs, location, phaseshift=0., period="orbit",
+                        rotper=0.):
     """Calculate the observed phases for a given set of flares.
     
     Parameters:
@@ -182,6 +189,10 @@ def get_observed_phases(p, lcs, location, phaseshift=0.):
         path to the folder with the LCs
     phaseshift : float
         shift the phases by this amount
+    period : str
+        "orbit" or "rotation", default is "orbit"
+    rotper : float
+        rotation period in days, only used if period="rotation"
 
     Returns:
     --------
@@ -215,15 +226,24 @@ def get_observed_phases(p, lcs, location, phaseshift=0.):
        
         for i, lightcurve in enumerate(lightcurves):
          
-            # shift the phases by the phase shift
-            phases = (lightcurve["phase"] + phaseshift) % 1.
+            if period == "orbit":
+                # shift the phases by the phase shift
+                phases = (lightcurve["phase"] + phaseshift) % 1.
+
+            elif period == "rotation":
+                # get rotation phase
+                phases = get_rotational_phases(lightcurve, period,
+                                                                row.mission)
+                
+                # shift the phases by the phase shift
+                phases = (phases + phaseshift) % 1.
 
             # get the phases and bin them
             counts, bins = np.histogram(phases, bins=bins)
 
             # get observing times for each lightcurve using cadence
             cadence = np.nanmin(np.diff(lightcurve["time"]))
-      
+    
             observedphases[f"{row.mission}_{row.quarter_or_sector}_{i}"] = counts * cadence
 
     return observedphases, binmids
@@ -250,4 +270,29 @@ def get_null_hypothesis_distribution(p, cum_n_exp):
 
     # Interpolate!
     return interpolate.interp1d(cphases, cum_n_exp, fill_value="extrapolate")
+
+
+def get_rotational_phases(times, period, mission):
+    """Calculate the rotational phases for a lightcurve using 
+    BKJD conventionally.
+    
+    Parameters:
+    -----------
+    times : array
+        array of flare start times
+    period : float
+        rotation period in days
+    mission : str
+        mission name, either "Kepler" or "TESS"
+    
+    Returns:
+    --------
+    phases : array
+        array of phases
+    """
+    # calculate the phases using BKJD offset
+    phases = ((times + np.vectorize(OFFSET.get)(mission) - OFFSET["Kepler"]) / period) % 1.
+    
+    return phases
+
 

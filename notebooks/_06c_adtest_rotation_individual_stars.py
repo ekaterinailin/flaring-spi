@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-from funcs.phaseanalysismulti import (get_observed_phases,
+from funcs.phaseanalysismulti import (get_rotational_phases,
+                                      get_observed_phases,
                                       get_cumulative_distribution,
                                       get_null_hypothesis_distribution,
                                      ) 
@@ -25,11 +26,14 @@ if __name__ == '__main__':
     N = 10000
 
     # phaseshift zero for now
-    phaseshift = 0.75
+    phaseshift = 0.
     print('phaseshift = ', phaseshift)
 
     # Get flare table with final flares
     flare_table = pd.read_csv("../results/PAPER_flare_table.csv")
+
+    # Get table with rotation periods
+    rotation_table = pd.read_csv("../results/2022_08_stellar_params.csv")
 
     # Select only flare with ED > 1.:
     flare_table = flare_table[flare_table['ED'] > 1.]
@@ -42,14 +46,27 @@ if __name__ == '__main__':
         if (flare_table_single_star.shape[0] >= 1):
 
             ID = flare_table_single_star.ID.iloc[0]
-            # if ID == "AU Mic":
-            #     print("We exclude AU Mic for now.")
-            #     continue
             
-            print(ID)
+            # Get rotation period
+            print(rotation_table.TIC, TIC)
+            try:
+                rotation_period = np.random.rand() * 19.5 + .5
+                # rotation_period = rotation_table[rotation_table.TIC == int(TIC)].st_rotp.iloc[0]
+            except IndexError:
+                print('No rotation period for TIC', TIC)
+                continue
+            print(ID, rotation_period)
+
             # Sort the real flares by their phases in ascending order
             real = (flare_table_single_star.orbital_phase != -1) 
-            p = flare_table_single_star[real].orbital_phase
+
+            # -----------------------------------------------------------------
+            # Get the rotational phase instead of orbital
+            # replace p = flare_table_single_star[real].orbital_phase
+            real_flares = flare_table_single_star[real]
+            p = get_rotational_phases(real_flares.tstart, rotation_period,
+                                      real_flares.mission)
+
             p = p.sort_values(ascending=True).values
 
             # Select the LCs that were searched for flares for this star
@@ -68,11 +85,13 @@ if __name__ == '__main__':
 
             # Get the total observing time in each phase bin
             location = "/media/ekaterina/USB DISK/lcs_w_phases/"
-            observed_phases, binmids  = get_observed_phases(p, lcs, location)
+            observed_rotational_phases, binmids = get_observed_phases(p, lcs,
+                                                                      location)
 
             # Get the (cumulative) flare phase distributions j
+            # CHECK HERE IF THE PHASES ARE CORRECTLY CALCULATED
             n_exp, cum_n_exp = get_cumulative_distribution(flare_table_single_star,
-                                                        observed_phases, lcs)
+                                                           observed_rotational_phases, lcs)
             # Get the null hypothesis distribution of flare phases
             # assuming flares are distributed uniformly
             f = get_null_hypothesis_distribution(p, cum_n_exp)
@@ -109,5 +128,5 @@ if __name__ == '__main__':
                 with open("../results/multistar_adtest.csv", "a") as f:
                     f.write(f"{tstamp},{TIC},{ID},"
                             f"{len(p)-2},"# account for the added 0 and 1
-                            f"{observed_phases.sum().sum()},{phaseshift},"
-                            f"{N},{pval},{atest},ED>1s\n")
+                            f"{observed_rotational_phases.sum().sum()},{phaseshift},"
+                            f"{N},{pval},{atest},ED>1s,rand_rotation_05_20\n")
