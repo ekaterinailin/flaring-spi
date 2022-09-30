@@ -87,6 +87,65 @@ def get_pvalue_from_AD_statistic(x, dist, A2):
     return pval, atest
 
 
+
+def get_sigma_values():
+    """Define the sigma values."""
+
+    # define sigma values
+    onesigma = 1 - .342*2
+    twosigma = 1 - .342*2 - .136*2
+    threesigma = 1 - .342*2 - .136*2 - .021*2
+    
+    # put them in a list
+    sigmas = [onesigma, twosigma, threesigma]
+    sigma_label = [r"$1\sigma$", r"$2\sigma$", r"$3\sigma$"]
+
+    return sigmas, sigma_label
+
+    
+
+def aggregate_pvalues(adtests, subsample="ED>1s", period="orbit"):
+    """Aggregate the p-values of the AD tests for each star-planet system.
+    
+    Parameters
+    ----------
+    adtests : pandas.DataFrame
+        Table of AD tests for each star-planet system.
+    energy_cut : str
+        Energy cut used for the AD test.
+    subsample : str
+        Name of the subsample of star-planet systems.
+
+    Returns
+    -------
+    pvalues : pandas.DataFrame
+        Table of p-values of AD tests for each star-planet system.
+    """
+
+    # select a subsample of consistent energy cut
+    adtests = adtests[(adtests.subsample == subsample)&
+                      (adtests.period == period)]
+
+    # groub by TIC and number of flares
+    columns_to_groupby = ["TIC","number_of_flares"]
+
+    # drop the rows where p-value is zero bc here MC sampling failed
+    adtests = adtests[adtests["p-value"] > 0.]
+
+    # get the mean and std of p-values for each star
+    mean = adtests.groupby(columns_to_groupby)["p-value"].mean().reset_index()
+    std  = adtests.groupby(columns_to_groupby)["p-value"].std().reset_index()
+
+    # merge the two tables
+    mean_std = mean.merge(std, on=columns_to_groupby)
+
+    # rename the columns
+    mean_std = mean_std.rename(columns={"p-value_x": "mean",
+                                        "p-value_y": "std"})
+
+    return mean_std
+
+
     
 def sample_AD_for_custom_distribution(f, nobs, N, savefig=False,
                                       fig_name="AD_statistic.png"):

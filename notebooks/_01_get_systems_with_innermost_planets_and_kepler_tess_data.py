@@ -95,7 +95,7 @@ if __name__ == '__main__':
 
     # select final columns for the merged table
     columns = ["pl_orbper","pl_orbpererr1","pl_orbpererr2",
-            "pl_tranmid","pl_tranmiderr1", "pl_tranmiderr2"]
+               "pl_tranmid","pl_tranmiderr1", "pl_tranmiderr2"]
 
     df_merged = df_nasa.merge(df_tess, how="outer",on=["TIC"],
                               suffixes=["","_tess"])
