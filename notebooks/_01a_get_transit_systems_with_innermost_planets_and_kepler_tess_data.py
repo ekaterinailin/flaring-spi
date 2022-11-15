@@ -11,8 +11,7 @@ This script uses the Composite Table of confirmed exoplanets
 from the NASA Exoplanet Archive* (column description**) AND 
 the TESS-TOI table of confirmed planets and known planets***
 (column description****) to compile a sample of all 
-Kepler/K2/TESS short cadence light curves available 
-for all currently known exoplanet systems.
+currently known TRANSITING exoplanet systems.
 
 * https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=PSCompPars
 ** https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html

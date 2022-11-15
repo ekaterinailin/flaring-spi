@@ -21,7 +21,8 @@ import matplotlib.pyplot as plt
 
 
 def custom_detrending(lc, spline_coarseness=30, spline_order=3,
-                      savgol1=6., savgol2=3., pad=3):
+                      savgol1=6., savgol2=3., pad=3, max_sigma=2.5, 
+                      longdecay=6,):
     """Custom de-trending for TESS and Kepler 
     short cadence light curves, including TESS Cycle 3 20s
     cadence.
@@ -45,6 +46,11 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     pad : 3
         Outliers in Savitzky-Golay filter are padded with this
         number of data points. Defaults to 3.
+    max_sigma : float
+        Outlier rejection threshold in sigma. Defaults to 2.5.
+    longdecay : int
+        Long decay time for outlier rejection. Defaults to 6.
+
         
     Return:
     -------
@@ -74,7 +80,8 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     w = int((np.rint(savgol2 / 24. / dt) // 2) * 2 + 1)
 
     # use Savitzy-Golay to iron out the rest
-    lc4 = lc3.detrend("savgol", window_length=w, pad=pad)
+    lc4 = lc3.detrend("savgol", window_length=w, pad=pad, 
+                        max_sigma=max_sigma,longdecay=longdecay)
 
     # find median value
     lc4 = find_iterative_median(lc4)
@@ -232,6 +239,8 @@ def remove_sines_iteratively(flcd, niter=5, freq_unit=1/u.day,
         return a * np.cos(b * x + c) + d
 
     # make a copy of the original LC
+    flcd.flux = flcd.flux.value
+    flcd.flux_err = flcd.flux_err.value
     flct = copy.deepcopy(flcd)
     
     # iterate over chunks
@@ -411,7 +420,7 @@ def estimate_detrended_noise(flc, mask_pos_outliers_sigma=2.5,
         # apply rolling window std and interpolate the masked values
         flcd.detrended_flux_err[:] = pd.Series(flcd.detrended_flux.value).rolling(std_window,
                                                                  center=True,
-                                                                 min_periods=1).std().interpolate()
+                                                                 min_periods=1).std().interpolate().values
         
         # and refine it:
         flcd = find_iterative_median(flcd)
@@ -431,7 +440,11 @@ def estimate_detrended_noise(flc, mask_pos_outliers_sigma=2.5,
         # apply rolling window std and interpolate the masked values
         flcc.detrended_flux_err[le:ri]= pd.Series(filtered).rolling(std_window,
                                                                  center=True,
-                                                                 min_periods=1).std().interpolate()
+                                                                 min_periods=1).std().interpolate().values
+        
+        # make it a series again so that formatting is consistent
+        flcc.detrended_flux_err = pd.Series(flcc.detrended_flux_err)
+    
     return flcc
 
 

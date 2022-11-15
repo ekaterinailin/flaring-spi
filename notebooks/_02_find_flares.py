@@ -96,6 +96,7 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
     dflcn = estimate_detrended_noise(dflc, std_window=int(w), 
                                   mask_pos_outliers_sigma=mask_pos_outliers_sigma)
 
+    print(type(dflcn.detrended_flux))
     # -------------------------------------------------------------------------
     # search the residual for flare candidates
     ff = dflcn.find_flares(addtail=addtail).flares
@@ -179,7 +180,8 @@ if __name__=="__main__":
 
     # Composite Table of confirmed exoplanets
     # path = "../data/2022_07_27_input_catalog_star_planet_systems.csv"
-    path = "../data/2022_08_16_input_catalog_systems_with_KOI_IDs.csv"
+    # path = "../data/2022_08_16_input_catalog_systems_with_KOI_IDs.csv"
+    path = "../data/2022_11_15_input_catalog_NONtransit_star_planet_systems.csv"
 
     mprint(f"[UP] Using compiled input catalog from {path}")
 
@@ -209,7 +211,7 @@ if __name__=="__main__":
             continue
 
         # format TIC
-        TIC = "TIC " + str(input_target.TIC)
+        TIC = str(input_target.TIC) #"TIC " + 
         ID = input_target.hostname
         Nflares = 0
 
