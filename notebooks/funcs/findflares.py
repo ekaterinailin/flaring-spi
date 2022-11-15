@@ -99,7 +99,10 @@ def get_midtime(input_target, mission):
     midtime: float
 
     """
-    # calculate the observed phases
+    # calculate midtime when there is no transit
+
+    # TBD
+
     # calculate midtime of transit in TESS or Kepler time
     if mission == "TESS":
         # if transit has been measured in TESS
@@ -118,6 +121,7 @@ def get_midtime(input_target, mission):
             return input_target.pl_tranmid - offset[mission]
         else:
             raise ValueError("No transit midtime found. No pl_tranmid found.")
+
 
 
 def add_meta_data_and_write(ff, dflcn, ID, TIC, sector, mission,
@@ -239,12 +243,12 @@ def write_flc_to_file(dflcn, flc, path_dflcn, overwrite=True):
         raise KeyError("flux_model not in columns")    
 
     dflcn.to_fits(path_dflcn, 
-                  FLUX=flc.flux.value,
-                  DETRENDED_FLUX=dflcn.detrended_flux.value,
-                  DETRENDED_FLUX_ERR=dflcn.detrended_flux_err.value,
-                  IT_MED=dflcn.it_med.value,
-                  FLUX_MODEL=dflcn.flux_model.value,
-                  PHASE = dflcn.phase,
+                  FLUX=flc.flux.value.astype(float),
+                  DETRENDED_FLUX=dflcn.detrended_flux.value.astype(float),
+                  DETRENDED_FLUX_ERR=dflcn.detrended_flux_err.value.astype(float),
+                  IT_MED=dflcn.it_med.value.astype(float),
+                  FLUX_MODEL=dflcn.flux_model.value.astype(float),
+                  PHASE = dflcn.phase.astype(float),
                   overwrite=True)
 
 def write_no_lc(input_target, path="../results/2022_07_nolc.txt"):

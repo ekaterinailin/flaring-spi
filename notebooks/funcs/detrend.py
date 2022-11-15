@@ -471,7 +471,9 @@ def fit_spline(flc, spline_coarseness=30, spline_order=3):
 
     flcp = flcp.find_gaps()
     flux_med = np.nanmedian(flcp.flux.value)
-    n = int(np.rint(spline_coarseness/ 24 / (flcp.time.value[1] - flcp.time.value[0]))) #default 30h window
+    n = int(np.rint(spline_coarseness / 
+                                   24 / 
+            (flcp.time.value[1] - flcp.time.value[0]))) #default 30h window
     k = spline_order
 #     print(n)
     #do a first round
@@ -480,12 +482,15 @@ def fit_spline(flc, spline_coarseness=30, spline_order=3):
 
         rip = flcp.flux[le:ri].value.shape[0] + le
         t, f = np.zeros((rip - le)//n+2), np.zeros((rip - le)//n+2)
-#         print(len(t), len(f), rip, le, n+2)
-        t[1:-1] = np.mean(flcp.time.value[le:rip - (rip - le)%n].reshape((rip - le)//n, n), axis=1)
-        f[1:-1] =  np.median(flcp.flux.value[le:rip - (rip - le)%n].reshape((rip - le)//n, n), axis=1)
-        t[0], t[-1] = flcp.time.value[le], flcp.time.value[rip-1]
-        f[0], f[-1] = flcp.flux.value[le], flcp.flux.value[rip-1]
-        
+        if (rip - le)//n == 0:
+            flcp.detrended_flux[le:ri] = flcp.flux.value[le:ri]
+        elif (rip - le)//n > 0:
+            news, news_mod = (rip - le)//n, (rip - le)%n 
+            t[1:-1] = np.mean(flcp.time.value[le:rip - news_mod].reshape(news, n), axis=1)
+            f[1:-1] =  np.median(flcp.flux.value[le:rip - news_mod].reshape(news, n), axis=1)
+            t[0], t[-1] = flcp.time.value[le], flcp.time.value[rip-1]
+            f[0], f[-1] = flcp.flux.value[le], flcp.flux.value[rip-1]
+            
         # if the LC chunk is too short, skip spline fit
         if t.shape[0] <= k:
             flcp.detrended_flux[le:ri] = flcp.flux.value[le:ri] 
