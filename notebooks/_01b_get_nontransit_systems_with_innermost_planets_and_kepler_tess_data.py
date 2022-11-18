@@ -48,6 +48,8 @@ if __name__ == '__main__':
 
     # rename tic id column to TIC
     df_nasa = df_nasa.rename(columns={"tic_id":"TIC"})
+    df_nasa["TIC"] = df_nasa["TIC"].str[4:].astype(int)
+    print(df_nasa.TIC.values)
 
     path =f"../data/{tstamp}_input_catalog_NONtransit_star_planet_systems.csv"
     print(f"[DOWN] Saving {df_nasa.shape[0]} uncontroversial "

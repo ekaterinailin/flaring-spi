@@ -96,7 +96,6 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
     dflcn = estimate_detrended_noise(dflc, std_window=int(w), 
                                   mask_pos_outliers_sigma=mask_pos_outliers_sigma)
 
-    print(type(dflcn.detrended_flux))
     # -------------------------------------------------------------------------
     # search the residual for flare candidates
     ff = dflcn.find_flares(addtail=addtail).flares
@@ -104,6 +103,8 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
     # -------------------------------------------------------------------------
     # get orbital phases for all observed times and the flare candidate times
     # get midtime in BTJD or BKJD, depending on mission
+
+    # THIS IS ONLY SET TO KEPLER because not TESS DATA EXIST
     midtime = get_midtime(input_target, mission)
     print(f"Transit midtime in {mission} time: {midtime}")
 
@@ -116,6 +117,11 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
     # calculate the phase at which the flare was observed
     ff['phase'] = get_flare_phases(ff.cstart, dflcn["phase"], 
                                    dflcn["cadenceno"])
+
+    dflcn["phase"] = -1.
+    ff["phase"] = -1.
+
+    # -------------------------------------------------------------------------
 
     # The next line is just to get the order of columns right, 
     # will be added later again
@@ -147,7 +153,7 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
         path_dflcn = f"{download_dir}/{tstamp}_{input_target.TIC}_{sector}_altai_{i}.fits"
     elif mission=="Kepler":
         name = input_target.hostname.replace(" ","_").replace("-","_")
-        path_dflcn = f"{download_dir}/{tstamp}_{input_target.hostname}_{sector}_altai_{i}.fits"
+        path_dflcn = f"{download_dir}/{tstamp}_{name}_{sector}_altai_{i}.fits"
         
     # write light curve to file and notify user
     write_flc_to_file(dflcn, flc, path_dflcn)
@@ -176,7 +182,7 @@ def add_helpid(x):
 
 if __name__=="__main__":
 
-    mask_pos_outliers_sigma = 1.5
+    mask_pos_outliers_sigma = 2.5
 
     # Composite Table of confirmed exoplanets
     # path = "../data/2022_07_27_input_catalog_star_planet_systems.csv"
@@ -211,7 +217,7 @@ if __name__=="__main__":
             continue
 
         # format TIC
-        TIC = str(input_target.TIC) #"TIC " + 
+        TIC = "TIC " + str(input_target.TIC)
         ID = input_target.hostname
         Nflares = 0
 
@@ -255,6 +261,7 @@ if __name__=="__main__":
                 elif mission=="Kepler":
                     flc = from_mast(ID, **parameters)
 
+                
                 # handle case when no light curve is found
                 if flc is None:
                     print(f"No LC found for {mission}, {ID}, {TIC} "

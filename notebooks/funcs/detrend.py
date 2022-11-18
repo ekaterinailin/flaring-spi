@@ -82,7 +82,7 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     # use Savitzy-Golay to iron out the rest
     lc4 = lc3.detrend("savgol", window_length=w, pad=pad, 
                         max_sigma=max_sigma,longdecay=longdecay)
-
+    
     # find median value
     lc4 = find_iterative_median(lc4)
 
