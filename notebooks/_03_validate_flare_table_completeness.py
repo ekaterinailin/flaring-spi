@@ -13,6 +13,15 @@ if __name__=="__main__":
     input_catalog = pd.read_csv(path) 
     print(f"[UP] Using compiled input catalog from {path}")
 
+    # Table of RV systems that we added later
+    path = "../data/2022_11_15_input_catalog_NONtransit_star_planet_systems.csv"
+    extra_input_catalog = pd.read_csv(path) 
+    print(f"[UP] Adding compiled input catalog of RV systems from {path}")
+
+    # combine the two catalogs
+    input_catalog = pd.concat([input_catalog, extra_input_catalog],
+                               ignore_index=True)
+
     # Table of vetted flares
     path_vetted = "../results/2022_07_flares_vetted.csv"
     vetted_table = pd.read_csv(path_vetted)
@@ -32,8 +41,9 @@ if __name__=="__main__":
     unique_input_catalog, n_unique_input_catalog = unique_and_count(input_catalog,
                                                                     col="TIC")
     # Assert number did not change for some reason
-    assert n_unique_input_catalog == 2993, \
-           f"{n_unique_input_catalog} != 2993"
+    assert n_unique_input_catalog == 2993 + 191, \
+           (f"{n_unique_input_catalog} != 2993 transiting + "
+           f"191 non-transiting systems")
 
     # Get unique TICs in flare tables and nolc table with number of TICs
     unique_vt, n_unique_in_vetted_table = unique_and_count(vetted_table)

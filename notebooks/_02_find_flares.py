@@ -105,18 +105,18 @@ def run_analysis(flc, input_target, sector, mission, lc_n, download_dir,
     # get midtime in BTJD or BKJD, depending on mission
 
     # THIS IS ONLY SET TO KEPLER because not TESS DATA EXIST
-    midtime = get_midtime(input_target, mission)
-    print(f"Transit midtime in {mission} time: {midtime}")
+    # midtime = get_midtime(input_target, mission)
+    # print(f"Transit midtime in {mission} time: {midtime}")
 
-    # calculate phases for the light curve
-    # we always take the Kepler one, as it uses the longer baseline, and is
-    # otherwise filled in from the TESS one in input_catalog
-    dflcn['phase'] = get_observed_phases(dflcn.time.value, midtime, 
-                                         input_target.pl_orbper)
+    # # calculate phases for the light curve
+    # # we always take the Kepler one, as it uses the longer baseline, and is
+    # # otherwise filled in from the TESS one in input_catalog
+    # dflcn['phase'] = get_observed_phases(dflcn.time.value, midtime, 
+    #                                      input_target.pl_orbper)
 
-    # calculate the phase at which the flare was observed
-    ff['phase'] = get_flare_phases(ff.cstart, dflcn["phase"], 
-                                   dflcn["cadenceno"])
+    # # calculate the phase at which the flare was observed
+    # ff['phase'] = get_flare_phases(ff.cstart, dflcn["phase"], 
+    #                                dflcn["cadenceno"])
 
     dflcn["phase"] = -1.
     ff["phase"] = -1.
