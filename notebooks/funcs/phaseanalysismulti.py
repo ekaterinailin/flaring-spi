@@ -232,7 +232,7 @@ def get_observed_phases(p, lcs, location, phaseshift=0., period="orbit",
 
             elif period == "rotation":
                 # get rotation phase
-                phases = get_rotational_phases(lightcurve, period,
+                phases = get_rotational_phases(lightcurve, rotper,
                                                                 row.mission)
                 
                 # shift the phases by the phase shift
@@ -291,6 +291,15 @@ def get_rotational_phases(times, period, mission):
         array of phases
     """
     # calculate the phases using BKJD offset
+    # print(type(times))
+    if type(times) == pd.Series:
+        times = times.values
+    elif type(times) == fits.fitsrec.FITS_rec:
+        # print(times)
+        times = times["time"]
+    else:
+        times = times
+    # print(period)
     phases = ((times + np.vectorize(OFFSET.get)(mission) - OFFSET["Kepler"]) / period) % 1.
     
     return phases
