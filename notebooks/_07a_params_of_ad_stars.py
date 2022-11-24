@@ -17,35 +17,47 @@ import numpy as np
 
 if __name__ == "__main__":
 
-    # Read in known parameters for Kepler and TESS SPSs
+    # Read in known parameters for transiting Kepler SPSs
     path_kepler = "../data/2022_07_27_confirmed_uncontroversial_innermost_transiting_exoplanet.csv"
     kepler_params = pd.read_csv(path_kepler)
 
+    # Read in known parameters for transiting TESS SPSs
     path_tess = "../data/2022_07_27_tess_confirmed_and_known_planets.csv"
     tess_params = pd.read_csv(path_tess)
+
+    # Read in known parameters for non-transiting SPSs
+    path_nontrans = "../data/2022_11_15_input_catalog_NONtransit_star_planet_systems.csv"
+    rv_params = pd.read_csv(path_nontrans)
 
     # read in AD test results
     adtests = pd.read_csv("../results/multistar_adtest.csv")
 
     # get the unique TIC IDs
-    unique_ids = adtests.TIC.unique()
+    unique_ids = adtests.TIC.astype(str).unique()
 
-    # find the TIC IDs that are in the AD test results in the stellar parameters table
-    idx_kepler = np.where(kepler_params.tic_id.str[4:].isin(unique_ids))
-    idx_tess = np.where(tess_params.tic_id.astype(str).isin(unique_ids))
-
-    # select the rows with the stars for which we have AD test results
-    sps_w_ad_kepler = kepler_params.iloc[idx_kepler]
-    sps_w_ad_tess = tess_params.iloc[idx_tess]
 
     # rename the the TIC prefix from the TIC ID column
-    sps_w_ad_kepler.tic_id = sps_w_ad_kepler.tic_id.str[4:]
+    kepler_params.tic_id = kepler_params.tic_id.str[4:]
 
     # convert the TIC ID column to string
-    sps_w_ad_tess.tic_id = sps_w_ad_tess.tic_id.astype(str)
+    tess_params.tic_id = tess_params.tic_id.astype(str)
+    rv_params.tic_id = rv_params.tic_id.astype(str)
 
-    # merge the two tables
-    sps_w_ad = sps_w_ad_kepler.merge(sps_w_ad_tess, on="tic_id", how="outer",
+    # get the indices of AD SPSs in all the tables
+    idx_kepler = kepler_params.tic_id.isin(unique_ids)
+    idx_tess = tess_params.tic_id.isin(unique_ids)
+    idx_rv = rv_params.tic_id.isin(unique_ids)
+
+    # get the AD SPSs from all the tables
+    sps_w_ad_kepler = kepler_params[idx_kepler]
+    sps_w_ad_tess = tess_params[idx_tess]
+    sps_w_ad_rv = rv_params[idx_rv]
+    
+    # concatenate the transiting and non-transiting SPSs in NASA tables
+    sps_w_ad_transnontrans = pd.concat([sps_w_ad_kepler, sps_w_ad_rv])
+
+    # merge in the TESS table
+    sps_w_ad = sps_w_ad_transnontrans.merge(sps_w_ad_tess, on="tic_id", how="outer",
                                     suffixes=("_kepler", "_tess"))
 
     # write the table to a CSV file
@@ -54,3 +66,6 @@ if __name__ == "__main__":
 
     print(f"Wrote {path_to_params}")
     print(f"{len(sps_w_ad)} rows")
+
+    # make sure all SPS are covered
+    assert len(sps_w_ad) == len(unique_ids), "Not all SPS are covered!"
