@@ -124,8 +124,8 @@ if __name__ == "__main__":
     # --------------------------------------------------------------------------
 
     # write to file
-    # df_timespan.to_csv("../results/2022_08_stellar_params.csv", 
-    #                 index=False)
+    df_timespan.to_csv("../results/2022_08_stellar_params.csv", 
+                    index=False)
 
     # --------------------------------------------------------------------------
 
@@ -248,10 +248,8 @@ if __name__ == "__main__":
 
         # Check if the output is ok
         # tminmax, TIC, missions, per_and_errs
-        print(tminmax)
-        print(missions)
-        print(row[cols])
-        # check_output(tminmax, row.tic_id, missions, row[cols])
+
+        check_output(tminmax, row.tic_id, missions, row[cols])
 
         # Calculate the time span covered by the flares
         tminmax["timespan_d"] = tminmax["tstart_max"] - tminmax["tstart_min"]

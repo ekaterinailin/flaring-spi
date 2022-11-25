@@ -35,7 +35,6 @@ if __name__ == "__main__":
     # get the unique TIC IDs
     unique_ids = adtests.TIC.astype(str).unique()
 
-
     # rename the the TIC prefix from the TIC ID column
     kepler_params.tic_id = kepler_params.tic_id.str[4:]
 
