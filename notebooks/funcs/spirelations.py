@@ -68,7 +68,8 @@ def wrap_obstimes(TIC, flares):
 
 
 def p_spi_lanza12(v_rel, B, pl_rad, Bp=1.):
-    """Lanza 2012 scaling relation
+    """Lanza 2012 scaling relation and its adaptation to absence of
+    planet magnetic field (Bp=0).
     
     Parameters
     ----------
@@ -91,7 +92,10 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1.):
 
     # convert from km/s to cm/s
     v_rel = v_rel * 1e6
-    return B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.)
+    if Bp > 0.:
+        return B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.)
+    elif Bp == 0.:
+        return B**2 * v_rel * pl_rad**2
 
 
 

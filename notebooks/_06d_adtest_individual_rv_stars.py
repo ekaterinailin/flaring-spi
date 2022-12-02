@@ -52,9 +52,9 @@ if __name__ == '__main__':
     orbital_table = pd.read_csv("../data/2022_11_15_input_catalog_NONtransit_star_planet_systems.csv")
 
     # Select only flare with ED > 1.:
-    flare_table = flare_table[flare_table['ED'] > 1.]
+    flare_table = flare_table[flare_table['ED'] > 0.]
 
-    for phaseshift in [0.25, 0.5, 0.75]:
+    for phaseshift in [0., 0.25, 0.5, 0.75]:
         print('---------------\nphaseshift = ', phaseshift)
 
 
@@ -151,4 +151,4 @@ if __name__ == '__main__':
                         f.write(f"{tstamp},{TIC},{ID},"
                                 f"{len(p)-2},"# account for the added 0 and 1
                                 f"{observed_rotational_phases.sum().sum()},{phaseshift},"
-                                f"{N},{pval},{atest},ED>1s,orbit\n")
+                                f"{N},{pval},{atest},all,orbit\n")

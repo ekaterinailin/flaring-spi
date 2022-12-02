@@ -31,8 +31,8 @@ if __name__ == '__main__':
     # Get flare table with final flares
     flare_table = pd.read_csv("../results/PAPER_flare_table.csv")
 
-    # Select only flare with ED > 1.:
-    flare_table = flare_table[flare_table['ED'] > 1.]
+    # Select only flare with ED :
+    flare_table = flare_table[flare_table['ED'] > 0.]
 
     # pick a star to test
     for TIC, flare_table_single_star in flare_table.groupby("TIC"):
@@ -110,4 +110,4 @@ if __name__ == '__main__':
                     f.write(f"{tstamp},{TIC},{ID},"
                             f"{len(p)-2},"# account for the added 0 and 1
                             f"{observed_phases.sum().sum()},{phaseshift},"
-                            f"{N},{pval},{atest},ED>1s\n")
+                            f"{N},{pval},{atest},all\n")

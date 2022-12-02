@@ -118,6 +118,10 @@ if __name__ == "__main__":
     mean_std["p_spi_erg_s"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
                                                             x.B_G, x.pl_radj), axis=1)   
 
+    # calculate the SPI power from the Lanza 2012 scaling relation with Bp=0
+    mean_std["p_spi_erg_s_bp0"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
+                                                            x.B_G, x.pl_radj, Bp=0.), axis=1)  
+
     # -------------------------------------------------------------------------
     # Finally, save the table
 
