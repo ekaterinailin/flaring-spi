@@ -33,12 +33,12 @@ def check_output(tminmax, TIC, missions, per_and_errs):
                      fr"  periods = {per_and_errs}\n" 
     
     # print a message if the orbital period is not finite
-    if ~np.isfinite(tminmax["orbper"].values[0]):
+    if ~np.isfinite(tminmax["orbper"]):
         print(f"Orbital period not finite for TIC {row.tic_id}\n")
         print(system_string)
     
     # print a message if the orbital period error is not finite
-    if ~np.isfinite(tminmax["orbper_err"]).values[0]:
+    if ~np.isfinite(tminmax["orbper_err"]):
         print(f"Orbital period error not finite for TIC {row.tic_id}\n")
         print(system_string)
 
@@ -147,6 +147,9 @@ if __name__ == "__main__":
     # This is a little more complicated because we sometimes have Kepler orbital
     # periods only but TESS observations without TESS orbital periods
 
+    columns = [ "tstart_min",	"tstart_max", "TIC","orbper", "orbper_err",
+                  "timespan_d",	"coherence_timescale_orbit_d", "coherence_ratio_orbit"]
+
     # Read in stellar parameters table
     path = "../results/2022_08_stellar_params.csv"
     df = pd.read_csv(path)
@@ -169,7 +172,7 @@ if __name__ == "__main__":
     flares["abs_tstart"] = flares.tstart + flares["mission"].apply(lambda x: OFFSET[x])
 
     # Init a coherence timescales table
-    ct = pd.DataFrame()
+    ct = pd.DataFrame(columns=columns)
 
     # go through the SPSs table
     for i, row in orbits.iterrows():
@@ -198,11 +201,13 @@ if __name__ == "__main__":
         if nmissions == 1:
 
             # no need to get absolute flare times, just get min and max
-            tmin = f.groupby("TIC").tstart.min()
-            tmax = f.groupby("TIC").tstart.max()
+            tmin = f.tstart.min()
+            tmax = f.tstart.max()
+            
 
             # merge the two values into one Series
-            tminmax = pd.merge(tmin, tmax, on="TIC", suffixes=("_min", "_max"))
+            tminmax = pd.Series([tmin, tmax, row.tic_id], 
+                                index=["tstart_min", "tstart_max", "TIC"])
 
             # select the mission and get the orbital period and the error on the
             # orbital period
@@ -231,21 +236,17 @@ if __name__ == "__main__":
         elif nmissions == 2:
             # This case does not occur!
             if separate:
-                tmin = f.groupby(["mission", "TIC"]).tstart.min()
-                tmax = f.groupby(["mission", "TIC"]).tstart.max()
-                tminmax = pd.merge(tmin, tmax, on=["mission", "TIC"],
-                                   suffixes=("_min", "_max"))
-                # define coloumns with the orbital period and uncertainty to use
-                cols = ["pl_orbper_kepler","pl_orbpererr1_kepler", "pl_orbpererr2_kepler"]
-                print(tminmax)
+                raise ValueError("This case does not occur! And if it would,"
+                                "I would have to rewrite the code!")
             # if separate is False, group by TIC only    
             # because you have both missions present
             else:
-                tmin = f.groupby("TIC").abs_tstart.min()
-                tmax = f.groupby("TIC").abs_tstart.max()
-                tminmax = pd.merge(tmin, tmax, on="TIC", suffixes=("_min", "_max"))
-                tminmax = tminmax.rename(index=str, columns={"abs_tstart_min": "tstart_min", 
-                                                            "abs_tstart_max": "tstart_max"})
+
+                tmin = f.abs_tstart.min()
+                tmax = f.abs_tstart.max()
+                tminmax = pd.Series([tmin, tmax, row.tic_id],
+                                    index=["tstart_min", "tstart_max", "TIC"])
+
 
                 # select the mission where tranmid time is from and get the orbital 
                 # period and the error on the orbital period
@@ -260,7 +261,7 @@ if __name__ == "__main__":
                     raise ValueError("No orbital period available")
             tminmax["orbper"] = row[cols[0]]
             tminmax["orbper_err"] = (row[cols[1]] - row[cols[2]]) / 2. 
-        
+            
 
         elif nmissions==0:
 
@@ -272,30 +273,27 @@ if __name__ == "__main__":
         check_output(tminmax, row.tic_id, missions, row[cols])
 
         # Calculate the time span covered by the flares
-        tminmax["timespan_d"] = tminmax["tstart_max"] - tminmax["tstart_min"]
+        tminmax["timespan_d"] = tminmax.tstart_max - tminmax.tstart_min
 
 
         # Calculate the coherence time of the orbital period
-        g = lambda x: coherence_timescale(x.orbper, x.orbper_err)
-        tminmax["coherence_timescale_orbit_d"] = tminmax.apply(g, axis=1)
-
-        # Calculate the coherence ration for the orbital period
+        tminmax["coherence_timescale_orbit_d"] = coherence_timescale(tminmax.orbper, 
+                                                                     tminmax.orbper_err)        
+        # Calculate the coherence ratio for the orbital period
         tminmax["coherence_ratio_orbit"] = (tminmax.timespan_d / 
                                                     tminmax.coherence_timescale_orbit_d)
 
-        # merge tminmax with the table of stellar parameters
-        tminmax = tminmax.reset_index()
-        
-        ct = pd.concat([ct, tminmax], ignore_index=True)
+        ct = pd.concat([ct, pd.DataFrame(tminmax).T], ignore_index=True)
 
-    print(ct.shape)
     ct.TIC = ct.TIC.astype(str)
     df.TIC = df.TIC.astype(str)
     df_timespan = pd.merge(df, ct, on="TIC")
 
     # ------------------------------------------------------------------------------
     # check if the table has all SPSs in it that have ad tests
+    
     assert df_timespan.shape[0] == 40
+
 
     print("All 40 SPSs with AD tests are in the table")
 
