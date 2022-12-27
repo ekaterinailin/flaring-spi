@@ -64,17 +64,20 @@ if __name__ == "__main__":
     # and remove the Kepler enty
     sps_w_ad.loc[sps_w_ad.tic_id == "441420236", "pl_orbper_tess"] = 8.463
     sps_w_ad.loc[sps_w_ad.tic_id == "441420236", "pl_orbper_kepler"] = np.nan
-    sps_w_ad.loc[sps_w_ad.tic_id == "441420236", "pl_orbpererr2_tess"] = 2e-6
+    sps_w_ad.loc[sps_w_ad.tic_id == "441420236", "pl_orbpererr2_tess"] = -2e-6
     sps_w_ad.loc[sps_w_ad.tic_id == "441420236", "pl_orbpererr1_tess"] = 2e-6
     
     # add for Kepler-396 the values uncertainty in the orbital period
     # from Battley et al. 2022
     # the results are from TESS, but fill in Kepler anyways
     sps_w_ad.loc[sps_w_ad.tic_id == "27769688", "pl_orbper_kepler"] = 42.99292140
-    sps_w_ad.loc[sps_w_ad.tic_id == "27769688", "pl_orbpererr2_kepler"] = 0.00002072
+    sps_w_ad.loc[sps_w_ad.tic_id == "27769688", "pl_orbpererr2_kepler"] = -0.00002072
     sps_w_ad.loc[sps_w_ad.tic_id == "27769688", "pl_orbpererr1_kepler"] = 0.00002072
 
-
+    # for HAT-P-11, fill in the orbital period error from
+    # Bakos et al. 2010
+    sps_w_ad.loc[sps_w_ad.tic_id == "28230919", "pl_orbpererr2_kepler"] = -7.1e-6
+    sps_w_ad.loc[sps_w_ad.tic_id == "28230919", "pl_orbpererr1_kepler"] = 7.1e-6
 
     # write the table to a CSV file
     path_to_params = "../results/params_of_star_planet_systems_with_AD_tests.csv"

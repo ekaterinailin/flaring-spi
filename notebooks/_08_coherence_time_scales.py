@@ -47,6 +47,13 @@ def coherence_timescale(period, error):
     """Calculate the coherence timescale from the period and the error on the
     period.
 
+    Explanation for dummies like myself:
+
+    If the error is the same as the period, after 1 period the undertainty
+    the orbital phase is the same as the period. If the error is 0.5 times
+    the period, after 2 periods the uncertainty is the same as the period.
+    In these cases, the coherence timescale is 1 or 2 times the period.
+
     Parameters
     ----------
     period : float
@@ -77,11 +84,12 @@ if __name__ == "__main__":
     df = pd.read_csv(path)
     print(f"Get stellar parameters from\n{path}\n")
     if "time_span_d" in df.columns:
-        del df["time_span_d"]
-    if "abs_tstart_min" in df.columns:
-        del df["abs_tstart_min"]
-    if "abs_tstart_max" in df.columns:
-        del df["abs_tstart_max"]
+        for l in ["abs_tstart_min",	"abs_tstart_max", "time_span_d", 
+                  "coherence_timescale_rotation_d", "coherence_ratio_rotation",
+                  "tstart_min",	"tstart_max", "orbper", "orbper_err",
+                  "timespan_d",	"coherence_timescale_orbit_d", "coherence_ratio_orbit"]:
+
+            del df[l]
 
     # Read in flare table
     path = "../results/PAPER_flare_table.csv"
@@ -150,7 +158,7 @@ if __name__ == "__main__":
     # cast tic_id to str
     orbits["tic_id"] = orbits["tic_id"].astype(str)
     print(f"Get get orbital periods and uncertainties from\n{path}\n")
-
+    
     # Read in flare table
     path = "../results/PAPER_flare_table.csv"
     flares = pd.read_csv(path)
@@ -221,6 +229,7 @@ if __name__ == "__main__":
         # if there are multiple missions, pick the first and last flare times while
         # grouping by mission if separate is True
         elif nmissions == 2:
+            # This case does not occur!
             if separate:
                 tmin = f.groupby(["mission", "TIC"]).tstart.min()
                 tmax = f.groupby(["mission", "TIC"]).tstart.max()
@@ -228,9 +237,9 @@ if __name__ == "__main__":
                                    suffixes=("_min", "_max"))
                 # define coloumns with the orbital period and uncertainty to use
                 cols = ["pl_orbper_kepler","pl_orbpererr1_kepler", "pl_orbpererr2_kepler"]
-               
+                print(tminmax)
             # if separate is False, group by TIC only    
-            # because you have both missions present, but only
+            # because you have both missions present
             else:
                 tmin = f.groupby("TIC").abs_tstart.min()
                 tmax = f.groupby("TIC").abs_tstart.max()
@@ -279,14 +288,16 @@ if __name__ == "__main__":
         
         ct = pd.concat([ct, tminmax], ignore_index=True)
 
+    print(ct.shape)
     ct.TIC = ct.TIC.astype(str)
     df.TIC = df.TIC.astype(str)
     df_timespan = pd.merge(df, ct, on="TIC")
 
     # ------------------------------------------------------------------------------
     # check if the table has all SPSs in it that have ad tests
-    print(df_timespan.shape[0])
     assert df_timespan.shape[0] == 40
+
+    print("All 40 SPSs with AD tests are in the table")
 
     # ------------------------------------------------------------------------------
     # plot the result and save the file
