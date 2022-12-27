@@ -178,7 +178,8 @@ if __name__ == "__main__":
     for i, row in orbits.iterrows():
 
         # take the real flares for this TIC
-        f = flares[(flares["TIC"].astype(str)==str(row.tic_id)) & (np.isfinite(flares["ED"]))]
+        f = flares[(flares["TIC"].astype(str)==str(row.tic_id)) &
+                   (np.isfinite(flares["ED"]))]
     
         # If both transit midtimes for Kepler and TESS are present
         if (np.isfinite(row.pl_orbper_kepler)) & (np.isfinite(row.pl_orbper_tess)):
@@ -203,7 +204,6 @@ if __name__ == "__main__":
             # no need to get absolute flare times, just get min and max
             tmin = f.tstart.min()
             tmax = f.tstart.max()
-            
 
             # merge the two values into one Series
             tminmax = pd.Series([tmin, tmax, row.tic_id], 
@@ -252,13 +252,16 @@ if __name__ == "__main__":
                 # period and the error on the orbital period
                 if np.isfinite(row.pl_orbper_kepler):
                     # define coloumns with the orbital period and uncertainty to use
-                    cols = ["pl_orbper_kepler","pl_orbpererr1_kepler", "pl_orbpererr2_kepler"]
+                    cols = ["pl_orbper_kepler","pl_orbpererr1_kepler",
+                            "pl_orbpererr2_kepler"]
                     
                 elif np.isfinite(row.pl_orbper_tess):
                     # define coloumns with the orbital period and uncertainty to use
                     cols = ["pl_orbper_tess","pl_orbpererr1_tess", "pl_orbpererr2_tess"]
                 else:
                     raise ValueError("No orbital period available")
+            
+            # add them to the Series
             tminmax["orbper"] = row[cols[0]]
             tminmax["orbper_err"] = (row[cols[1]] - row[cols[2]]) / 2. 
             

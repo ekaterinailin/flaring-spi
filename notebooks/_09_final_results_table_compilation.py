@@ -89,8 +89,9 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     # Add some values manually
 
-    # HIP 67522
-    mean_std.loc[mean_std.TIC == "166527623", "a_au"] = 1.5
+    # HIP 67522 from rizzuto+2020 56 stellar radii
+    # with 1.38 R sun, and 0.00465047 AU per solar radius
+    mean_std.loc[mean_std.TIC == 166527623, "a_au"] = 1.38 * 56 * 0.00465047
 
 
     # -------------------------------------------------------------------------
