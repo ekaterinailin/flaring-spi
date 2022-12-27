@@ -36,7 +36,7 @@ if __name__ == '__main__':
     rotation_table = pd.read_csv("../results/2022_08_stellar_params.csv")
 
     # Select only flare with ED > 1.:
-    flare_table = flare_table[flare_table['ED'] > 1.]
+    flare_table = flare_table[flare_table['ED'] >= 0.]
 
     # pick a star to test
     for TIC, flare_table_single_star in flare_table.groupby("TIC"):
@@ -50,8 +50,8 @@ if __name__ == '__main__':
             # Get rotation period
             print(rotation_table.TIC, TIC)
             try:
-                rotation_period = np.random.rand() * 19.5 + .5
-                # rotation_period = rotation_table[rotation_table.TIC == int(TIC)].st_rotp.iloc[0]
+                _ = rotation_table[rotation_table.TIC == int(TIC)]
+                rotation_period = _.st_rotp.iloc[0]
             except IndexError:
                 print('No rotation period for TIC', TIC)
                 continue
@@ -129,4 +129,4 @@ if __name__ == '__main__':
                     f.write(f"{tstamp},{TIC},{ID},"
                             f"{len(p)-2},"# account for the added 0 and 1
                             f"{observed_rotational_phases.sum().sum()},{phaseshift},"
-                            f"{N},{pval},{atest},ED>1s,rand_rotation_05_20\n")
+                            f"{N},{pval},{atest},all,rotation\n")

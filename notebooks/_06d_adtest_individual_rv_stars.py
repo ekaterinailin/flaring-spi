@@ -57,13 +57,13 @@ if __name__ == '__main__':
     for phaseshift in [0., 0.25, 0.5, 0.75]:
         print('---------------\nphaseshift = ', phaseshift)
 
-
+        # flare_table = flare_table[flare_table.TIC == XXXX]
         # pick a star to test
         for TIC, flare_table_single_star in flare_table.groupby("TIC"):
 
         # get entries for the TIC
-        # flare_table_single_star = flare_table[flare_table.TIC == TIC]
-            if (flare_table_single_star.shape[0] >= 1):
+            
+            if (flare_table_single_star.shape[0] > 0):
 
                 ID = flare_table_single_star.ID.iloc[0]
                 
@@ -72,7 +72,7 @@ if __name__ == '__main__':
                 try:
                     orbital_period = orbital_table[orbital_table.TIC == int(TIC)].pl_orbper.iloc[0]
                 except IndexError:
-                    print('No rotation period for TIC', TIC)
+                    print('No orbital period for TIC', TIC)
                     continue
                 print(ID, orbital_period)
 

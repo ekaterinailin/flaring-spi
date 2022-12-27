@@ -76,6 +76,12 @@ if __name__ == "__main__":
     path = "../results/2022_08_stellar_params.csv"
     df = pd.read_csv(path)
     print(f"Get stellar parameters from\n{path}\n")
+    if "time_span_d" in df.columns:
+        del df["time_span_d"]
+    if "abs_tstart_min" in df.columns:
+        del df["abs_tstart_min"]
+    if "abs_tstart_max" in df.columns:
+        del df["abs_tstart_max"]
 
     # Read in flare table
     path = "../results/PAPER_flare_table.csv"
@@ -133,6 +139,11 @@ if __name__ == "__main__":
     # This is a little more complicated because we sometimes have Kepler orbital
     # periods only but TESS observations without TESS orbital periods
 
+    # Read in stellar parameters table
+    path = "../results/2022_08_stellar_params.csv"
+    df = pd.read_csv(path)
+    print(f"Get stellar parameters from\n{path}\n")
+
     # Get orbital period of SPSs
     path = "../results/params_of_star_planet_systems_with_AD_tests.csv"
     orbits = pd.read_csv(path)
@@ -150,7 +161,7 @@ if __name__ == "__main__":
     flares["abs_tstart"] = flares.tstart + flares["mission"].apply(lambda x: OFFSET[x])
 
     # Init a coherence timescales table
-    coherence_timescales_orbit = pd.DataFrame()
+    ct = pd.DataFrame()
 
     # go through the SPSs table
     for i, row in orbits.iterrows():
@@ -254,27 +265,33 @@ if __name__ == "__main__":
         # Calculate the time span covered by the flares
         tminmax["timespan_d"] = tminmax["tstart_max"] - tminmax["tstart_min"]
 
+
         # Calculate the coherence time of the orbital period
         g = lambda x: coherence_timescale(x.orbper, x.orbper_err)
         tminmax["coherence_timescale_orbit_d"] = tminmax.apply(g, axis=1)
 
-        # append tminmax to coherence_timescales_orbit
-        coherence_timescales_orbit = pd.concat([coherence_timescales_orbit, tminmax],
-                                                axis=0)
         # Calculate the coherence ration for the orbital period
-        coherence_timescales_orbit["coherence_ratio"] = (coherence_timescales_orbit.timespan_d / 
-                                                    coherence_timescales_orbit.coherence_timescale_orbit_d)
+        tminmax["coherence_ratio_orbit"] = (tminmax.timespan_d / 
+                                                    tminmax.coherence_timescale_orbit_d)
 
+        # merge tminmax with the table of stellar parameters
+        tminmax = tminmax.reset_index()
+        
+        ct = pd.concat([ct, tminmax], ignore_index=True)
 
+    ct.TIC = ct.TIC.astype(str)
+    df.TIC = df.TIC.astype(str)
+    df_timespan = pd.merge(df, ct, on="TIC")
 
     # ------------------------------------------------------------------------------
     # check if the table has all SPSs in it that have ad tests
-    assert coherence_timescales_orbit.shape[0] == 36
+    print(df_timespan.shape[0])
+    assert df_timespan.shape[0] == 40
 
     # ------------------------------------------------------------------------------
     # plot the result and save the file
     plt.figure(figsize=(7,5.5))
-    plt.hist(coherence_timescales_orbit["coherence_ratio"], 
+    plt.hist(df_timespan["coherence_ratio_orbit"], 
             bins=np.logspace(-6,-2.,30),
             facecolor="orange", edgecolor="maroon")
     plt.xscale("log")
@@ -284,4 +301,9 @@ if __name__ == "__main__":
     plt.ylabel("number of star-planet systems")
     plt.tight_layout()
     plt.savefig("../results/plots/coherence_time_of_orbital_period.png", dpi=300)
+
+
+    # write to file
+    df_timespan.to_csv("../results/2022_08_stellar_params.csv", 
+                    index=False)
     # ------------------------------------------------------------------------------

@@ -1,3 +1,19 @@
+"""
+UTF-8, Python 3
+
+------------------
+Flaring SPI
+------------------
+
+Ekaterina Ilin, 2022, MIT License
+
+This script runs the A-D test on individual stars.
+Requires the paper flare table, and the de-trended light curves with phases.
+
+Output goes to multistar_adtest.csv
+"""
+
+
 import pandas as pd
 import numpy as np
 
@@ -25,7 +41,7 @@ if __name__ == '__main__':
     N = 10000
 
     # phaseshift zero for now
-    phaseshift = 0.75
+    phaseshift = 0.0
     print('phaseshift = ', phaseshift)
 
     # Get flare table with final flares
@@ -33,7 +49,7 @@ if __name__ == '__main__':
 
     # Select only flare with ED :
     flare_table = flare_table[flare_table['ED'] > 0.]
-
+    flare_table = flare_table[flare_table.TIC == 267749737]
     # pick a star to test
     for TIC, flare_table_single_star in flare_table.groupby("TIC"):
 
@@ -110,4 +126,4 @@ if __name__ == '__main__':
                     f.write(f"{tstamp},{TIC},{ID},"
                             f"{len(p)-2},"# account for the added 0 and 1
                             f"{observed_phases.sum().sum()},{phaseshift},"
-                            f"{N},{pval},{atest},all\n")
+                            f"{N},{pval},{atest},all,orbit\n")
