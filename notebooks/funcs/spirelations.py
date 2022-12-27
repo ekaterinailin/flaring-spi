@@ -96,7 +96,8 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1.):
         return B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.)
     elif Bp == 0.:
         return B**2 * v_rel * pl_rad**2
-
+    else:
+        raise ValueError("Planet magnetic field must be >= 0.")
 
 
 def b_from_lx_reiners(lx, r):

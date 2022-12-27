@@ -38,7 +38,8 @@ def test_p_spi_lanza():
     assert p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value) == 1.
 
     # input NaN returns NaN
-    assert np.isnan(p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, Bp=np.nan))
+    with pytest.raises(ValueError):
+        np.isnan(p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, Bp=np.nan))
 
 
 def test_b_from_lx_reiners():

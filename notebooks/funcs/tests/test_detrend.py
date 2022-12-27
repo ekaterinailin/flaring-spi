@@ -39,7 +39,8 @@ def test_custom_detrending(a1, a2, period1, period2, quad, cube,):
 
 
     flares = flccc.find_flares(addtail=True).flares
-    print(flares)
+    print(flares.ed_rec)
+    print(flares.ampl_rec)
 
     # check that uncertainty is 
     assert np.nanmedian(flccc.detrended_flux_err) == pytest.approx(errorval, abs=2)
@@ -47,13 +48,21 @@ def test_custom_detrending(a1, a2, period1, period2, quad, cube,):
 
     compare = pd.DataFrame({'istart': {0: 5280, 1: 13160, 2: 23160},
                             'istop': {0: 5346, 1: 13163, 2: 23175}})
-    assert (flares[["istart","istop"]] == compare[["istart","istop"]]).all().all()
-    
-    assert (flares.ed_rec.values ==
-            pytest.approx(np.array([802.25, 4.7907, 40.325]), rel=0.2))
+        
+    assert (flares[["istart"]] == compare[["istart"]]).all().all()
 
-    assert (flares.ampl_rec.values ==
-            pytest.approx(np.array([0.28757, 0.03004, 0.064365]), rel=0.25))
+    edrec = np.array([802.25, 4.7907, 40.325])
+    amplrec = np.array([0.28757, 0.03004, 0.064365])
+
+    for i in range(3):
+        assert [float(flares[["istop"]].values[i])] == pytest.approx([float(compare[["istop"]].values[i])],
+                                                            rel=.09)
+    
+    for i in range(3):
+        assert [flares.ed_rec.values[i]] == pytest.approx([edrec[i]], rel=0.2)
+
+    for i in range(3):
+        assert flares.ampl_rec.values[i] == pytest.approx(amplrec[i], rel=0.25)
 
     return 
 
