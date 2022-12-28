@@ -129,3 +129,8 @@ if __name__ == "__main__":
     # [WRITE] 
     # to file
     mean_std.to_csv("../results/results.csv", index=False)
+
+    # [WRITE]
+    # to paper folder
+    mean_std.to_csv("../../../002_writing/flaring-spi-paper/src/data/results.csv",
+                    index=False)

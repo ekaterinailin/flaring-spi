@@ -285,9 +285,10 @@ if __name__ == "__main__":
         # Calculate the coherence ratio for the orbital period
         tminmax["coherence_ratio_orbit"] = (tminmax.timespan_d / 
                                                     tminmax.coherence_timescale_orbit_d)
-
+        # add Series to the DataFrame
         ct = pd.concat([ct, pd.DataFrame(tminmax).T], ignore_index=True)
 
+    # merege the two DataFrames
     ct.TIC = ct.TIC.astype(str)
     df.TIC = df.TIC.astype(str)
     df_timespan = pd.merge(df, ct, on="TIC")
