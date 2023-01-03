@@ -33,6 +33,28 @@ from funcs.spirelations import (b_from_lx_reiners,
                                 calculate_relative_velocity)
 
 
+def map_bibkey(reflink, bibkeys):
+    """Map the bibkey to the reflink.
+    
+    Parameters
+    ----------
+    reflink : str
+        The reflink to the source.
+    bibkeys : pd.DataFrame 
+        The table with the reflink to bibkey mapping.
+
+    Returns
+    -------
+    str
+        The bibkey.
+    """
+
+    try:
+        return bibkeys[bibkeys.pl_orbper_reflink == reflink]["pl_orbper_bibkey"].values[0]
+    except:
+        return np.nan
+
+
 if __name__ == "__main__":
 
     # -------------------------------------------------------------------------
@@ -75,10 +97,10 @@ if __name__ == "__main__":
     # add semi-major axis in AU, stellar radius in Rsun, 
     # planet radius in Rjup, and orbital period to the table:
 
-    # merge teh relevant part of the table
+    # merge the relevant part of the table
     mean_std = mean_std.merge(sps_w_ad[["TIC", "pl_orbsmax","st_rad_kepler",
                                         "st_rad_tess", "pl_radj", "pl_orbper_kepler",
-                                        "pl_orbper_tess"]],
+                                        "pl_orbper_tess","pl_orbper_reflink"]],
                                 on="TIC", how="left")
 
     # rename columns and fill NaNs will TESS values
@@ -121,7 +143,26 @@ if __name__ == "__main__":
 
     # calculate the SPI power from the Lanza 2012 scaling relation with Bp=0
     mean_std["p_spi_erg_s_bp0"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj, Bp=0.), axis=1)  
+                                                            x.B_G, x.pl_radj, Bp=0.), axis=1) 
+
+    # -------------------------------------------------------------------------
+    # For transparency, add bibkeys to the table for the literature values
+
+    # 1. orbital period
+
+    # read in the reflink to bibkey mapping table
+    bibkeys = pd.read_csv("../results/pl_orbper_source_to_bibkey.csv")
+
+    # add the bibkey to the table
+    mean_std["pl_orbper_bibkey"] = mean_std.apply(lambda x: map_bibkey(x.pl_orbper_reflink, bibkeys),
+                                                    axis=1)
+
+    # delete the reflink column
+    mean_std.drop(columns=["pl_orbper_reflink"], inplace=True)
+
+
+
+
 
     # -------------------------------------------------------------------------
     # Finally, save the table

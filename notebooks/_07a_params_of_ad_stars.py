@@ -60,24 +60,51 @@ if __name__ == "__main__":
                                     suffixes=("_kepler", "_tess"))
 
     # add for AU Mic the values uncertainty in the orbital period 
-    # from Martioli et al. 2021
+    # from Zicher et al. 2022
     # and remove the Kepler enty
     sps_w_ad.loc[sps_w_ad.tic_id == "441420236", "pl_orbper_tess"] = 8.463
     sps_w_ad.loc[sps_w_ad.tic_id == "441420236", "pl_orbper_kepler"] = np.nan
     sps_w_ad.loc[sps_w_ad.tic_id == "441420236", "pl_orbpererr2_tess"] = -2e-6
     sps_w_ad.loc[sps_w_ad.tic_id == "441420236", "pl_orbpererr1_tess"] = 2e-6
     
+    # fill in Zicher et al. 2022 for AU Mic instead of Cale et al. 2021
+    sps_w_ad.loc[sps_w_ad.tic_id == "441420236", 
+                 "pl_orbper_reflink"] = ("<a refstr=ZICHER_ET_AL__2022 "
+                                         "href=https://ui.adsabs.harvard.edu/abs/2022MNRAS.512.3060Z/abstract "
+                                         "target=ref>Zicher et al. 2022</a>")
+
+
     # add for Kepler-396 the values uncertainty in the orbital period
-    # from Battley et al. 2022
+    # from Battley et al. 2021
     # the results are from TESS, but fill in Kepler anyways
     sps_w_ad.loc[sps_w_ad.tic_id == "27769688", "pl_orbper_kepler"] = 42.99292140
     sps_w_ad.loc[sps_w_ad.tic_id == "27769688", "pl_orbpererr2_kepler"] = -0.00002072
     sps_w_ad.loc[sps_w_ad.tic_id == "27769688", "pl_orbpererr1_kepler"] = 0.00002072
+    sps_w_ad.loc[sps_w_ad.tic_id == "27769688", 
+                 "pl_orbper_reflink"] = ("<a refstr=BATTLEY_ET_AL__2021 "
+                                         "href=https://ui.adsabs.harvard.edu/abs/2021MNRAS.503.4092B/abstract "
+                                         "target=ref>Battley et al. 2021</a>")
+
 
     # for HAT-P-11, fill in the orbital period error from
     # Bakos et al. 2010
     sps_w_ad.loc[sps_w_ad.tic_id == "28230919", "pl_orbpererr2_kepler"] = -7.1e-6
     sps_w_ad.loc[sps_w_ad.tic_id == "28230919", "pl_orbpererr1_kepler"] = 7.1e-6
+    sps_w_ad.loc[sps_w_ad.tic_id == "28230919", 
+                 "pl_orbper_reflink"] = ("<a refstr=BAKOS_ET_AL__2010 "
+                                         "href=https://ui.adsabs.harvard.edu/abs/2010ApJ...710.1724B/abstract  "
+                                         "target=ref>Bakos et al. 2010</a>")
+
+    # NOW FOR THE BROWN DWARF SYSTEMS
+
+    # LP 261-75
+    lp261 = sps_w_ad.tic_id == "67646988"
+
+    # fill in the source for the orbital period
+    # Irwiin+2018 is consistent with the table, but we got this from TESS
+    sps_w_ad.loc[lp261, "pl_orbper_reflink"]
+
+
 
     # write the table to a CSV file
     path_to_params = "../results/params_of_star_planet_systems_with_AD_tests.csv"
