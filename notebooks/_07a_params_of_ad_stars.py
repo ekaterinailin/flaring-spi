@@ -92,7 +92,7 @@ if __name__ == "__main__":
     sps_w_ad.loc[sps_w_ad.tic_id == "28230919", "pl_orbpererr1_kepler"] = 7.1e-6
     sps_w_ad.loc[sps_w_ad.tic_id == "28230919", 
                  "pl_orbper_reflink"] = ("<a refstr=BAKOS_ET_AL__2010 "
-                                         "href=https://ui.adsabs.harvard.edu/abs/2010ApJ...710.1724B/abstract  "
+                                         "href=https://ui.adsabs.harvard.edu/abs/2010ApJ...710.1724B/abstract "
                                          "target=ref>Bakos et al. 2010</a>")
 
     # NOW FOR THE BROWN DWARF SYSTEMS
