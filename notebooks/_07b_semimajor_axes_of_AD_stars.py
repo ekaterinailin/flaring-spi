@@ -20,7 +20,7 @@ import pandas as pd
 from astropy import units as u
 from astropy.constants import M_jup, M_sun
 
-from funcs.keplerian import get_semimajor_axis
+from funcs.keplerian import get_semimajor_axis, get_distance_from_planet_range
 
 def wrap_get_semimajor_axis(x):
     """Wrap get_semimajor_axis to work with pandas.apply
@@ -40,6 +40,9 @@ if __name__ == "__main__":
     # read in SPS table
     path = "../results/params_of_star_planet_systems_with_AD_tests.csv"
     sps_w_ad = pd.read_csv(path)
+
+    # make tic_id a string
+    sps_w_ad.tic_id = sps_w_ad.tic_id.astype(str)
     print(f"\n\nReading SPS parameters from {path}.\n")
 
     # get stellar mass, and planet mass and orbital period
@@ -56,8 +59,8 @@ if __name__ == "__main__":
     print(f"Semi-major axis is missing for {a_is_none.shape[0]} SPSs.\n")
 
     # calculate semi-major axis for these rows
-    sps_w_ad.loc[sps_w_ad.pl_orbsmax.isna(), 
-                "pl_orbsmax"] = a_is_none.apply(wrap_get_semimajor_axis, axis=1)
+    # sps_w_ad.loc[sps_w_ad.pl_orbsmax.isna(), 
+    #             "pl_orbsmax"] = a_is_none.apply(wrap_get_semimajor_axis, axis=1)
 
 
     # -------------------------------------------------------------------------
@@ -66,8 +69,8 @@ if __name__ == "__main__":
     # HIP 67522 from rizzuto+2020 11.7 stellar radii
     # with 1.38 R sun, and 0.00465047 AU per solar radius
     au_per_rad = 0.00465047
-    strad = sps_w_ad.loc[sps_w_ad.TIC == "166527623", "st_rad_kepler"]
-    sps_w_ad.loc[sps_w_ad.TIC == "166527623", "pl_orbsmax"] = 11.7 * au_per_rad * strad
+    strad = sps_w_ad.loc[sps_w_ad.tic_id == "166527623", "st_rad_kepler"]
+    sps_w_ad.loc[sps_w_ad.tic_id == "166527623", "pl_orbsmax"] = 11.7 * au_per_rad * strad
     sps_w_ad.loc[sps_w_ad.tic_id == "166527623", "pl_orbsmaxerr2"] = -0.27 * au_per_rad * strad
     sps_w_ad.loc[sps_w_ad.tic_id == "166527623", "pl_orbsmaxerr1"] = 0.24 * au_per_rad * strad
 
@@ -79,8 +82,8 @@ if __name__ == "__main__":
 
     # TOI 837 from Bouma+2020 17.26 stellar radii
     # with 1.04 R sun, and 0.00465047 AU per solar radius
-    strad = sps_w_ad.loc[sps_w_ad.TIC == "460205581", "st_rad_kepler"]
-    sps_w_ad.loc[sps_w_ad.TIC == "460205581", "pl_orbsmax"] = 17.26 * au_per_rad * strad
+    strad = sps_w_ad.loc[sps_w_ad.tic_id == "460205581", "st_rad_kepler"]
+    sps_w_ad.loc[sps_w_ad.tic_id == "460205581", "pl_orbsmax"] = 17.26 * au_per_rad * strad
     sps_w_ad.loc[sps_w_ad.tic_id == "460205581", "pl_orbsmaxerr2"] = -0.6 * au_per_rad * strad
     sps_w_ad.loc[sps_w_ad.tic_id == "460205581", "pl_orbsmaxerr1"] = 0.6 * au_per_rad * strad
 
@@ -95,8 +98,8 @@ if __name__ == "__main__":
 
     # K2-354 from DeLeon+2021 19.05 stellar radii
     # with 0.41 R sun, and 0.00465047 AU per solar radius
-    strad = sps_w_ad.loc[sps_w_ad.TIC == "468989066", "st_rad_kepler"]
-    sps_w_ad.loc[sps_w_ad.TIC == "468989066", "pl_orbsmax"] = 19.05 * au_per_rad * strad
+    strad = sps_w_ad.loc[sps_w_ad.tic_id == "468989066", "st_rad_kepler"]
+    sps_w_ad.loc[sps_w_ad.tic_id == "468989066", "pl_orbsmax"] = 19.05 * au_per_rad * strad
     sps_w_ad.loc[sps_w_ad.tic_id == "468989066", "pl_orbsmaxerr2"] = -0.21 * au_per_rad * strad
     sps_w_ad.loc[sps_w_ad.tic_id == "468989066", "pl_orbsmaxerr1"] = 0.21 * au_per_rad * strad
 
@@ -150,7 +153,25 @@ if __name__ == "__main__":
     print(f"{remaining_missing.shape[0]} SPSs still miss semi-major axis info.\n")
     if remaining_missing.shape[0] != 0:
         print(f"These are:\n")
-        print(remaining_missing.TIC)
+        print(remaining_missing.tic_id)
+
+    # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # NOW COMPUTE THE RANGE OF THE SEMI-MAJOR AXIS USING ECCENTRICITY AND
+    # THE ERROR ON THE SEMI-MAJOR AXIS
+
+    # if eccentricity is given as 0 with no uncertainties, fill in np.nan
+    sps_w_ad.loc[sps_w_ad.pl_orbeccen == 0, "pl_orbeccen"] = np.nan
+
+    # if eccentricity is given as 0 with no a value >0 for the upper error,
+    # fill in that value
+    sps_w_ad.loc[(sps_w_ad.pl_orbeccen == 0) & 
+                 (sps_w_ad.pl_orbeccenerr1 > 0.), "pl_orbeccen"] = sps_w_ad.loc[(sps_w_ad.pl_orbeccen == 0) & 
+                               (sps_w_ad.pl_orbeccenerr1 > 0.),
+                                "pl_orbeccenerr1"]
+
+    sps_w_ad["a_au_err"] = sps_w_ad.apply(lambda x: 
+                                            get_distance_from_planet_range(x.pl_orbsmax, x.pl_orbeccen, x.pl_orbsmaxerr1), axis=1)
 
     # write the result to the original file
     sps_w_ad.to_csv("../results/params_of_star_planet_systems_with_AD_tests.csv", index=False)
