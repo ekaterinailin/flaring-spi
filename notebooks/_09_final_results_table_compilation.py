@@ -108,13 +108,6 @@ if __name__ == "__main__":
     mean_std["st_rad"] =  mean_std.st_rad_kepler.fillna(mean_std.st_rad_tess)
     mean_std["orbper_d"] =  mean_std.pl_orbper_kepler.fillna(mean_std.pl_orbper_tess)
 
-    # -------------------------------------------------------------------------
-    # Add some values manually
-
-    # HIP 67522 from rizzuto+2020 56 stellar radii
-    # with 1.38 R sun, and 0.00465047 AU per solar radius
-    mean_std.loc[mean_std.TIC == 166527623, "a_au"] = 1.38 * 56 * 0.00465047
-
 
     # -------------------------------------------------------------------------
     # Now it's time to calculate some properties of the systems with
@@ -148,14 +141,20 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     # For transparency, add bibkeys to the table for the literature values
 
-    # 1. orbital period
-
     # read in the reflink to bibkey mapping table
-    bibkeys = pd.read_csv("../results/pl_orbper_source_to_bibkey.csv")
+    bibkeys = pd.read_csv("../results/reflink_to_bibkey.csv")
 
-    # add the bibkey to the table
+    # 1. orbital period
     mean_std["pl_orbper_bibkey"] = mean_std.apply(lambda x: map_bibkey(x.pl_orbper_reflink, bibkeys),
                                                     axis=1)
+
+    # 2. stellar radius
+    mean_std["st_rad_bibkey"] = mean_std.apply(lambda x: map_bibkey(x.st_rad_reflink, bibkeys),
+                                                    axis=1)
+
+    
+    
+
 
     # delete the reflink column
     mean_std.drop(columns=["pl_orbper_reflink"], inplace=True)
