@@ -22,19 +22,6 @@ from astropy.constants import M_jup, M_sun
 
 from funcs.keplerian import get_semimajor_axis, get_distance_from_planet_range
 
-def wrap_get_semimajor_axis(x):
-    """Wrap get_semimajor_axis to work with pandas.apply
-    and take available period frm either kepler or TESS."""
-
-    # If Kepler orbital period is available, prefer that
-    if x.pl_orbper_kepler is not np.nan:
-        p = x.pl_orbper_kepler
-    else:
-        p = x.pl_orbper_tess
-        
-    # Return semi-major axis
-    return get_semimajor_axis(p, x.st_mass, x.pl_bmassj).to(u.AU).value
-    
 if __name__ == "__main__":
 
     # read in SPS table
@@ -45,23 +32,10 @@ if __name__ == "__main__":
     sps_w_ad.tic_id = sps_w_ad.tic_id.astype(str)
     print(f"\n\nReading SPS parameters from {path}.\n")
 
-    # get stellar mass, and planet mass and orbital period
-    mass_star = sps_w_ad.st_mass # in solar masses
-    mass_planet = sps_w_ad.pl_bmassj # in Jupiter masses, best mass estimate either mass, or mass*sin(i)
-    period = sps_w_ad.pl_orbper_kepler.fillna(sps_w_ad.pl_orbper_tess) # in days
-
-    # calculate semimajor axis using stellar mass, and planet mass and orbital period
-    semimajor_axis = get_semimajor_axis(period, mass_star, mass_planet)
-
     # select rows where semi-major axis is not known
     a_is_none = sps_w_ad[sps_w_ad.pl_orbsmax.isna()]
 
     print(f"Semi-major axis is missing for {a_is_none.shape[0]} SPSs.\n")
-
-    # calculate semi-major axis for these rows
-    # sps_w_ad.loc[sps_w_ad.pl_orbsmax.isna(), 
-    #             "pl_orbsmax"] = a_is_none.apply(wrap_get_semimajor_axis, axis=1)
-
 
     # -------------------------------------------------------------------------
     # Add some values manually
