@@ -100,7 +100,8 @@ if __name__ == "__main__":
     # merge the relevant part of the table
     mean_std = mean_std.merge(sps_w_ad[["TIC", "pl_orbsmax","st_rad_kepler",
                                         "st_rad_tess", "pl_radj", "pl_orbper_kepler",
-                                        "pl_orbper_tess","pl_orbper_reflink"]],
+                                        "pl_orbper_tess","pl_orbper_reflink",
+                                        "a_au_err"]],
                                 on="TIC", how="left")
 
     # rename columns and fill NaNs will TESS values

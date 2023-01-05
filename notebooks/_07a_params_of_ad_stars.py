@@ -15,6 +15,8 @@ for which AD tests were performed."""
 import pandas as pd
 import numpy as np
 
+import forecaster
+
 from astropy.constants import R_earth, R_jup
 
 if __name__ == "__main__":
@@ -98,31 +100,47 @@ if __name__ == "__main__":
                                          "target=ref>Bakos et al. 2010</a>")
 
 
-    # for GJ 3323, fill in the planetary radius from Lovos 2022
-    # max is 2.01 for ice
-    # min is 0.95 for iron
-    icerp = (2.01 * R_earth / R_jup).value
-    ironrp = (0.95 * R_earth / R_jup).value
-    sps_w_ad.loc[sps_w_ad.tic_id == "43605290", "pl_radj"] = (icerp + ironrp) / 2
-    sps_w_ad.loc[sps_w_ad.tic_id == "43605290", "pl_radjerr2"] = (ironrp - icerp) / 2
-    sps_w_ad.loc[sps_w_ad.tic_id == "43605290", "pl_radjerr1"] = (icerp - ironrp) / 2
-    sps_w_ad.loc[sps_w_ad.tic_id == "43605290",
-                    "pl_radj_reflink"] = ("<a refstr=LOVOS_ET_AL_2022 "
-                                            "href=https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.157L/abstract "
-                                            "target=ref>Lovos et al. 2022</a>")
+    # # for GJ 3323, fill in the planetary radius from Lovos 2022
+    # # max is 2.01 for ice
+    # # min is 0.95 for iron
+    # icerp = (2.01 * R_earth / R_jup).value
+    # ironrp = (0.95 * R_earth / R_jup).value
+    # sps_w_ad.loc[sps_w_ad.tic_id == "43605290", "pl_radj"] = (icerp + ironrp) / 2
+    # sps_w_ad.loc[sps_w_ad.tic_id == "43605290", "pl_radjerr2"] = (ironrp - icerp) / 2
+    # sps_w_ad.loc[sps_w_ad.tic_id == "43605290", "pl_radjerr1"] = (icerp - ironrp) / 2
+    # sps_w_ad.loc[sps_w_ad.tic_id == "43605290",
+    #                 "pl_radj_reflink"] = ("<a refstr=LOVOS_ET_AL_2022 "
+    #                                         "href=https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.157L/abstract "
+    #                                         "target=ref>Lovos et al. 2022</a>")
 
-    # for GJ 1061, fill in the planetary radius from Lovos 2022
-    # max is 1.81 for ice
-    # min is 0.86 for iron
-    icerp = (1.81 * R_earth / R_jup).value
-    ironrp = (0.86 * R_earth / R_jup).value
-    sps_w_ad.loc[sps_w_ad.tic_id == "79611981", "pl_radj"] = (icerp + ironrp) / 2
-    sps_w_ad.loc[sps_w_ad.tic_id == "79611981", "pl_radjerr2"] = (ironrp - icerp) / 2
-    sps_w_ad.loc[sps_w_ad.tic_id == "79611981", "pl_radjerr1"] = (icerp - ironrp) / 2
-    sps_w_ad.loc[sps_w_ad.tic_id == "79611981",
-                    "pl_radj_reflink"] = ("<a refstr=LOVOS_ET_AL_2022 " 
-                                            "href=https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.157L/abstract "
-                                            "target=ref>Lovos et al. 2022</a>")
+    # # for GJ 1061, fill in the planetary radius from Lovos 2022
+    # # max is 1.81 for ice
+    # # min is 0.86 for iron
+    # icerp = (1.81 * R_earth / R_jup).value
+    # ironrp = (0.86 * R_earth / R_jup).value
+    # sps_w_ad.loc[sps_w_ad.tic_id == "79611981", "pl_radj"] = (icerp + ironrp) / 2
+    # sps_w_ad.loc[sps_w_ad.tic_id == "79611981", "pl_radjerr2"] = (ironrp - icerp) / 2
+    # sps_w_ad.loc[sps_w_ad.tic_id == "79611981", "pl_radjerr1"] = (icerp - ironrp) / 2
+    # sps_w_ad.loc[sps_w_ad.tic_id == "79611981",
+    #                 "pl_radj_reflink"] = ("<a refstr=LOVOS_ET_AL_2022 " 
+    #                                         "href=https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.157L/abstract "
+    #                                         "target=ref>Lovos et al. 2022</a>")
+
+    
+    # for planets with no radius error, use Chen and Kipping 2017 forecaster
+    # to get the radius from M sin i
+    radfrommass = lambda x: forecaster.Mstat2R(mean=x.pl_bmassj, 
+                                              onesig_neg=x.pl_bmassjerr2,
+                                              onesig_pos=x.pl_bmassjerr1, 
+                                              unit='Jupiter',
+                                              n_mass_samples=int(1e3),
+                                               classify=False)
+
+    rrr = sps_w_ad[(sps_w_ad.pl_radjerr1.isna()) &
+                   (~sps_w_ad.pl_bmassjerr1.isna())].apply(lambda x: radfrommass(x), axis=1)
+
+    rrr = np.array(rrr.to_list())
+    print(pd.DataFrame({"r":rrr[:,0] , "rerr1":rrr[:,1], "rerr2":rrr[:,2]}))
 
 
     # NOW FOR THE BROWN DWARF SYSTEMS
