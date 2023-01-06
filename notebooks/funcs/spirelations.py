@@ -100,7 +100,7 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1.):
         raise ValueError("Planet magnetic field must be >= 0.")
 
 
-def b_from_lx_reiners(lx, r):
+def b_from_lx_reiners(lx, r, error=False, lx_err=None, r_err=None):
     """Reiners et al. 2022 Eq. 4 inverted to get magnetic field in Gauss.
     
     Parameters
@@ -109,12 +109,56 @@ def b_from_lx_reiners(lx, r):
         X-ray luminosity in erg/s.
     r : float
         Stellar radius in R_sun.
-    """
-    rcm = (r * R_sun).to(u.cm).value
-  
-    B =  np.power(lx / 3.28e-12, 1. / 1.58) / (4. * np.pi * rcm**2) 
-    return B
+    error : bool
+        If True, return the error in the magnetic field by
+        estimating it from the scatter in the relation, and the
+        error in the stellar radius and X-ray luminosity.
+    lx_err : float
+        Error in X-ray luminosity in erg/s.
+    r_err : float
+        Error in stellar radius in R_sun.
 
+    Returns
+    -------
+    B : float
+        Magnetic field in Gauss.
+    B_err : float
+        Error in magnetic field in Gauss.
+    """
+    if np.isnan(lx) | np.isnan(r) | (lx == 0) | (r == 0):
+        B = np.nan
+        highB, lowB = np.nan, np.nan
+        if error:
+            return B, highB, lowB
+        else:
+            return B
+    else:
+        # convert stellar radius to cm
+        rcm = (r * R_sun).to(u.cm).value
+
+        # constants from Reiners et al. 2022 Eq. 4    
+        a, b = 1 / 3.28e-12, 1.58
+
+        # error on b from Reiners et al. 2022 Eq. 4
+        b_err = 0.06
+
+        # calculate magnetic field from inverse of Reiners et al. 2022 Eq. 4
+        get_B = lambda lx, rcm, a, b: (a * lx)**(1/b) / (4. * np.pi * rcm**2)
+
+        B =  get_B(lx, rcm, a, b) 
+
+        if error:
+
+            # convert error in radius
+            rcm_err = (r_err * R_sun).to(u.cm).value
+
+            # calculate upper and lower 1-sigma range on magnetic field
+            highB = get_B(lx+lx_err, rcm+rcm_err, a, b - b_err)
+            lowB = get_B(lx-lx_err, rcm-rcm_err, a, b + b_err)
+
+            return B, highB, lowB
+        else:
+            return B
 
     
 

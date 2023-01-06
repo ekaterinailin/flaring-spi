@@ -49,8 +49,24 @@ def test_b_from_lx_reiners():
     assert b_from_lx_reiners(3.28e-12, 1. / (R_sun.to("cm").value)) * 4. * np.pi == 1.
 
     # input NaN returns NaN
-    np.isnan(b_from_lx_reiners(3.28e-12, np.nan))
+    assert np.isnan(b_from_lx_reiners(3.28e-12, np.nan))
 
+    # input 0 returns nan
+    assert np.isnan(b_from_lx_reiners(3.28e-12, 0))
+
+    # error propagation
+    lx, r = 3.28e-12, 1. / (R_sun.to("cm").value)
+    lx_err, r_err = 0. * lx, 0. * r
+    B, highB, lowB = b_from_lx_reiners(lx, r, error=True, lx_err=lx_err, r_err=r_err)
+
+    # as before
+    assert B == 1. / (4. * np.pi)
+
+    # if input value is 1 output is 1 always
+    assert highB == B
+    assert lowB == B
+
+    
 
 def test_calculate_relative_velocity():
     "Test if the formula converts properly."
