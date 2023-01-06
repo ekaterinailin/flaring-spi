@@ -67,10 +67,13 @@ def wrap_obstimes(TIC, flares):
     return obstime_d
 
 
-def p_spi_lanza12(v_rel, B, pl_rad, Bp=1.):
+
+def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False, 
+                  v_rel_err=None, Bhigh=None, Blow=None, 
+                  pl_rad_err=None, Bp_err=None):
     """Lanza 2012 scaling relation and its adaptation to absence of
     planet magnetic field (Bp=0).
-    
+
     Parameters
     ----------
     v_rel : float
@@ -81,24 +84,74 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1.):
         Planet radius in R_jup.
     Bp : float
         Planet magnetic field in Gauss.
+    error : bool
+        If True, return the error in the power of the star-planet interaction
+        through estimating max and min values of the relation.
+    v_rel_err : float
+        Error in relative velocity between stellar rotation and orbital velocity
+        in km/s.
+    Bhigh : float
+        Upper limit of magnetic field in Gauss.
+    Blow : float
+        Lower limit of magnetic field in Gauss.       
+    pl_rad_err : float
+        Error in planet radius in R_jup.
+    Bp_err : float
+        Error in planet magnetic field in Gauss.
+
 
     Returns
     -------
-    p_spi : float
-        Power of the star-planet interaction in erg/s
+    p_spi, p_spi_err : float, float
+        Power of the star-planet interaction in erg/s, error in erg/s.
     """
+    # --------------------
+    # Unit conversion:
+
     # convert from Rjup to cm
     pl_rad = pl_rad * R_jup.to(u.cm).value
 
     # convert from km/s to cm/s
     v_rel = v_rel * 1e6
+
+    if error:
+        # convert from Rjup to cm
+        pl_rad_err = pl_rad_err * R_jup.to(u.cm).value
+
+        # convert from km/s to cm/s
+        v_rel_err = v_rel_err * 1e6
+
+    # --------------------
+
+    # --------------------
+    # Three cases: Bp > 0 and Bp = 0 and Bp < 0
+
     if Bp > 0.:
-        return B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.)
+
+        pspi = B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.)
+        
+        if error:
+            pspi_high = Bhigh**(4./3.) * (v_rel + v_rel_err) * (pl_rad + pl_rad_err)**2 * (Bp + Bp_err)**(2./3.)
+            pspi_low = Blow**(4./3.) * (v_rel - v_rel_err) * (pl_rad - pl_rad_err)**2 * (Bp - Bp_err)**(2./3.)
+            return pspi, pspi_high, pspi_low
+        
+        else:
+            return pspi
+    
     elif Bp == 0.:
-        return B**2 * v_rel * pl_rad**2
+
+        pspi = B**2 * v_rel * pl_rad**2
+
+        if error:
+            pspi_high = Bhigh**2 * (v_rel + v_rel_err) * (pl_rad + pl_rad_err)**2
+            pspi_low = Blow**2 * (v_rel - v_rel_err) * (pl_rad - pl_rad_err)**2
+            return pspi, pspi_high, pspi_low
+    
+        else:
+            return pspi
+    
     else:
         raise ValueError("Planet magnetic field must be >= 0.")
-
 
 def b_from_lx_reiners(lx, r, error=False, lx_err=None, r_err=None):
     """Reiners et al. 2022 Eq. 4 inverted to get magnetic field in Gauss.

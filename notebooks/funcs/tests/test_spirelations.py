@@ -32,7 +32,7 @@ def test_convert_datapoints_to_obstime():
         convert_datapoints_to_obstime(1e5, "Chandra")
 
 
-def test_p_spi_lanza():
+def test_p_spi_lanza12():
     """Tiny test for SPI power function"""
     # input unit conversion check
     assert p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value) == 1.
@@ -40,6 +40,20 @@ def test_p_spi_lanza():
     # input NaN returns NaN
     with pytest.raises(ValueError):
         np.isnan(p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, Bp=np.nan))
+
+    # input negative returns ValueError
+    with pytest.raises(ValueError):
+        p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, Bp=-1.)
+    
+    # error check
+    assert (p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, error=True,
+                        v_rel_err=0,Bhigh=1,Blow=1.,Bp_err=0., pl_rad_err=0.) 
+                         == (1., 1., 1.))
+
+    # error check
+    assert (p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, error=True,
+                        v_rel_err=0.,Bhigh=2,Blow=0.,Bp_err=1., pl_rad_err=0.)
+                            == (1., 4., 0.))
 
 
 def test_b_from_lx_reiners():
@@ -66,7 +80,7 @@ def test_b_from_lx_reiners():
     assert highB == B
     assert lowB == B
 
-    
+
 
 def test_calculate_relative_velocity():
     "Test if the formula converts properly."
