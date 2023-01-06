@@ -58,8 +58,21 @@ def test_calculate_relative_velocity():
     assert calculate_relative_velocity(1, 1, 1) == 0
 
     # no orbital distance, planet is in the star
-    assert calculate_relative_velocity(0, 1, 3) == 0.
+    assert np.isnan(calculate_relative_velocity(0, 1, 3))
 
     # unit check
     assert (calculate_relative_velocity(1 /2 / np.pi, 1, 2) / 
             149597870.700 * 24. * 3600. == 0.5)
+
+    # error propagation
+    assert (calculate_relative_velocity(1, 1, 1, error=True,
+                                        a_au_err=1, orbper_err=1, rotper_err=1) ==
+            (0, np.sqrt(8) * np.pi / 24. / 3600. * 149597870.700))
+
+    
+    # nans
+    assert np.isnan(calculate_relative_velocity(1, 1, 0))
+    assert np.isnan(calculate_relative_velocity(1, 0, 1))
+    assert np.isnan(calculate_relative_velocity(np.nan, 1, 1))
+    assert np.isnan(calculate_relative_velocity(np.nan, 1, 1, error=True)).all()
+

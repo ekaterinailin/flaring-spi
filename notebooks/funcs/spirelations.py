@@ -116,7 +116,10 @@ def b_from_lx_reiners(lx, r):
     return B
 
 
-def calculate_relative_velocity(a_au, orbper, rotper):
+    
+
+def calculate_relative_velocity(a_au, orbper, rotper, error=False,
+                                a_au_err=None, orbper_err=None, rotper_err=None):
     """Calculate the relative velocity between stellar rotation at the planetary orbit
     and the orbital distance of the planet in km/s.
 
@@ -128,6 +131,15 @@ def calculate_relative_velocity(a_au, orbper, rotper):
         Orbital period in days.
     rotper : float
         Stellar rotation period in days.
+    error : bool
+        If True, return the error in the relative velocity from
+        error propagation.
+    a_au_err : float
+        Error in semi-major axis in AU.
+    orbper_err : float
+        Error in orbital period in days.
+    rotper_err : float
+        Error in stellar rotation period in days.
 
     Returns
     -------
@@ -135,9 +147,52 @@ def calculate_relative_velocity(a_au, orbper, rotper):
         Relative velocity between stellar rotation at the planetary orbit
         and the orbital velocity of the planet in km/s.
     """
-    v_rel = 2 * np.pi * a_au * (1/orbper - 1/rotper) 
     
     # return in km/s
     # 1AU = 149597870.700 km
     # 1day = 24h * 3600s
-    return v_rel / 24. / 3600. * 149597870.700
+
+    # convet au to km
+    a_au = a_au * 149597870.700
+
+    if (np.isnan(a_au) | np.isnan(orbper) | np.isnan(rotper) | 
+        (a_au == 0) | (orbper == 0) | (rotper == 0)):
+        v_rel = np.nan
+        v_rel_err = np.nan
+
+    else:
+        # convert orbper to s
+        orbper = orbper * 24. * 3600.
+
+        # convert rotper to s
+        rotper = rotper * 24. * 3600.
+        
+        v_rel = 2 * np.pi * a_au * (1/orbper - 1/rotper)
+
+        if error:
+            # get error in km/s
+            dv_dau = 2 * np.pi * (1/orbper - 1/rotper)
+            dv_dorbper = -2 * np.pi * a_au * (1/orbper**2)
+            dv_drotper = 2 * np.pi * a_au * (1/rotper**2)
+
+            # convert a_au_err to km
+            a_au_err = a_au_err * 149597870.700
+
+            # convert orbper_err to s
+            orbper_err = orbper_err * 24. * 3600.
+
+            # convert rotper_err to s
+            rotper_err = rotper_err * 24. * 3600.
+
+            # quadratic error propagation
+            v_rel_err = np.sqrt((dv_dau * a_au_err)**2 +
+                                (dv_dorbper * orbper_err)**2 +
+                                (dv_drotper * rotper_err)**2)
+
+    if error:
+
+        return v_rel, v_rel_err
+
+    else:
+        return v_rel
+

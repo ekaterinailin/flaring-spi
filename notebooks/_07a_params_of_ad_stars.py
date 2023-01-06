@@ -99,6 +99,15 @@ if __name__ == "__main__":
                                          "href=https://ui.adsabs.harvard.edu/abs/2010ApJ...710.1724B/abstract "
                                          "target=ref>Bakos et al. 2010</a>")
     
+
+    # for GJ 674, tic_id 218263393, add uncertainty on pl_bmassj as 0.3 Mearth,
+    # or equivalently 0.00314558 * 0.3 MJup
+    # estimated from Bonfils et al. 2007 and Boisse et al. 2011 discrepancy
+    # see Boisse et al. 2011 Table 2
+    err = 0.00314558 * 0.3
+    sps_w_ad.loc[sps_w_ad.tic_id == "218263393", "pl_bmassjerr2"] = -err
+    sps_w_ad.loc[sps_w_ad.tic_id == "218263393", "pl_bmassjerr1"] = err
+
     # for planets with no radius error, use Chen and Kipping 2017 forecaster
     # to get the radius from M sin i
     radfrommass = lambda x: forecaster.Mstat2R(mean=x.pl_bmassj, 
@@ -133,8 +142,6 @@ if __name__ == "__main__":
     # fill in the source for the orbital period
     # Irwiin+2018 is consistent with the table, but we got this from TESS
     sps_w_ad.loc[lp261, "pl_orbper_reflink"]
-
-
 
     # write the table to a CSV file
     path_to_params = "../results/params_of_star_planet_systems_with_AD_tests.csv"
