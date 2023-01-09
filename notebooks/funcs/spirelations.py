@@ -70,7 +70,7 @@ def wrap_obstimes(TIC, flares):
 
 def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False, 
                   v_rel_err=None, Bhigh=None, Blow=None, 
-                  pl_rad_err=None, Bp_err=None):
+                  pl_radhigh=None, pl_radlow=None, Bp_err=None):
     """Lanza 2012 scaling relation and its adaptation to absence of
     planet magnetic field (Bp=0).
 
@@ -94,8 +94,10 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False,
         Upper limit of magnetic field in Gauss.
     Blow : float
         Lower limit of magnetic field in Gauss.       
-    pl_rad_err : float
-        Error in planet radius in R_jup.
+    pl_radhigh : float
+        Upper limit of planet radius in R_jup.
+    pl_radlow : float
+        Lower limit of planet radius in R_jup.
     Bp_err : float
         Error in planet magnetic field in Gauss.
 
@@ -116,7 +118,8 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False,
 
     if error:
         # convert from Rjup to cm
-        pl_rad_err = pl_rad_err * R_jup.to(u.cm).value
+        pl_radhigh = pl_radhigh * R_jup.to(u.cm).value
+        pl_radlow = pl_radlow * R_jup.to(u.cm).value
 
         # convert from km/s to cm/s
         v_rel_err = v_rel_err * 1e6
@@ -131,8 +134,8 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False,
         pspi = B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.)
         
         if error:
-            pspi_high = Bhigh**(4./3.) * (v_rel + v_rel_err) * (pl_rad + pl_rad_err)**2 * (Bp + Bp_err)**(2./3.)
-            pspi_low = Blow**(4./3.) * (v_rel - v_rel_err) * (pl_rad - pl_rad_err)**2 * (Bp - Bp_err)**(2./3.)
+            pspi_high = Bhigh**(4./3.) * (v_rel + v_rel_err) * pl_radhigh**2 * (Bp + Bp_err)**(2./3.)
+            pspi_low = Blow**(4./3.) * (v_rel - v_rel_err) * pl_radlow**2 * (Bp - Bp_err)**(2./3.)
             return pspi, pspi_high, pspi_low
         
         else:
@@ -143,8 +146,8 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False,
         pspi = B**2 * v_rel * pl_rad**2
 
         if error:
-            pspi_high = Bhigh**2 * (v_rel + v_rel_err) * (pl_rad + pl_rad_err)**2
-            pspi_low = Blow**2 * (v_rel - v_rel_err) * (pl_rad - pl_rad_err)**2
+            pspi_high = Bhigh**2 * (v_rel + v_rel_err) * pl_radhigh**2
+            pspi_low = Blow**2 * (v_rel - v_rel_err) * pl_radlow**2
             return pspi, pspi_high, pspi_low
     
         else:

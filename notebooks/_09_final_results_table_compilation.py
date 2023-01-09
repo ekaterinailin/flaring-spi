@@ -105,7 +105,7 @@ if __name__ == "__main__":
                                         "pl_orbpererr1_kepler", "pl_orbpererr2_kepler",
                                         "pl_orbpererr1_tess", "pl_orbpererr2_tess",
                                         "pl_orbper_tess","pl_orbper_reflink",
-                                        "a_au_err"]],
+                                        "a_au_err", "pl_radjerr1","pl_radjerr2"]],
                                 on="TIC", how="left")
 
     # rename columns and fill NaNs will TESS values
@@ -119,11 +119,11 @@ if __name__ == "__main__":
                                  mean_std.pl_orbpererr2_kepler.fillna(mean_std.pl_orbpererr2_tess)) / 2
 
     # -------------------------------------------------------------------------
-    # Fill in missing values for the rotation period uncertainty with 50% of the
+    # Fill in missing values for the rotation period uncertainty with 10% of the
     # rotation period
 
     rot_but_no_err = np.isnan(mean_std.st_rotp_err) & ~np.isnan(mean_std.st_rotp)
-    mean_std.loc[rot_but_no_err, "st_rotp_err"] = mean_std[rot_but_no_err].st_rotp * 0.5
+    mean_std.loc[rot_but_no_err, "st_rotp_err"] = mean_std[rot_but_no_err].st_rotp * 0.1
     
     # add [*] footnote as the st_rotp_source
     mean_std.loc[rot_but_no_err, "st_rotp_source"] = "[*]"
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     # assume uncertainty on Lx is 50% of the value based on Wright et al 2011/2018
     # for the values from Foster and Poppenhäger 2022
-    mean_std["xray_flux_err_erg_s"] = mean_std.xray_flux_erg_s * 0.5
+    mean_std["xray_flux_err_erg_s"] = mean_std.xray_flux_erg_s * 0.3
 
    
     # MAGNETIC FIELD
@@ -147,12 +147,12 @@ if __name__ == "__main__":
 
     # get uncertainty in B field from X-ray luminosity and stellar radius uncertainty
     # and use the intrinsic scatter, too
-    mean_std["B_G_err1"] = mean_std.apply(lambda x: b_from_lx_reiners(x.xray_flux_erg_s,
+    mean_std["high_B_G"] = mean_std.apply(lambda x: b_from_lx_reiners(x.xray_flux_erg_s,
                                                     x.st_rad, error=True, 
                                                     r_err=x.st_rad_err,
                                                     lx_err=x.xray_flux_err_erg_s)[1], axis=1)
 
-    mean_std["B_G_err2"] = mean_std.apply(lambda x: b_from_lx_reiners(x.xray_flux_erg_s,
+    mean_std["low_B_G"] = mean_std.apply(lambda x: b_from_lx_reiners(x.xray_flux_erg_s,
                                                     x.st_rad, error=True,
                                                     r_err=x.st_rad_err,
                                                     lx_err=x.xray_flux_err_erg_s)[2], axis=1)
@@ -181,7 +181,7 @@ if __name__ == "__main__":
                                             calculate_relative_velocity(x.a_au,
                                             x.orbper_d, x.st_rotp, a_au_err=x.a_au_err,
                                             orbper_err=x.orbper_d_err,
-                                            rotper_err=x.st_rotp_err), axis=1)
+                                            rotper_err=x.st_rotp_err, error=True)[1], axis=1)
 
 
     # SPI POWER 
@@ -189,6 +189,25 @@ if __name__ == "__main__":
     # calculate the SPI power from the Lanza 2012 scaling relation
     mean_std["p_spi_erg_s"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
                                                             x.B_G, x.pl_radj), axis=1)   
+
+    # calculate the uncertainty in the SPI power from the Lanza 2012 scaling relation
+    mean_std["p_spi_erg_s_high"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
+                                                            x.B_G, x.pl_radj, error=True,
+                                                            Blow=x.low_B_G, Bhigh=x.high_B_G,
+                                                            pl_radhigh=x.pl_radj + x.pl_radjerr1,
+                                                            pl_radlow=x.pl_radj + x.pl_radjerr2,
+                                                            v_rel_err=np.abs(x.v_rel_err_km_s),
+                                                            Bp_err=0.)[1], axis=1)
+  
+    mean_std["p_spi_erg_s_low"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
+                                                            x.B_G, x.pl_radj, error=True,
+                                                            Blow=x.low_B_G, Bhigh=x.high_B_G,
+                                                            pl_radhigh=x.pl_radj + x.pl_radjerr1,
+                                                            pl_radlow=x.pl_radj + x.pl_radjerr2,
+                                                            v_rel_err=np.abs(x.v_rel_err_km_s),
+                                                            Bp_err=0.)[2], axis=1)
+
+
 
     # calculate the SPI power from the Lanza 2012 scaling relation with Bp=0
     mean_std["p_spi_erg_s_bp0"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),

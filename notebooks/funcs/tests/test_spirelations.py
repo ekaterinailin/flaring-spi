@@ -34,8 +34,11 @@ def test_convert_datapoints_to_obstime():
 
 def test_p_spi_lanza12():
     """Tiny test for SPI power function"""
+    plrad =  1./ R_jup.to("cm").value
+
+
     # input unit conversion check
-    assert p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value) == 1.
+    assert p_spi_lanza12(1e-6, 1., plrad) == 1.
 
     # input NaN returns NaN
     with pytest.raises(ValueError):
@@ -43,16 +46,18 @@ def test_p_spi_lanza12():
 
     # input negative returns ValueError
     with pytest.raises(ValueError):
-        p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, Bp=-1.)
+        p_spi_lanza12(1e-6, 1., plrad, Bp=-1.)
     
     # error check
-    assert (p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, error=True,
-                        v_rel_err=0,Bhigh=1,Blow=1.,Bp_err=0., pl_rad_err=0.) 
+    assert (p_spi_lanza12(1e-6, 1., plrad, error=True,
+                        v_rel_err=0,Bhigh=1,Blow=1.,Bp_err=0.,pl_radhigh=plrad,
+                        pl_radlow=plrad) 
                          == (1., 1., 1.))
 
     # error check
-    assert (p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, error=True,
-                        v_rel_err=0.,Bhigh=2,Blow=0.,Bp_err=1., pl_rad_err=0.)
+    assert (p_spi_lanza12(1e-6, 1.,plrad, error=True,
+                        v_rel_err=0.,Bhigh=2,Blow=0.,Bp_err=1., pl_radhigh=plrad,
+                        pl_radlow=plrad)
                             == (1., 4., 0.))
 
 
