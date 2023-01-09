@@ -30,7 +30,9 @@ from funcs.ad import aggregate_pvalues
 from funcs.spirelations import (b_from_lx_reiners,
                                 wrap_obstimes,
                                 p_spi_lanza12,
-                                calculate_relative_velocity)
+                                calculate_relative_velocity,
+                                rossby_reiners2014,
+                                b_from_ro_reiners2022)
 
 
 def map_bibkey(reflink, bibkeys):
@@ -100,7 +102,7 @@ if __name__ == "__main__":
     # merge the relevant part of the table
     mean_std = mean_std.merge(sps_w_ad[["TIC", "pl_orbsmax","st_rad_kepler",
                                         "st_raderr1_kepler", "st_raderr2_kepler",
-                                        "st_rad_reflink",
+                                        "st_rad_reflink", "st_lum", "st_lum_reflink",
                                         "st_rad_tess", "pl_radj", "pl_orbper_kepler",
                                         "pl_orbpererr1_kepler", "pl_orbpererr2_kepler",
                                         "pl_orbpererr1_tess", "pl_orbpererr2_tess",
@@ -157,6 +159,15 @@ if __name__ == "__main__":
                                                     r_err=x.st_rad_err,
                                                     lx_err=x.xray_flux_err_erg_s)[2], axis=1)
    
+    # where still nan, calculate Ro and B from Ro with Reiners et al. (2022)
+    # luminosity is in log10(L/Lsun) in Exoplanet Archive
+    mean_std["Ro"] = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, x.st_rotp), axis=1)
+
+    cond = np.isnan(mean_std.B_G)
+    mean_std.loc[cond, "B_G"] = mean_std[cond].apply(lambda x: b_from_ro_reiners2022(x.Ro), axis=1)
+    mean_std.loc[cond, "high_B_G"] = mean_std[cond].apply(lambda x: b_from_ro_reiners2022(x.Ro, error=True)[1], axis=1)
+    mean_std.loc[cond, "low_B_G"] = mean_std[cond].apply(lambda x: b_from_ro_reiners2022(x.Ro, error=True)[2], axis=1)
+
    
     # OBSERVING BASELINE and ORBITS COVERED
 

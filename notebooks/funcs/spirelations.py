@@ -296,3 +296,68 @@ def calculate_relative_velocity(a_au, orbper, rotper, error=False,
     else:
         return v_rel
 
+
+
+def rossby_reiners2014(Lbol, Prot):
+    """Calculate the Rossby number for a given bolometric luminosity.
+    Based on Reiners et al. (2014), as noted in Reiners et al. (2022).
+    
+    Parameters
+    ----------
+    Lbol : float
+        Bolometric luminosity in solar units.
+    Prot : float
+        Rotation period in days.
+
+    Returns
+    -------
+    Ro : float
+        Rossby number.
+    """
+    # convective turnover time
+    tau = 12.3 / (Lbol**0.5)
+
+    # Rossby number
+    Ro = Prot / tau
+
+    return Ro
+
+
+def b_from_ro_reiners2022(Ro, error=False):
+    """Calculate the manetic field from the Rossby number.
+    Based on Reiners et al. (2022), Table 2.
+    
+    Parameters
+    ----------
+    Ro : float
+        Rossby number.
+    error : bool
+        If True, return the error in the magnetic field from
+        scatter in relation.
+
+    Returns
+    -------
+    B : float
+        Magnetic field in Gauss.
+    """
+
+    # slow rotator
+    if Ro > 0.13:
+        B = 199 * Ro**(-1.26)#pm .1
+        if error:
+            B_high = 199 * Ro**(-1.26 + 0.1)
+            B_low = 199 * Ro**(-1.26 - 0.1)
+            
+    # fast rotator
+    elif Ro < 0.13:
+        B = 2050 * Ro**(-0.11) #pm 0.03
+        if error:
+            B_high = 2050 * Ro**(-0.11 + 0.03)
+            B_low = 2050 * Ro**(-0.11 - 0.03)
+    else:
+        B, B_high, B_low = np.nan, np.nan, np.nan
+
+    if error:
+        return B, B_high, B_low
+    else:
+        return B
