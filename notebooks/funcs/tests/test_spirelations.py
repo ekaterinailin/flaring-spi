@@ -38,26 +38,26 @@ def test_p_spi_lanza12():
 
 
     # input unit conversion check
-    assert p_spi_lanza12(1e-6, 1., plrad) == 1.
+    assert p_spi_lanza12(1e-6, 1., plrad, 1) == 1.
 
     # input NaN returns NaN
     with pytest.raises(ValueError):
-        np.isnan(p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, Bp=np.nan))
+        np.isnan(p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, 1, Bp=np.nan))
 
     # input negative returns ValueError
     with pytest.raises(ValueError):
         p_spi_lanza12(1e-6, 1., plrad, Bp=-1.)
     
     # error check
-    assert (p_spi_lanza12(1e-6, 1., plrad, error=True,
+    assert (p_spi_lanza12(1e-6, 1., plrad, 1, error=True,
                         v_rel_err=0,Bhigh=1,Blow=1.,Bp_err=0.,pl_radhigh=plrad,
-                        pl_radlow=plrad) 
+                        pl_radlow=plrad, a_err=0.) 
                          == (1., 1., 1.))
 
     # error check
-    assert (p_spi_lanza12(1e-6, 1.,plrad, error=True,
+    assert (p_spi_lanza12(1e-6, 1.,plrad, 1,  error=True,
                         v_rel_err=0.,Bhigh=2,Blow=0.,Bp_err=1., pl_radhigh=plrad,
-                        pl_radlow=plrad)
+                        pl_radlow=plrad, a_err=0.)
                             == (1., 4., 0.))
 
 

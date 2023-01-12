@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # Next, initialize the final table by aggregating the p-values for the AD tests
 
     # aggregate the p-values
-    mean_std = aggregate_pvalues(adtests, subsample="ED>1s", period="orbit")
+    mean_std = aggregate_pvalues(adtests, subsample="all", period="orbit")
 
     # Then merge in the NASA Exoplanet Archive table and the literature 
     # search table
@@ -102,12 +102,14 @@ if __name__ == "__main__":
     # merge the relevant part of the table
     mean_std = mean_std.merge(sps_w_ad[["TIC", "pl_orbsmax","st_rad_kepler",
                                         "st_raderr1_kepler", "st_raderr2_kepler",
-                                        "st_rad_reflink", "st_lum", "st_lum_reflink",
+                                        "st_rad_reflink", "st_lum", "st_lumerr1",
+                                        "st_lumerr2","st_lum_reflink",
                                         "st_rad_tess", "pl_radj", "pl_orbper_kepler",
                                         "pl_orbpererr1_kepler", "pl_orbpererr2_kepler",
                                         "pl_orbpererr1_tess", "pl_orbpererr2_tess",
                                         "pl_orbper_tess","pl_orbper_reflink",
-                                        "a_au_err", "pl_radjerr1","pl_radjerr2"]],
+                                        "a_au_err", "pl_radjerr1","pl_radjerr2",
+                                        "sy_dist"]],
                                 on="TIC", how="left")
 
     # rename columns and fill NaNs will TESS values
@@ -162,11 +164,24 @@ if __name__ == "__main__":
     # where still nan, calculate Ro and B from Ro with Reiners et al. (2022)
     # luminosity is in log10(L/Lsun) in Exoplanet Archive
     mean_std["Ro"] = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, x.st_rotp), axis=1)
+    mean_std["Ro_high"] = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, x.st_rotp, error=True,
+                                                                    Lbol_high=10**(x.st_lum+x.st_lumerr1),
+                                                                    Lbol_low=10**(x.st_lum+x.st_lumerr2),
+                                                                    Prot_high=x.st_rotp+x.st_rotp_err, 
+                                                                    Prot_low=x.st_rotp-x.st_rotp_err)[1], axis=1)        
+    mean_std["Ro_low"] = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, x.st_rotp, error=True,
+                                                                    Lbol_high=10**(x.st_lum+x.st_lumerr1),
+                                                                    Lbol_low=10**(x.st_lum+x.st_lumerr2),
+                                                                    Prot_high=x.st_rotp+x.st_rotp_err, 
+                                                                    Prot_low=x.st_rotp-x.st_rotp_err)[2], axis=1)        
+
 
     cond = np.isnan(mean_std.B_G)
     mean_std.loc[cond, "B_G"] = mean_std[cond].apply(lambda x: b_from_ro_reiners2022(x.Ro), axis=1)
-    mean_std.loc[cond, "high_B_G"] = mean_std[cond].apply(lambda x: b_from_ro_reiners2022(x.Ro, error=True)[1], axis=1)
-    mean_std.loc[cond, "low_B_G"] = mean_std[cond].apply(lambda x: b_from_ro_reiners2022(x.Ro, error=True)[2], axis=1)
+    mean_std.loc[cond, "high_B_G"] = mean_std[cond].apply(lambda x: b_from_ro_reiners2022(x.Ro, error=True, 
+                                                        Ro_high=x.Ro_high, Ro_low=x.Ro_low)[1], axis=1)
+    mean_std.loc[cond, "low_B_G"] = mean_std[cond].apply(lambda x: b_from_ro_reiners2022(x.Ro, error=True,
+                                                        Ro_high=x.Ro_high, Ro_low=x.Ro_low)[1], axis=1)
 
    
     # OBSERVING BASELINE and ORBITS COVERED
@@ -199,30 +214,30 @@ if __name__ == "__main__":
 
     # calculate the SPI power from the Lanza 2012 scaling relation
     mean_std["p_spi_erg_s"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj), axis=1)   
+                                                            x.B_G, x.pl_radj, x.a_au), axis=1)   
 
     # calculate the uncertainty in the SPI power from the Lanza 2012 scaling relation
     mean_std["p_spi_erg_s_high"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj, error=True,
+                                                            x.B_G, x.pl_radj,x.a_au, error=True,
                                                             Blow=x.low_B_G, Bhigh=x.high_B_G,
                                                             pl_radhigh=x.pl_radj + x.pl_radjerr1,
                                                             pl_radlow=x.pl_radj + x.pl_radjerr2,
                                                             v_rel_err=np.abs(x.v_rel_err_km_s),
-                                                            Bp_err=0.)[1], axis=1)
+                                                            Bp_err=0.,a_err=x.a_au_err)[1], axis=1)
   
     mean_std["p_spi_erg_s_low"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj, error=True,
+                                                            x.B_G, x.pl_radj, x.a_au, error=True,
                                                             Blow=x.low_B_G, Bhigh=x.high_B_G,
                                                             pl_radhigh=x.pl_radj + x.pl_radjerr1,
                                                             pl_radlow=x.pl_radj + x.pl_radjerr2,
                                                             v_rel_err=np.abs(x.v_rel_err_km_s),
-                                                            Bp_err=0.)[2], axis=1)
+                                                            Bp_err=0., a_err=x.a_au_err)[2], axis=1)
 
 
 
     # calculate the SPI power from the Lanza 2012 scaling relation with Bp=0
     mean_std["p_spi_erg_s_bp0"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj, Bp=0.), axis=1) 
+                                                            x.B_G, x.pl_radj,x.a_au, Bp=0.), axis=1) 
 
     
     

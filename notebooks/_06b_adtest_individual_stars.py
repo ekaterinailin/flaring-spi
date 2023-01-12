@@ -41,7 +41,7 @@ if __name__ == '__main__':
     N = 10000
 
     # phaseshift zero for now
-    phaseshift = 0.0
+    phaseshift = 0.75
     print('phaseshift = ', phaseshift)
 
     # Get flare table with final flares
@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     # Select only flare with ED :
     flare_table = flare_table[flare_table['ED'] > 0.]
-    flare_table = flare_table[flare_table.TIC == 267749737]
+    # flare_table = flare_table[flare_table.TIC == 267749737]
     # pick a star to test
     for TIC, flare_table_single_star in flare_table.groupby("TIC"):
 
@@ -58,9 +58,9 @@ if __name__ == '__main__':
         if (flare_table_single_star.shape[0] >= 1):
 
             ID = flare_table_single_star.ID.iloc[0]
-            # if ID == "AU Mic":
-            #     print("We exclude AU Mic for now.")
-            #     continue
+            if ID == "AU Mic":
+                print("We exclude AU Mic for now.")
+                continue
             
             print(ID)
             # Sort the real flares by their phases in ascending order
@@ -94,6 +94,8 @@ if __name__ == '__main__':
             f = get_null_hypothesis_distribution(p, cum_n_exp)
             print(len(p))
             print(p)
+            p = np.sort(np.random.rand(len(p)))
+            print(p)
 
             if len(p) > 2:
 
@@ -126,4 +128,4 @@ if __name__ == '__main__':
                     f.write(f"{tstamp},{TIC},{ID},"
                             f"{len(p)-2},"# account for the added 0 and 1
                             f"{observed_phases.sum().sum()},{phaseshift},"
-                            f"{N},{pval},{atest},all,orbit\n")
+                            f"{N},{pval},{atest},all,randomized_orbit\n")

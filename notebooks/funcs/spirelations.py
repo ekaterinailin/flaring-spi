@@ -68,9 +68,10 @@ def wrap_obstimes(TIC, flares):
 
 
 
-def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False, 
+def p_spi_lanza12(v_rel, B, pl_rad, a, Bp=1., error=False, 
                   v_rel_err=None, Bhigh=None, Blow=None, 
-                  pl_radhigh=None, pl_radlow=None, Bp_err=None):
+                  pl_radhigh=None, pl_radlow=None, a_err=None,
+                  Bp_err=None):
     """Lanza 2012 scaling relation and its adaptation to absence of
     planet magnetic field (Bp=0).
 
@@ -82,6 +83,8 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False,
         X-ray luminosity in erg/s.
     pl_rad : float
         Planet radius in R_jup.
+    a : float
+        Semi-major axis in AU.
     Bp : float
         Planet magnetic field in Gauss.
     error : bool
@@ -98,6 +101,8 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False,
         Upper limit of planet radius in R_jup.
     pl_radlow : float
         Lower limit of planet radius in R_jup.
+    a_err : float
+        Error in semi-major axis in AU.
     Bp_err : float
         Error in planet magnetic field in Gauss.
 
@@ -131,11 +136,11 @@ def p_spi_lanza12(v_rel, B, pl_rad, Bp=1., error=False,
 
     if Bp > 0.:
 
-        pspi = B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.)
+        pspi = B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.) / (a**4)
         
         if error:
-            pspi_high = Bhigh**(4./3.) * (v_rel + v_rel_err) * pl_radhigh**2 * (Bp + Bp_err)**(2./3.)
-            pspi_low = Blow**(4./3.) * (v_rel - v_rel_err) * pl_radlow**2 * (Bp - Bp_err)**(2./3.)
+            pspi_high = Bhigh**(4./3.) * (v_rel + v_rel_err) * pl_radhigh**2 * (Bp + Bp_err)**(2./3.) /  (a - a_err)**4
+            pspi_low = Blow**(4./3.) * (v_rel - v_rel_err) * pl_radlow**2 * (Bp - Bp_err)**(2./3.) /  (a + a_err)**4
             return pspi, pspi_high, pspi_low
         
         else:
@@ -298,7 +303,8 @@ def calculate_relative_velocity(a_au, orbper, rotper, error=False,
 
 
 
-def rossby_reiners2014(Lbol, Prot):
+def rossby_reiners2014(Lbol, Prot, error=False, Lbol_high=None, 
+                       Lbol_low=None, Prot_high=None, Prot_low=None):
     """Calculate the Rossby number for a given bolometric luminosity.
     Based on Reiners et al. (2014), as noted in Reiners et al. (2022).
     
@@ -308,6 +314,18 @@ def rossby_reiners2014(Lbol, Prot):
         Bolometric luminosity in solar units.
     Prot : float
         Rotation period in days.
+    error : bool
+        If True, return the error in the Rossby number from
+        error propagation.
+    Lbol_high : float
+        Upper 1-sigma error in bolometric luminosity in solar units.
+    Lbol_low : float
+        Lower 1-sigma error in bolometric luminosity in solar units.
+    Prot_high : float
+        Upper 1-sigma error in rotation period in days.
+    Prot_low : float    
+        Lower 1-sigma error in rotation period in days.
+
 
     Returns
     -------
@@ -317,13 +335,25 @@ def rossby_reiners2014(Lbol, Prot):
     # convective turnover time
     tau = 12.3 / (Lbol**0.5)
 
+    if error:
+        tau_high = 12.3 / (Lbol_low**0.5)
+        tau_low = 12.3 / (Lbol_high**0.5)
+
     # Rossby number
     Ro = Prot / tau
 
-    return Ro
+
+    if error:
+        Ro_high = Prot_high / tau_low
+        Ro_low = Prot_low / tau_high
+
+    if error:
+        return Ro, Ro_high, Ro_low
+    else:
+        return Ro
 
 
-def b_from_ro_reiners2022(Ro, error=False):
+def b_from_ro_reiners2022(Ro, error=False, Ro_high=None, Ro_low=None):
     """Calculate the manetic field from the Rossby number.
     Based on Reiners et al. (2022), Table 2.
     
@@ -334,6 +364,10 @@ def b_from_ro_reiners2022(Ro, error=False):
     error : bool
         If True, return the error in the magnetic field from
         scatter in relation.
+    Ro_high : float
+        Upper 1-sigma error in Rossby number.
+    Ro_low : float
+        Lower 1-sigma error in Rossby number.
 
     Returns
     -------
@@ -345,15 +379,15 @@ def b_from_ro_reiners2022(Ro, error=False):
     if Ro > 0.13:
         B = 199 * Ro**(-1.26)#pm .1
         if error:
-            B_high = 199 * Ro**(-1.26 + 0.1)
-            B_low = 199 * Ro**(-1.26 - 0.1)
+            B_high = 199 * Ro_low**(-1.26 + 0.1)
+            B_low = 199 * Ro_high**(-1.26 - 0.1)
             
     # fast rotator
     elif Ro < 0.13:
         B = 2050 * Ro**(-0.11) #pm 0.03
         if error:
-            B_high = 2050 * Ro**(-0.11 + 0.03)
-            B_low = 2050 * Ro**(-0.11 - 0.03)
+            B_high = 2050 * Ro_low**(-0.11 + 0.03)
+            B_low = 2050 * Ro_high**(-0.11 - 0.03)
     else:
         B, B_high, B_low = np.nan, np.nan, np.nan
 
