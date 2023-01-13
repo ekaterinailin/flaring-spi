@@ -365,9 +365,9 @@ def b_from_ro_reiners2022(Ro, error=False, Ro_high=None, Ro_low=None):
         If True, return the error in the magnetic field from
         scatter in relation.
     Ro_high : float
-        Upper 1-sigma error in Rossby number.
+        Upper 1-sigma limit in Rossby number.
     Ro_low : float
-        Lower 1-sigma error in Rossby number.
+        Lower 1-sigma limit in Rossby number.
 
     Returns
     -------
@@ -379,15 +379,19 @@ def b_from_ro_reiners2022(Ro, error=False, Ro_high=None, Ro_low=None):
     if Ro > 0.13:
         B = 199 * Ro**(-1.26)#pm .1
         if error:
-            B_high = 199 * Ro_low**(-1.26 + 0.1)
-            B_low = 199 * Ro_high**(-1.26 - 0.1)
+            if Ro>=1:
+                B_high = 199 * Ro_low**(-1.26 + 0.1)
+                B_low = 199 * Ro_high**(-1.26 - 0.1)
+            else:
+                B_low = 199 * Ro_high**(-1.26 + 0.1)
+                B_high = 199 * Ro_low**(-1.26 - 0.1)
             
     # fast rotator
     elif Ro < 0.13:
         B = 2050 * Ro**(-0.11) #pm 0.03
         if error:
-            B_high = 2050 * Ro_low**(-0.11 + 0.03)
-            B_low = 2050 * Ro_high**(-0.11 - 0.03)
+            B_low = 2050 * Ro_low**(-0.11 + 0.03)
+            B_high = 2050 * Ro_high**(-0.11 - 0.03)
     else:
         B, B_high, B_low = np.nan, np.nan, np.nan
 
@@ -395,3 +399,63 @@ def b_from_ro_reiners2022(Ro, error=False, Ro_high=None, Ro_low=None):
         return B, B_high, B_low
     else:
         return B
+
+
+
+def pspi_kavanagh2022(Rp, B, vrel, a, Bp=1., error=False, Rphigh=None, Bphigh=1.,
+                      Bhigh=None, vrelhigh=None, alow=None, Rplow=None, Bplow=1., 
+                      Blow=None, vrellow=None, ahigh=None):
+    """Power of star-plaet interactions following the
+    Saur et al. 2013 model, put in a scaling law by
+    Kavanagh et al. 2022.
+    
+    Parameters
+    ----------
+    Rp : float
+        Planet radius in Jupiter radii
+    B : float
+        Stellar magnetic field in G
+    vrel : float
+        Relative velocity in km/s
+    a : float
+        Orbital separation in AU
+    Bp : float
+        Planet magnetic field in G
+    error : bool
+        If True, return the error on the pspi
+    Rphigh : float
+        Upper limit on planet radius in Jupiter radii
+    Bphigh : float
+        Upper limit on planet magnetic field in G
+    Bhigh : float   
+        Upper limit on stellar magnetic field in G
+    vrelhigh : float
+        Upper limit on relative velocity in km/s
+    alow : float    
+        Lower limit on orbital separation in AU
+    Rplow : float
+        Lower limit on planet radius in Jupiter radii
+    Bplow : float
+        Lower limit on planet magnetic field in G
+    Blow : float
+        Lower limit on stellar magnetic field in G
+    vrellow : float
+        Lower limit on relative velocity in km/s
+    ahigh : float
+        Upper limit on orbital separation in AU
+
+    Returns
+    -------
+    pspi : float
+        prop. to power of star-planet interaction
+    """
+    pspi = Rp**2 * Bp**(2/3) * B**(1/3) * vrel**2 * a**(-2)
+
+    if error:
+        pspi_high = Rphigh**2 * Bphigh**(2/3) * Bhigh**(1/3) * vrelhigh**2 * alow**(-2)
+        pspi_low = Rplow**2 * Bplow**(2/3) * Blow**(1/3) * vrellow**2 * ahigh**(-2)
+    
+        return pspi, pspi_high, pspi_low
+
+    else:
+        return pspi
