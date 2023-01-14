@@ -68,10 +68,10 @@ def wrap_obstimes(TIC, flares):
 
 
 
-def p_spi_lanza12(v_rel, B, pl_rad, a, Bp=1., error=False, 
+def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False, 
                   v_rel_err=None, Bhigh=None, Blow=None, 
                   pl_radhigh=None, pl_radlow=None, a_err=None,
-                  Bp_err=None):
+                  Bp_err=None, rstarhigh=None, rstarlow=None):
     """Lanza 2012 scaling relation and its adaptation to absence of
     planet magnetic field (Bp=0).
 
@@ -85,6 +85,8 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, Bp=1., error=False,
         Planet radius in R_jup.
     a : float
         Semi-major axis in AU.
+    rstar : float
+        Stellar radius in R_sun.
     Bp : float
         Planet magnetic field in Gauss.
     error : bool
@@ -105,6 +107,10 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, Bp=1., error=False,
         Error in semi-major axis in AU.
     Bp_err : float
         Error in planet magnetic field in Gauss.
+    rstarhigh : float
+        Upper limit of stellar radius in R_sun.
+    rstarlow : float
+        Lower limit of stellar radius in R_sun.
 
 
     Returns
@@ -116,18 +122,28 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, Bp=1., error=False,
     # Unit conversion:
 
     # convert from Rjup to cm
-    pl_rad = pl_rad * R_jup.to(u.cm).value
+    pl_rad = pl_rad * R_jup.to(u.km).value
 
-    # convert from km/s to cm/s
-    v_rel = v_rel * 1e6
+    # convert from rsun to cm
+    rstar = rstar * R_sun.to(u.km).value
+
+    # convert a from AU to km
+    a = a * u.AU.to(u.km)
+
 
     if error:
         # convert from Rjup to cm
-        pl_radhigh = pl_radhigh * R_jup.to(u.cm).value
-        pl_radlow = pl_radlow * R_jup.to(u.cm).value
+        pl_radhigh = pl_radhigh * R_jup.to(u.km).value
+        pl_radlow = pl_radlow * R_jup.to(u.km).value
 
-        # convert from km/s to cm/s
-        v_rel_err = v_rel_err * 1e6
+        # convert rstar, rstarhigh, rstarlow from rsun to cm
+      
+        rstarhigh = rstarhigh * R_sun.to(u.km).value
+        rstarlow = rstarlow * R_sun.to(u.km).value
+
+        #convert a_err from AU to km
+        a_err = a_err * u.AU.to(u.km)
+
 
     # --------------------
 
@@ -136,11 +152,11 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, Bp=1., error=False,
 
     if Bp > 0.:
 
-        pspi = B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.) / (a**4)
+        pspi = B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.) / (a**4) * (rstar**4)
         
         if error:
-            pspi_high = Bhigh**(4./3.) * (v_rel + v_rel_err) * pl_radhigh**2 * (Bp + Bp_err)**(2./3.) /  (a - a_err)**4
-            pspi_low = Blow**(4./3.) * (v_rel - v_rel_err) * pl_radlow**2 * (Bp - Bp_err)**(2./3.) /  (a + a_err)**4
+            pspi_high = Bhigh**(4./3.) * (v_rel + v_rel_err) * pl_radhigh**2 * (Bp + Bp_err)**(2./3.) * rstarhigh**4 /  (a - a_err)**4 
+            pspi_low = Blow**(4./3.) * (v_rel - v_rel_err) * pl_radlow**2 * (Bp - Bp_err)**(2./3.)  * rstarlow**4 /  (a + a_err)**4
             return pspi, pspi_high, pspi_low
         
         else:
@@ -148,11 +164,17 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, Bp=1., error=False,
     
     elif Bp == 0.:
 
-        pspi = B**2 * v_rel * pl_rad**2
+        pspi = B**2 * v_rel * pl_rad**2  / (a**4) * (rstar**4)
+
+        print("B ", Bhigh-B)
+        print("v", v_rel_err)
+        print("rp",pl_radhigh-pl_rad)
+        print("aerr",a_err)
+        print("rerr",rstarhigh-rstar)
 
         if error:
-            pspi_high = Bhigh**2 * (v_rel + v_rel_err) * pl_radhigh**2
-            pspi_low = Blow**2 * (v_rel - v_rel_err) * pl_radlow**2
+            pspi_high = Bhigh**2 * (v_rel + v_rel_err) * pl_radhigh**2  * rstarhigh**4 / (a-a_err**4) 
+            pspi_low = Blow**2 * (v_rel - v_rel_err) * pl_radlow**2 * rstarlow**4 / (a+a_err**4) 
             return pspi, pspi_high, pspi_low
     
         else:
@@ -449,9 +471,24 @@ def pspi_kavanagh2022(Rp, B, vrel, a, Bp=1., error=False, Rphigh=None, Bphigh=1.
     pspi : float
         prop. to power of star-planet interaction
     """
+    # convert a from AU to km
+    a = a * u.AU.to(u.km)
+
+    # convert Rp from Jupiter radii to km
+    Rp = Rp * u.R_jup.to(u.km)
+
+
     pspi = Rp**2 * Bp**(2/3) * B**(1/3) * vrel**2 * a**(-2)
 
     if error:
+        # convert alow and ahigh from AU to km
+        alow = alow * u.AU.to(u.km)
+        ahigh = ahigh * u.AU.to(u.km)
+
+        # convert Rplow and Rphigh from Jupiter radii to km
+        Rplow = Rplow * u.R_jup.to(u.km)
+        Rphigh = Rphigh * u.R_jup.to(u.km)
+
         pspi_high = Rphigh**2 * Bphigh**(2/3) * Bhigh**(1/3) * vrelhigh**2 * alow**(-2)
         pspi_low = Rplow**2 * Bplow**(2/3) * Blow**(1/3) * vrellow**2 * ahigh**(-2)
     
