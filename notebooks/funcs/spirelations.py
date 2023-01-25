@@ -31,6 +31,8 @@ def convert_datapoints_to_obstime(n, mission):
             return n * 2. / 60. / 24.  # 2 min cadence
         elif mission == "Kepler":
             return n / 60. / 24.  # 1 min cadence
+        elif mission == "K2":
+            return n / 60. / 24.  # 1 min cadence
         else:
             raise ValueError("Mission name not recognized for a small LC.")
 
@@ -165,12 +167,6 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
     elif Bp == 0.:
 
         pspi = B**2 * v_rel * pl_rad**2  / (a**4) * (rstar**4)
-
-        print("B ", Bhigh-B)
-        print("v", v_rel_err)
-        print("rp",pl_radhigh-pl_rad)
-        print("aerr",a_err)
-        print("rerr",rstarhigh-rstar)
 
         if error:
             pspi_high = Bhigh**2 * (v_rel + v_rel_err) * pl_radhigh**2  * rstarhigh**4 / (a-a_err**4) 

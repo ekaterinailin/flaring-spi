@@ -296,10 +296,10 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------------------
     # check if the table has all SPSs in it that have ad tests
     
-    assert df_timespan.shape[0] == 40
+    assert df_timespan.shape[0] == 41
 
 
-    print("All 40 SPSs with AD tests are in the table")
+    print("All 41 SPSs with AD tests are in the table")
 
     # ------------------------------------------------------------------------------
     # plot the result and save the file
