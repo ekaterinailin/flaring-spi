@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     # Select only flare with ED :
     flare_table = flare_table[flare_table['ED'] > 0.]
-    # flare_table = flare_table[flare_table.TIC == 267749737]
+    flare_table = flare_table[flare_table.TIC == 278892590]
     # pick a star to test
     for TIC, flare_table_single_star in flare_table.groupby("TIC"):
 
@@ -58,9 +58,6 @@ if __name__ == '__main__':
         if (flare_table_single_star.shape[0] >= 1):
 
             ID = flare_table_single_star.ID.iloc[0]
-            if ID == "AU Mic":
-                print("We exclude AU Mic for now.")
-                continue
             
             print(ID)
             # Sort the real flares by their phases in ascending order
@@ -93,9 +90,6 @@ if __name__ == '__main__':
             # assuming flares are distributed uniformly
             f = get_null_hypothesis_distribution(p, cum_n_exp)
             print(len(p))
-            print(p)
-            p = np.sort(np.random.rand(len(p)))
-            print(p)
 
             if len(p) > 2:
 

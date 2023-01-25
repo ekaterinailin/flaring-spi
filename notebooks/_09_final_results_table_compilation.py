@@ -110,7 +110,7 @@ if __name__ == "__main__":
                                         "pl_orbpererr1_tess", "pl_orbpererr2_tess",
                                         "pl_orbper_tess","pl_orbper_reflink",
                                         "a_au_err", "pl_radjerr1","pl_radjerr2",
-                                        "sy_dist"]],
+                                        "sy_dist", "sy_snum"]],
                                 on="TIC", how="left")
 
     # rename columns and fill NaNs will TESS values
@@ -213,49 +213,39 @@ if __name__ == "__main__":
 
     # SPI POWER 
 
-    # calculate the SPI power from the Lanza 2012 scaling relation
-    mean_std["p_spi_erg_s"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj, x.a_au), axis=1)   
-
     # calculate the uncertainty in the SPI power from the Lanza 2012 scaling relation
-    mean_std["p_spi_erg_s_high"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj,x.a_au, error=True,
+    res = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
+                                                            x.B_G, x.pl_radj,x.a_au, x.st_rad,error=True,
                                                             Blow=x.low_B_G, Bhigh=x.high_B_G,
                                                             pl_radhigh=x.pl_radj + x.pl_radjerr1,
                                                             pl_radlow=x.pl_radj + x.pl_radjerr2,
                                                             v_rel_err=np.abs(x.v_rel_err_km_s),
-                                                            Bp_err=0.,a_err=x.a_au_err)[1], axis=1)
-  
-    mean_std["p_spi_erg_s_low"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj, x.a_au, error=True,
-                                                            Blow=x.low_B_G, Bhigh=x.high_B_G,
-                                                            pl_radhigh=x.pl_radj + x.pl_radjerr1,
-                                                            pl_radlow=x.pl_radj + x.pl_radjerr2,
-                                                            v_rel_err=np.abs(x.v_rel_err_km_s),
-                                                            Bp_err=0., a_err=x.a_au_err)[2], axis=1)
-
-
+                                                            Bp_err=0.,a_err=x.a_au_err,
+                                                            rstarhigh=x.st_rad + x.st_rad_err1,
+                                                            rstarlow=x.st_rad + x.st_rad_err2), axis=1)
+    # convert res into an a 2d array
+    res = np.array(res.values.tolist()).T
+    mean_std["p_spi_erg_s"] = res[0]
+    mean_std["p_spi_erg_s_high"] = res[1]
+    mean_std["p_spi_erg_s_low"] = res[2]
 
     # calculate the SPI power from the Lanza 2012 scaling relation with Bp=0
-    mean_std["p_spi_erg_s_bp0"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj,x.a_au, Bp=0.), axis=1) 
+    res = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
+                                                            x.B_G, x.pl_radj,x.a_au, x.st_rad,error=True,
+                                                            Blow=x.low_B_G, Bhigh=x.high_B_G, Bp=0.,
+                                                            pl_radhigh=x.pl_radj + x.pl_radjerr1,
+                                                            pl_radlow=x.pl_radj + x.pl_radjerr2,
+                                                            v_rel_err=np.abs(x.v_rel_err_km_s),
+                                                            Bp_err=0.,a_err=x.a_au_err,
+                                                            rstarhigh=x.st_rad + x.st_rad_err1,
+                                                            rstarlow=x.st_rad + x.st_rad_err2), axis=1)
+    # convert res into an a 2d array
+    res = np.array(res.values.tolist()).T
+    mean_std["p_spi_erg_s_bp0"] = res[0]
+    mean_std["p_spi_erg_s_bp0_high"] = res[1]
+    mean_std["p_spi_erg_s_bp0_low"] = res[2]
 
-    # calculate the uncertainty in the SPI power from the Lanza 2012 scaling relation
-    mean_std["p_spi_erg_s_bp0_high"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj,x.a_au, error=True,
-                                                            Blow=x.low_B_G, Bhigh=x.high_B_G,
-                                                            pl_radhigh=x.pl_radj + x.pl_radjerr1,
-                                                            pl_radlow=x.pl_radj + x.pl_radjerr2,
-                                                            v_rel_err=np.abs(x.v_rel_err_km_s), Bp=0.,
-                                                            Bp_err=0.,a_err=x.a_au_err)[1], axis=1)
-  
-    mean_std["p_spi_erg_s_bp0_low"] = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj, x.a_au, error=True,
-                                                            Blow=x.low_B_G, Bhigh=x.high_B_G,
-                                                            pl_radhigh=x.pl_radj + x.pl_radjerr1,
-                                                            pl_radlow=x.pl_radj + x.pl_radjerr2,
-                                                            v_rel_err=np.abs(x.v_rel_err_km_s), Bp=0.,
-                                                            Bp_err=0., a_err=x.a_au_err)[2], axis=1)
+
 
     # calculate the SPI power from the Saur et al. 2013 / Kavanagh et al. (2022)
     # scaling relation with Bp=0
@@ -311,3 +301,5 @@ if __name__ == "__main__":
     # to paper folder
     mean_std.to_csv("../../../002_writing/flaring-spi-paper/src/data/results.csv",
                     index=False)
+
+                    
