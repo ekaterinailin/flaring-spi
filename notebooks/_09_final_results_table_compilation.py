@@ -24,8 +24,7 @@ import numpy as np
 import pandas as pd
 
 from funcs.ad import aggregate_pvalues
-from funcs.spirelations import (b_from_lx_reiners,
-                                wrap_obstimes,
+from funcs.spirelations import (wrap_obstimes,
                                 p_spi_lanza12,
                                 calculate_relative_velocity,
                                 rossby_reiners2014,
@@ -95,7 +94,8 @@ if __name__ == "__main__":
     flares = pd.read_csv(path)
 
     # -------------------------------------------------------------------------
-    # Next, initialize the final table by aggregating the p-values for the AD tests
+    # Next, initialize the final table by aggregating the p-values for the 
+    # AD tests
 
     print("[CALC] Aggregating the p-values of the AD tests.")
 
@@ -141,8 +141,9 @@ if __name__ == "__main__":
 
     print("[MERGE] Fill in TESS orbital period uncertainty values where Kepler "
           "values are NaN.")
-    mean_std["orbper_d_err"] =  (mean_std.pl_orbpererr1_kepler.fillna(mean_std.pl_orbpererr1_tess) +
-                                 mean_std.pl_orbpererr2_kepler.fillna(mean_std.pl_orbpererr2_tess)) / 2
+    filledin1 = mean_std.pl_orbpererr1_kepler.fillna(mean_std.pl_orbpererr1_tess)
+    filledin2 = mean_std.pl_orbpererr2_kepler.fillna(mean_std.pl_orbpererr2_tess)
+    mean_std["orbper_d_err"] =  (filledin1 + filledin2) / 2
 
     # -------------------------------------------------------------------------
     # Fill in missing values for the rotation period uncertainty with 10% of the
@@ -150,11 +151,11 @@ if __name__ == "__main__":
 
     print("[MERGE] Fill in missing values for the rotation period uncertainty with "
           "10 per cent of the rotation period.")
-    rot_but_no_err = np.isnan(mean_std.st_rotp_err) & ~np.isnan(mean_std.st_rotp)
-    mean_std.loc[rot_but_no_err, "st_rotp_err"] = mean_std[rot_but_no_err].st_rotp * 0.1
+    rot_no_err = np.isnan(mean_std.st_rotp_err) & ~np.isnan(mean_std.st_rotp)
+    mean_std.loc[rot_no_err, "st_rotp_err"] = mean_std[rot_no_err].st_rotp * 0.1
     
     # add [*] footnote as the st_rotp_source
-    mean_std.loc[rot_but_no_err, "st_rotp_source"] = "[*]"
+    mean_std.loc[rot_no_err, "st_rotp_source"] = "[*]"
 
     # -------------------------------------------------------------------------
     # Now it's time to calculate some properties of the systems with
@@ -164,11 +165,14 @@ if __name__ == "__main__":
     # where still nan, calculate Ro and B from Ro with Reiners et al. (2022)
     # luminosity is in log10(L/Lsun) in Exoplanet Archive    
     print("[CALC] Calculating Rossby number from the rotation period and luminosity.")
-    res = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, x.st_rotp, error=True,
-                                                                    Lbol_high=10**(x.st_lum+x.st_lumerr1),
-                                                                    Lbol_low=10**(x.st_lum+x.st_lumerr2),
-                                                                    Prot_high=x.st_rotp+x.st_rotp_err, 
-                                                                    Prot_low=x.st_rotp-x.st_rotp_err), axis=1)
+    res = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, 
+                                                      x.st_rotp,
+                                                      error=True,
+                                                      Lbol_high=10**(x.st_lum+x.st_lumerr1),
+                                                      Lbol_low=10**(x.st_lum+x.st_lumerr2),
+                                                      Prot_high=x.st_rotp+x.st_rotp_err, 
+                                                      Prot_low=x.st_rotp-x.st_rotp_err), 
+                        axis=1)
     # convert res into a 2d array
     res = np.array(res.tolist())    
 
