@@ -128,6 +128,7 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
 
     # convert from rsun to cm
     rstar = rstar * R_sun.to(u.km).value
+    print(rstar)
 
     # convert a from AU to km
     a = a * u.AU.to(u.km)
@@ -359,7 +360,6 @@ def rossby_reiners2014(Lbol, Prot, error=False, Lbol_high=None,
 
     # Rossby number
     Ro = Prot / tau
-
 
     if error:
         Ro_high = Prot_high / tau_low

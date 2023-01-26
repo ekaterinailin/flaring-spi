@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from astropy.constants import R_jup, R_sun
+from astropy import units as u
 
 
 from ..spirelations import (convert_datapoints_to_obstime,
@@ -34,30 +35,31 @@ def test_convert_datapoints_to_obstime():
 
 def test_p_spi_lanza12():
     """Tiny test for SPI power function"""
-    plrad =  1./ R_jup.to("cm").value
-
+    plrad =  1./ R_jup.to("km").value
+    rstar =  1. / R_sun.to("km").value
+    a = 1 / (1.*u.AU.to('km'))
 
     # input unit conversion check
-    assert p_spi_lanza12(1e-6, 1., plrad, 1) == 1.
+    assert p_spi_lanza12(1, 1., plrad, a, rstar) == 1.
 
     # input NaN returns NaN
     with pytest.raises(ValueError):
-        np.isnan(p_spi_lanza12(1e-6, 1., 1./ R_jup.to("cm").value, 1, Bp=np.nan))
+        np.isnan(p_spi_lanza12(1, 1., plrad, a, rstar, Bp=np.nan))
 
     # input negative returns ValueError
     with pytest.raises(ValueError):
-        p_spi_lanza12(1e-6, 1., plrad, Bp=-1.)
+        p_spi_lanza12(1, 1., plrad, a, rstar, Bp=-1.)
     
     # error check
-    assert (p_spi_lanza12(1e-6, 1., plrad, 1, error=True,
-                        v_rel_err=0,Bhigh=1,Blow=1.,Bp_err=0.,pl_radhigh=plrad,
-                        pl_radlow=plrad, a_err=0.) 
+    assert (p_spi_lanza12(1, 1., plrad, a, rstar, error=True, rstarhigh=rstar,
+                        rstarlow=rstar, v_rel_err=0, Bhigh=1, Blow=1., Bp_err=0.,
+                        pl_radhigh=plrad, pl_radlow=plrad, a_err=0.) 
                          == (1., 1., 1.))
 
     # error check
-    assert (p_spi_lanza12(1e-6, 1.,plrad, 1,  error=True,
-                        v_rel_err=0.,Bhigh=2,Blow=0.,Bp_err=1., pl_radhigh=plrad,
-                        pl_radlow=plrad, a_err=0.)
+    assert (p_spi_lanza12(1, 1.,plrad, a, rstar, error=True, rstarhigh=rstar,
+                        rstarlow=rstar, v_rel_err=0., Bhigh=2, Blow=0., Bp_err=1., 
+                        pl_radhigh=plrad,pl_radlow=plrad, a_err=0.)
                             == (1., 4., 0.))
 
 

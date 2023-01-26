@@ -10,7 +10,7 @@ Ekaterina Ilin, 2022, MIT License
 This script calculates a bunch of values about the AD tests and stellar systems,
  including:
 
-- the magnetic field of the star based on Rossby number (Reiners+2022)
+- the magnetic field of the star based on Rossby number (Reiners+2014/2022)
 - the total observing time per star
 - number of covered orbits per star
 - relative velocity between star and planet at the planets orbit
