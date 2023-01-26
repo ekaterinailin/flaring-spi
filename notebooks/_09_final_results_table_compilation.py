@@ -10,16 +10,13 @@ Ekaterina Ilin, 2022, MIT License
 This script calculates a bunch of values about the AD tests and stellar systems,
  including:
 
-- the magnetic field of the star based on X-ray luminosity (Reiners+2022)
+- the magnetic field of the star based on Rossby number (Reiners+2022)
 - the total observing time per star
 - number of covered orbits per star
 - relative velocity between star and planet at the planets orbit
-- SPI power (Lanya 2009 and Lanza 2012)
+- SPI power (Lanza 2012 w/ and w/o planetary field, Saur+2013/Kavanagh+2022)
 
 Final table is called: results.csv
-
-* https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=PSCompPars
-** https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html
 """
 
 
