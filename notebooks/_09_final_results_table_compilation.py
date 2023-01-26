@@ -66,27 +66,41 @@ if __name__ == "__main__":
 
     # [READ] 
     # in AD test results
-    adtests = pd.read_csv("../results/multistar_adtest.csv")
+    print("[UP] Reading in AD test results from")
+    path = "../results/multistar_adtest.csv"
+    print(path)
+    adtests = pd.read_csv(path)
 
     # [READ] 
     # in the table of known parameters from the NASA Exoplanet Archive and TESS
-    sps_w_ad = pd.read_csv(
-        "../results/params_of_star_planet_systems_with_AD_tests.csv")
+    print("[UP] Reading in the table of known parameters from "
+          "the NASA Exoplanet Archive")
+    path = "../results/params_of_star_planet_systems_with_AD_tests.csv"
+    print(path)
+    sps_w_ad = pd.read_csv(path)
 
     # rename column tic_id to TIC
     sps_w_ad.rename(columns={"tic_id": "TIC"}, inplace=True)
 
     # [READ] 
     # in age and rotation period from the literature search
-    literature_params = pd.read_csv(
-        "../results/2022_08_stellar_params.csv")
+    print("[UP] Reading in age and rotation period "
+          "from the literature search from")
+    path = "../results/2022_08_stellar_params.csv"
+    print(path)
+    literature_params = pd.read_csv(path)
 
     # [READ] 
     # in the flare table
-    flares = pd.read_csv("../results/2022_07_flares_vetted.csv")
+    print("[UP] Reading in the flare table from")
+    path = "../results/2022_07_flares_vetted.csv"
+    print(path)
+    flares = pd.read_csv(path)
 
     # -------------------------------------------------------------------------
     # Next, initialize the final table by aggregating the p-values for the AD tests
+
+    print("[CALC] Aggregating the p-values of the AD tests.")
 
     # aggregate the p-values
     mean_std = aggregate_pvalues(adtests, subsample="ED>1s", period="orbit")
@@ -99,6 +113,8 @@ if __name__ == "__main__":
 
     # add semi-major axis in AU, stellar radius in Rsun, 
     # planet radius in Rjup, and orbital period to the table:
+
+    print("[MERGE] Merging in the NASA Exoplanet Archive table to the AD tests.")
 
     # merge the relevant part of the table
     mean_std = mean_std.merge(sps_w_ad[["TIC", "pl_orbsmax","st_rad_kepler",
@@ -118,8 +134,16 @@ if __name__ == "__main__":
                                           "st_rad_kepler": "st_rad",
                                           "st_raderr1_kepler": "st_rad_err1",
                                           "st_raderr2_kepler": "st_rad_err2",})
+
+    print("[CALC] Calculating stellar radius uncertainty from the mean"
+          "of the upper and lower uncertainties.")
     mean_std["st_rad_err"] =  (mean_std.st_rad_err1 + mean_std.st_rad_err2) / 2
+
+    print("[MERGE] Fill in TESS orbital period values where Kepler values are NaN.")
     mean_std["orbper_d"] =  mean_std.pl_orbper_kepler.fillna(mean_std.pl_orbper_tess)
+
+    print("[MERGE] Fill in TESS orbital period uncertainty values where Kepler "
+          "values are NaN.")
     mean_std["orbper_d_err"] =  (mean_std.pl_orbpererr1_kepler.fillna(mean_std.pl_orbpererr1_tess) +
                                  mean_std.pl_orbpererr2_kepler.fillna(mean_std.pl_orbpererr2_tess)) / 2
 
@@ -127,6 +151,8 @@ if __name__ == "__main__":
     # Fill in missing values for the rotation period uncertainty with 10% of the
     # rotation period
 
+    print("[MERGE] Fill in missing values for the rotation period uncertainty with "
+          "10 per cent of the rotation period.")
     rot_but_no_err = np.isnan(mean_std.st_rotp_err) & ~np.isnan(mean_std.st_rotp)
     mean_std.loc[rot_but_no_err, "st_rotp_err"] = mean_std[rot_but_no_err].st_rotp * 0.1
     
@@ -138,109 +164,132 @@ if __name__ == "__main__":
     # AD tests:
 
    
-    # X-RAY LUMINOSITY
-
-    # assume uncertainty on Lx is 50% of the value based on Wright et al 2011/2018
-    # for the values from Foster and Poppenhäger 2022
-    mean_std["xray_flux_err_erg_s"] = mean_std.xray_flux_erg_s * 0.3
-
-   
-    # MAGNETIC FIELD
-
-    # calculate B field from X-ray luminosity and stellar radius
-    # mean_std["B_G"] = mean_std.apply(lambda x: b_from_lx_reiners(x.xray_flux_erg_s, x.st_rad), axis=1)
-
-    # # get uncertainty in B field from X-ray luminosity and stellar radius uncertainty
-    # # and use the intrinsic scatter, too
-    # mean_std["high_B_G"] = mean_std.apply(lambda x: b_from_lx_reiners(x.xray_flux_erg_s,
-    #                                                 x.st_rad, error=True, 
-    #                                                 r_err=x.st_rad_err,
-    #                                                 lx_err=x.xray_flux_err_erg_s)[1], axis=1)
-
-    # mean_std["low_B_G"] = mean_std.apply(lambda x: b_from_lx_reiners(x.xray_flux_erg_s,
-    #                                                 x.st_rad, error=True,
-    #                                                 r_err=x.st_rad_err,
-    #                                                 lx_err=x.xray_flux_err_erg_s)[2], axis=1)
-   
     # where still nan, calculate Ro and B from Ro with Reiners et al. (2022)
-    # luminosity is in log10(L/Lsun) in Exoplanet Archive
-    mean_std["Ro"] = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, x.st_rotp), axis=1)
-    mean_std["Ro_high"] = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, x.st_rotp, error=True,
+    # luminosity is in log10(L/Lsun) in Exoplanet Archive    
+    print("[CALC] Calculating Rossby number from the rotation period and luminosity.")
+    res = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, x.st_rotp, error=True,
                                                                     Lbol_high=10**(x.st_lum+x.st_lumerr1),
                                                                     Lbol_low=10**(x.st_lum+x.st_lumerr2),
                                                                     Prot_high=x.st_rotp+x.st_rotp_err, 
-                                                                    Prot_low=x.st_rotp-x.st_rotp_err)[1], axis=1)        
-    mean_std["Ro_low"] = mean_std.apply(lambda x: rossby_reiners2014(10**x.st_lum, x.st_rotp, error=True,
-                                                                    Lbol_high=10**(x.st_lum+x.st_lumerr1),
-                                                                    Lbol_low=10**(x.st_lum+x.st_lumerr2),
-                                                                    Prot_high=x.st_rotp+x.st_rotp_err, 
-                                                                    Prot_low=x.st_rotp-x.st_rotp_err)[2], axis=1)        
+                                                                    Prot_low=x.st_rotp-x.st_rotp_err), axis=1)
+    # convert res into a 2d array
+    res = np.array(res.tolist())    
+
+    # write to columns            
+    mean_std["Ro"] = res[:,0]
+    mean_std["Ro_high"] = res[:,1]
+    mean_std["Ro_low"] = res[:,2]
 
 
     # cond = np.isnan(mean_std.B_G) [cond]
-    mean_std["B_G"] = mean_std.apply(lambda x: b_from_ro_reiners2022(x.Ro), axis=1)
-    mean_std["high_B_G"] = mean_std.apply(lambda x: b_from_ro_reiners2022(x.Ro, error=True, 
-                                                        Ro_high=x.Ro_high, Ro_low=x.Ro_low)[1], axis=1)
-    mean_std["low_B_G"] = mean_std.apply(lambda x: b_from_ro_reiners2022(x.Ro, error=True,
-                                                        Ro_high=x.Ro_high, Ro_low=x.Ro_low)[2], axis=1)
+    print("[CALC] Calculating magnetic field strength from the Rossby number.")
+    res = mean_std.apply(lambda x: b_from_ro_reiners2022(x.Ro, error=True,
+                                                        Ro_high=x.Ro_high,
+                                                        Ro_low=x.Ro_low),
+                        axis=1)
+
+    # convert res into a 2d array
+    res = np.array(res.tolist())
+
+    # write to columns
+    mean_std["B_G"] = res[:,0]
+    mean_std["B_G_high"] = res[:,1]
+    mean_std["B_G_low"] = res[:,2]
 
    
     # OBSERVING BASELINE and ORBITS COVERED
 
     # get the observing time for each star using the flare tables
+    print("[CALC] Calculating the observing baseline for each star in days.")
     mean_std["obstime_d"] = mean_std.apply(lambda x: wrap_obstimes(str(x.TIC), 
                                                     flares), axis=1)
 
     # calculate the number of covered orbits
+    print("[CALC] Calculating the number of orbits covered by the observing baseline.")
     mean_std["orbits_covered"] = mean_std["obstime_d"] / mean_std["orbper_d"]
 
 
     # RELATIVE VELOCITY
 
     # calculate relative velocity between stellar rotation at the planetary orbit
-    # and the orbital velocity of the planet in km/s
-    mean_std["v_rel_km_s"] = mean_std.apply(lambda x: 
-                                            calculate_relative_velocity(x.a_au,
-                                            x.orbper_d, x.st_rotp), axis=1)
-    # cqalculate relative velocity errors using the mean uncertainty in the
+    # and the orbital velocity of the planet in km/s and
+    # calculate relative velocity errors using the mean uncertainty in the
     # orbital period
-    mean_std["v_rel_err_km_s"] = mean_std.apply(lambda x: 
-                                            calculate_relative_velocity(x.a_au,
-                                            x.orbper_d, x.st_rotp, a_au_err=x.a_au_err,
-                                            orbper_err=x.orbper_d_err,
-                                            rotper_err=x.st_rotp_err, error=True)[1], axis=1)
+    print("[CALC] Calculating the relative velocity between the stellar rotation "
+            "and the orbital velocity of the planet in km/s.")
+    res = mean_std.apply(lambda x: calculate_relative_velocity(x.a_au,
+                                                               x.orbper_d,
+                                                               x.st_rotp,
+                                                               a_au_err=x.a_au_err,
+                                                               orbper_err=x.orbper_d_err,
+                                                               rotper_err=x.st_rotp_err,
+                                                               error=True),
+                         axis=1)
+
+    # convert to 2d array
+    res = np.array(res.tolist())
+
+    # write to columns
+    mean_std["v_rel_km_s"] = res[:,0]
+    mean_std["v_rel_err_km_s"] = res[:,1]
 
 
     # SPI POWER 
 
-    # calculate the uncertainty in the SPI power from the Lanza 2012 scaling relation
+    # calculate the SPI power from the Lanza 2012 scaling relation
+    print("[CALC] Calculating the SPI power from the Lanza 2012 scaling relation.")
     res = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj,x.a_au, x.st_rad,error=True,
-                                                            Blow=x.low_B_G, Bhigh=x.high_B_G,
-                                                            pl_radhigh=x.pl_radj + x.pl_radjerr1,
-                                                            pl_radlow=x.pl_radj + x.pl_radjerr2,
-                                                            v_rel_err=np.abs(x.v_rel_err_km_s),
-                                                            Bp_err=0.,a_err=x.a_au_err,
-                                                            rstarhigh=x.st_rad + x.st_rad_err1,
-                                                            rstarlow=x.st_rad + x.st_rad_err2), axis=1)
+                                                 x.B_G, 
+                                                 x.pl_radj,
+                                                 x.a_au, 
+                                                 x.st_rad,
+                                                 error=True,
+                                                 Blow=x.B_G_low,
+                                                 Bhigh=x.B_G_high,
+                                                 pl_radhigh=x.pl_radj + x.pl_radjerr1,
+                                                 pl_radlow=x.pl_radj + x.pl_radjerr2,
+                                                 v_rel_err=np.abs(x.v_rel_err_km_s),
+                                                 Bp_err=0.,
+                                                 a_err=x.a_au_err,
+                                                 rstarhigh=x.st_rad + x.st_rad_err1,
+                                                 rstarlow=x.st_rad + x.st_rad_err2),
+                        axis=1)
+
     # convert res into an a 2d array
     res = np.array(res.values.tolist()).T
+
+    # write to columns
     mean_std["p_spi_erg_s"] = res[0]
     mean_std["p_spi_erg_s_high"] = res[1]
     mean_std["p_spi_erg_s_low"] = res[2]
 
+    
     # calculate the SPI power from the Lanza 2012 scaling relation with Bp=0
+    print("[CALC] Calculating the SPI power from the Lanza 2012 scaling relation "
+            "with Bp=0.")
     res = mean_std.apply(lambda x: p_spi_lanza12(np.abs(x.v_rel_km_s),
-                                                            x.B_G, x.pl_radj,x.a_au, x.st_rad,error=True,
-                                                            Blow=x.low_B_G, Bhigh=x.high_B_G, Bp=0.,
-                                                            pl_radhigh=x.pl_radj + x.pl_radjerr1,
-                                                            pl_radlow=x.pl_radj + x.pl_radjerr2,
-                                                            v_rel_err=np.abs(x.v_rel_err_km_s),
-                                                            Bp_err=0.,a_err=x.a_au_err,
-                                                            rstarhigh=x.st_rad + x.st_rad_err1,
-                                                            rstarlow=x.st_rad + x.st_rad_err2), axis=1)
+                                                 x.B_G,
+                                                 x.pl_radj,
+                                                 x.a_au, 
+                                                 x.st_rad,
+                                                 error=True,
+                                                 Blow=x.B_G_low,
+                                                 Bhigh=x.B_G_high, 
+                                                 Bp=0., # THIS IS THE ONLY DIFFERENCE
+                                                 pl_radhigh=x.pl_radj + x.pl_radjerr1,
+                                                 pl_radlow=x.pl_radj + x.pl_radjerr2,
+                                                 v_rel_err=np.abs(x.v_rel_err_km_s),
+                                                 Bp_err=0.,
+                                                 a_err=x.a_au_err,
+                                                 rstarhigh=x.st_rad + x.st_rad_err1,
+                                                 rstarlow=x.st_rad + x.st_rad_err2),
+                         axis=1)
+    
+    
     # convert res into an a 2d array
     res = np.array(res.values.tolist()).T
+    
+    # write to columns
     mean_std["p_spi_erg_s_bp0"] = res[0]
     mean_std["p_spi_erg_s_bp0_high"] = res[1]
     mean_std["p_spi_erg_s_bp0_low"] = res[2]
@@ -249,16 +298,25 @@ if __name__ == "__main__":
 
     # calculate the SPI power from the Saur et al. 2013 / Kavanagh et al. (2022)
     # scaling relation with Bp=0
-    res = mean_std.apply(lambda x: pspi_kavanagh2022(x.pl_radj, x.B_G, np.abs(x.v_rel_km_s), 
-                                                     x.a_au, error=True, 
+    print("[CALC] Calculating the SPI power from the Saur et al. 2013 / Kavanagh et al. (2022) "
+            "scaling relation with Bp=1.")
+    res = mean_std.apply(lambda x: pspi_kavanagh2022(x.pl_radj,
+                                                     x.B_G,
+                                                     np.abs(x.v_rel_km_s), 
+                                                     x.a_au,
+                                                     error=True, 
                                                      Rphigh=x.pl_radj + x.pl_radjerr1, 
                                                      Rplow=x.pl_radj + x.pl_radjerr2,
-                                                     Bhigh=x.high_B_G, Blow=x.low_B_G,
+                                                     Bhigh=x.B_G_high,
+                                                     Blow=x.B_G_low,
                                                      vrelhigh=np.abs(x.v_rel_km_s) + x.v_rel_err_km_s,
                                                      vrellow=np.abs(x.v_rel_km_s) - x.v_rel_err_km_s,
                                                      ahigh=x.a_au + x.a_au_err, 
                                                      alow=x.a_au - x.a_au_err,
-                                                     Bphigh=1., Bplow=1.), axis=1)
+                                                     Bphigh=1.,
+                                                     Bplow=1.),
+                        axis=1)
+
     # convert res into an a 2d array
     res = np.array(res.values.tolist()).T
 
@@ -267,19 +325,28 @@ if __name__ == "__main__":
     mean_std["p_spi_kav22_high"] = res[1]
     mean_std["p_spi_kav22_low"] = res[2]
     
+
     # -------------------------------------------------------------------------
-    # For transparency, add bibkeys to the table for the literature values
+    # For transparency, ADD BIBKEYS to the table for the literature values
+
 
     # read in the reflink to bibkey mapping table
+    print("[UP] Reading in the reflink to bibkey mapping table.")
     bibkeys = pd.read_csv("../results/reflink_to_bibkey.csv")
 
     # 1. orbital period
-    mean_std["pl_orbper_bibkey"] = mean_std.apply(lambda x: map_bibkey(x.pl_orbper_reflink, bibkeys),
-                                                    axis=1)
+    print("[MERGE] Adding the bibkeys for orbital period to the results table.")
+    mean_std["pl_orbper_bibkey"] = mean_std.apply(lambda x: 
+                                                  map_bibkey(x.pl_orbper_reflink, 
+                                                             bibkeys),
+                                                  axis=1)
 
     # 2. stellar radius
-    mean_std["st_rad_bibkey"] = mean_std.apply(lambda x: map_bibkey(x.st_rad_reflink, bibkeys),
-                                                    axis=1)
+    print("[MERGE] Adding the bibkeys for stellar radius to the results table.")
+    mean_std["st_rad_bibkey"] = mean_std.apply(lambda x: 
+                                                map_bibkey(x.st_rad_reflink,
+                                                           bibkeys),
+                                                axis=1)
 
 
     # delete the reflink columns
@@ -288,18 +355,21 @@ if __name__ == "__main__":
 
 
 
-
-
     # -------------------------------------------------------------------------
-    # Finally, save the table
+    # SAVE THE RESULTS TABLE
 
     # [WRITE] 
     # to file
-    mean_std.to_csv("../results/results.csv", index=False)
+    print("[DOWN] writing final results table to")
+    path = "../results/results.csv"
+    print(path)
+    mean_std.to_csv(path, index=False)
 
     # [WRITE]
     # to paper folder
-    mean_std.to_csv("../../../002_writing/flaring-spi-paper/src/data/results.csv",
-                    index=False)
+    print("[DOWN] writing final results table to")
+    path = "../../../002_writing/flaring-spi-paper/src/data/results.csv"
+    print(path)
+    mean_std.to_csv(path, index=False)
 
                     
