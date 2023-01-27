@@ -117,12 +117,13 @@ if __name__ == "__main__":
     mean_std = mean_std.merge(sps_w_ad[["TIC", "pl_orbsmax","st_rad_kepler",
                                         "st_raderr1_kepler", "st_raderr2_kepler",
                                         "st_rad_reflink", "st_lum", "st_lumerr1",
-                                        "st_lumerr2","st_lum_reflink",
+                                        "st_lumerr2","st_lum_reflink", "pl_orbsmax_reflink",
                                         "st_rad_tess", "pl_radj", "pl_orbper_kepler",
                                         "pl_orbpererr1_kepler", "pl_orbpererr2_kepler",
                                         "pl_orbpererr1_tess", "pl_orbpererr2_tess",
                                         "pl_orbper_tess","pl_orbper_reflink",
                                         "a_au_err", "pl_radjerr1","pl_radjerr2",
+                                        "pl_radj_reflink",
                                         "sy_dist", "sy_snum"]],
                                 on="TIC", how="left")
 
@@ -349,10 +350,35 @@ if __name__ == "__main__":
                                                            bibkeys),
                                                 axis=1)
 
+    # 3. orbital semi-major axis
+    print("[MERGE] Adding the bibkeys for orbital semi-major axis to the results table.")
+    mean_std["pl_orbsmax_bibkey"] = mean_std.apply(lambda x:
+                                                    map_bibkey(x.pl_orbsmax_reflink,
+                                                                bibkeys),
+                                                axis=1)
+
+    # 4. stellar luminosity
+    print("[MERGE] Adding the bibkeys for stellar luminosity to the results table.")
+    mean_std["st_lum_bibkey"] = mean_std.apply(lambda x:
+                                                map_bibkey(x.st_lum_reflink,
+                                                            bibkeys),
+                                                axis=1) 
+
+    # 5. planet radius
+    print("[MERGE] Adding the bibkeys for planet radius to the results table.")
+    mean_std["pl_radj_bibkey"] = mean_std.apply(lambda x:
+                                                map_bibkey(x.pl_radj_reflink,
+                                                            bibkeys),
+                                                axis=1) 
+
+
 
     # delete the reflink columns
     mean_std.drop(columns=["pl_orbper_reflink"], inplace=True)
+    mean_std.drop(columns=["pl_orbsmax_reflink"], inplace=True)
     mean_std.drop(columns=["st_rad_reflink"], inplace=True)
+    mean_std.drop(columns=["st_lum_reflink"], inplace=True)
+    mean_std.drop(columns=["pl_radj_reflink"], inplace=True)
 
 
 

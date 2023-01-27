@@ -64,6 +64,7 @@ if __name__ == "__main__":
     reflink = ("<a refstr=BOUMA_ET_AL__2020 "
                "href=https://ui.adsabs.harvard.edu/abs/2020AJ....160..239B/abstract "
                "target=ref>Bouma et al. 2020</a>")
+    sps_w_ad.loc[sps_w_ad.tic_id == "460205581", "pl_orbsmax_reflink"] = reflink
 
     # TOI 837 eccentricity from Bouma+2020 is not constrained
     # so put NaN

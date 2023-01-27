@@ -128,7 +128,6 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
 
     # convert from rsun to cm
     rstar = rstar * R_sun.to(u.km).value
-    print(rstar)
 
     # convert a from AU to km
     a = a * u.AU.to(u.km)

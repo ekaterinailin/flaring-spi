@@ -34,7 +34,7 @@ def test_convert_datapoints_to_obstime():
 
 
 def test_p_spi_lanza12():
-    """Tiny test for SPI power function"""
+    """Test SPI power function"""
     plrad =  1./ R_jup.to("km").value
     rstar =  1. / R_sun.to("km").value
     a = 1 / (1.*u.AU.to('km'))
