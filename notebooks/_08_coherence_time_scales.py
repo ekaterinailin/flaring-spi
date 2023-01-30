@@ -91,6 +91,7 @@ if __name__ == "__main__":
 
             del df[l]
 
+
     # Read in flare table
     path = "../results/PAPER_flare_table.csv"
     flares = pd.read_csv(path)
@@ -158,6 +159,7 @@ if __name__ == "__main__":
     # Get orbital period of SPSs
     path = "../results/params_of_star_planet_systems_with_AD_tests.csv"
     orbits = pd.read_csv(path)
+    
     # cast tic_id to str
     orbits["tic_id"] = orbits["tic_id"].astype(str)
     print(f"Get get orbital periods and uncertainties from\n{path}\n")
@@ -295,10 +297,8 @@ if __name__ == "__main__":
 
     # ------------------------------------------------------------------------------
     # check if the table has all SPSs in it that have ad tests
+    assert df_timespan.shape[0] == 41, df_timespan.shape[0]
     
-    assert df_timespan.shape[0] == 41
-
-
     print("All 41 SPSs with AD tests are in the table")
 
     # ------------------------------------------------------------------------------
