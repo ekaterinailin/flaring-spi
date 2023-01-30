@@ -144,7 +144,7 @@ if __name__ == "__main__":
           "values are NaN.")
     filledin1 = mean_std.pl_orbpererr1_kepler.fillna(mean_std.pl_orbpererr1_tess)
     filledin2 = mean_std.pl_orbpererr2_kepler.fillna(mean_std.pl_orbpererr2_tess)
-    mean_std["orbper_d_err"] =  (filledin1 + filledin2) / 2
+    mean_std["orbper_d_err"] =  (filledin1 - filledin2) / 2
 
     # -------------------------------------------------------------------------
     # Fill in missing values for the rotation period uncertainty with 10% of the

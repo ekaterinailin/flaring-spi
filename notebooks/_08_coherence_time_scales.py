@@ -88,8 +88,8 @@ if __name__ == "__main__":
                   "coherence_timescale_rotation_d", "coherence_ratio_rotation",
                   "tstart_min",	"tstart_max", "orbper", "orbper_err",
                   "timespan_d",	"coherence_timescale_orbit_d", "coherence_ratio_orbit"]:
-
-            del df[l]
+            if l in df.columns:
+                del df[l]
 
 
     # Read in flare table

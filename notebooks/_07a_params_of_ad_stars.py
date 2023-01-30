@@ -99,6 +99,12 @@ if __name__ == "__main__":
                                          "href=https://ui.adsabs.harvard.edu/abs/2010ApJ...710.1724B/abstract "
                                          "target=ref>Bakos et al. 2010</a>")
     
+    # for TRAPPIST-1, add stellar radius from Agol et al. 
+    # the reflink is already correct, but the value is not
+    val, err = 0.1192, 0.0013
+    sps_w_ad.loc[sps_w_ad.tic_id == "278892590", "st_rad_kepler"] = val
+    sps_w_ad.loc[sps_w_ad.tic_id == "278892590", "st_raderr1_kepler"] = err
+    sps_w_ad.loc[sps_w_ad.tic_id == "278892590", "st_raderr2_kepler"] = -err
 
     # for GJ 674, tic_id 218263393, add uncertainty on pl_bmassj as 0.3 Mearth,
     # or equivalently 0.00314558 * 0.3 MJup

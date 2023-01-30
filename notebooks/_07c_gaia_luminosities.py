@@ -85,11 +85,14 @@ if __name__ == "__main__":
     df = df.merge(gaialum, on="hostname", how="left")
 
     # convert lum_flame from linear to log
-    df["lum_flame"] = np.log10(df["lum_flame"])
+    df["log_lum_flame"] = np.log10(df["lum_flame"])
 
     # convert lum flape upper and lower from to error in log
-    df["lum_flame_upper"] = np.log10(df["lum_flame_upper"] - df["lum_flame"])
-    df["lum_flame_lower"] = -np.log10(df["lum_flame"] - df["lum_flame_lower"])
+    df["log_lum_flame_upper"] = (np.log10(df["lum_flame_upper"]) 
+                                - df["log_lum_flame"])
+    df["log_lum_flame_lower"] = (np.log10(df["lum_flame_lower"])
+                                - df["log_lum_flame"])
+
 
     # define reflink for the values you want to replace
     reflink = ("<a refstr=FOUESNEAU__ET_AL__2022 "
@@ -97,12 +100,17 @@ if __name__ == "__main__":
                "target=ref>Fousneau et al. 2022</a>")
 
     # pick where no error on luminosity
-    no_err_st_lum = df["st_lumerr1"].isna()
+    no_err_st_lum = ((df["st_lumerr1"].isna()) 
+                    | (df["st_lumerr2"].isna())
+                    | df["st_lum_reflink"].str.contains("Fousneau"))
+
+    # print(df[["hostname", "lum_flame", "lum_flame_upper", "lum_flame_lower"]].head())
 
     # replace with FLAME luminosity and errors
-    df.loc[no_err_st_lum, "st_lum"] = df.loc[no_err_st_lum, "lum_flame"]
-    df.loc[no_err_st_lum, "st_lumerr1"] = df.loc[no_err_st_lum, "lum_flame_upper"]
-    df.loc[no_err_st_lum, "st_lumerr2"] = df.loc[no_err_st_lum, "lum_flame_lower"]
+    df.loc[no_err_st_lum, "st_lum"] = df.loc[no_err_st_lum]["log_lum_flame"].values
+    df.loc[no_err_st_lum, "st_lumerr1"] = df.loc[no_err_st_lum]["log_lum_flame_upper"].values
+    df.loc[no_err_st_lum, "st_lumerr2"] = df.loc[no_err_st_lum]["log_lum_flame_lower"].values
+
 
     # replace the reflink in st_lum_reflink
     df.loc[no_err_st_lum, "st_lum_reflink"] = reflink
