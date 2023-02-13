@@ -12,7 +12,7 @@ Requires the paper flare table, and the de-trended light curves with phases.
 
 Output goes to multistar_adtest.csv
 """
-
+import warnings
 
 import pandas as pd
 import numpy as np
@@ -33,6 +33,9 @@ import time
 
 if __name__ == '__main__':
         
+    # ignore warnings
+
+    warnings.filterwarnings("ignore")
 
     # time stamp
     tstamp = time.strftime("%Y_%m_%d")
@@ -48,8 +51,9 @@ if __name__ == '__main__':
     flare_table = pd.read_csv("../results/PAPER_flare_table.csv")
 
     # Select only flare with ED :
-    flare_table = flare_table[flare_table['ED'] > 0.]
-    flare_table = flare_table[flare_table.TIC == 278892590]
+    # flare_table = flare_table[flare_table['ED'] > 0.]
+    flare_table = flare_table[flare_table.TIC == "399954349"]
+    print(flare_table.shape)
     # pick a star to test
     for TIC, flare_table_single_star in flare_table.groupby("TIC"):
 
@@ -122,4 +126,4 @@ if __name__ == '__main__':
                     f.write(f"{tstamp},{TIC},{ID},"
                             f"{len(p)-2},"# account for the added 0 and 1
                             f"{observed_phases.sum().sum()},{phaseshift},"
-                            f"{N},{pval},{atest},all,randomized_orbit\n")
+                            f"{N},{pval},{atest},all,orbit\n")

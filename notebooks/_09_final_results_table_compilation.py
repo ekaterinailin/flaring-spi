@@ -236,7 +236,13 @@ if __name__ == "__main__":
     mean_std["v_rel_err_km_s"] = res[:,1]
 
 
-    # SPI POWER 
+    # -------------------------------------------------------------------------
+    # SPI POWER FROM LANZA 2012
+    # -------------------------------------------------------------------------
+
+    # -----------
+    # B_P = 1 G
+    # -----------
 
     # calculate the SPI power from the Lanza 2012 scaling relation
     print("[CALC] Calculating the SPI power from the Lanza 2012 scaling relation.")
@@ -265,7 +271,22 @@ if __name__ == "__main__":
     mean_std["p_spi_erg_s_high"] = res[1]
     mean_std["p_spi_erg_s_low"] = res[2]
 
-    
+     # get normalization value from AU Mic p_spi_erg_s value
+    print("[CALC] Calculating the normalization value for the SPI power.")
+    norm = mean_std.loc[mean_std.TIC == 441420236, "p_spi_erg_s"].values[0]
+
+    # normalize the SPI power
+    print("[CALC] Normalizing the SPI power.")
+    mean_std["p_spi_sb_bp1_norm"] = mean_std["p_spi_erg_s"] / norm
+    mean_std["p_spi_sb_bp1_norm_high"] = mean_std["p_spi_erg_s_high"] / norm
+    mean_std["p_spi_sb_bp1_norm_low"] = mean_std["p_spi_erg_s_low"] / norm
+
+    # -------------------------------------------------------------------------
+
+    # -----------
+    # B_P = 0 G
+    # -----------
+
     # calculate the SPI power from the Lanza 2012 scaling relation with Bp=0
     print("[CALC] Calculating the SPI power from the Lanza 2012 scaling relation "
             "with Bp=0.")
@@ -290,16 +311,33 @@ if __name__ == "__main__":
     
     # convert res into an a 2d array
     res = np.array(res.values.tolist()).T
-    
+
     # write to columns
     mean_std["p_spi_erg_s_bp0"] = res[0]
     mean_std["p_spi_erg_s_bp0_high"] = res[1]
     mean_std["p_spi_erg_s_bp0_low"] = res[2]
 
+    # get normalization value from AU Mic p_spi_erg_s_bp0 value
+    norm = mean_std.loc[mean_std.TIC == 441420236, "p_spi_erg_s_bp0"].values[0]
+    print(norm)
 
+    # normalize the SPI power to AU Mic
+    print("[CALC] Normalizing the SPI power to AU Mic.")
+    mean_std["p_spi_sb_bp0_norm"] = mean_std["p_spi_erg_s_bp0"] / norm
+    mean_std["p_spi_sb_bp0_norm_high"] = mean_std["p_spi_erg_s_bp0_high"] / norm
+    mean_std["p_spi_sb_bp0_norm_low"] = mean_std["p_spi_erg_s_bp0_low"] / norm
+
+
+    # -----------------------------------------------------------------------
+    # KAVANAGH 2022 / SAUR 2013
+    # -----------------------------------------------------------------------
+
+    # -----------
+    # B_P = 1 G
+    # -----------
 
     # calculate the SPI power from the Saur et al. 2013 / Kavanagh et al. (2022)
-    # scaling relation with Bp=0
+    # scaling relation with Bp=1
     print("[CALC] Calculating the SPI power from the Saur et al. 2013 / Kavanagh et al. (2022) "
             "scaling relation with Bp=1.")
     res = mean_std.apply(lambda x: pspi_kavanagh2022(x.pl_radj,
@@ -327,8 +365,69 @@ if __name__ == "__main__":
     mean_std["p_spi_kav22_high"] = res[1]
     mean_std["p_spi_kav22_low"] = res[2]
     
+    # get normalization value from AU Mic p_spi_kav22 value
+    norm = mean_std.loc[mean_std.TIC == 441420236, "p_spi_kav22"].values[0]
+    
+    # normalize the SPI power to AU Mic
+    print("[CALC] Normalizing the SPI power to AU Mic.")
+    mean_std["p_spi_aw_bp1_norm"] = mean_std["p_spi_kav22"] / norm
+    mean_std["p_spi_aw_bp1_norm_high"] = mean_std["p_spi_kav22_high"] / norm
+    mean_std["p_spi_aw_bp1_norm_low"] = mean_std["p_spi_kav22_low"] / norm
+
+    # -----------
+    # B_P = 0 G
+    # -----------
+
+    # calculate the SPI power from the Saur et al. 2013 / Kavanagh et al. (2022)
+    # scaling relation with Bp=0
+
+    print("[CALC] Calculating the SPI power from the Saur et al. 2013 / Kavanagh et al. (2022) "
+            "scaling relation with Bp=0.")
+
+    res = mean_std.apply(lambda x: pspi_kavanagh2022(x.pl_radj,
+                                                        x.B_G,
+                                                        np.abs(x.v_rel_km_s),
+                                                        x.a_au,
+                                                        error=True,
+                                                        Bp=0.,
+                                                        Rphigh=x.pl_radj + x.pl_radjerr1,
+                                                        Rplow=x.pl_radj + x.pl_radjerr2,
+                                                        Bhigh=x.B_G_high,
+                                                        Blow=x.B_G_low,
+                                                        vrelhigh=np.abs(x.v_rel_km_s) + x.v_rel_err_km_s,
+                                                        vrellow=np.abs(x.v_rel_km_s) - x.v_rel_err_km_s,
+                                                        ahigh=x.a_au + x.a_au_err,
+                                                        alow=x.a_au - x.a_au_err,
+                                                        Bphigh=0.,
+                                                        Bplow=0.),
+                            axis=1)
+
+    # convert res into an a 2d array
+    res = np.array(res.values.tolist()).T
+
+    # write to columns
+    mean_std["p_spi_kav22_bp0"] = res[0]
+    mean_std["p_spi_kav22_bp0_high"] = res[1]
+    mean_std["p_spi_kav22_bp0_low"] = res[2]
+
+    # get normalization value from AU Mic p_spi_kav22 value
+    norm = mean_std.loc[mean_std.TIC == 441420236, "p_spi_kav22_bp0"].values[0]
+
+    # normalize the SPI power to AU Mic
+    print("[CALC] Normalizing the SPI power to AU Mic.")
+    mean_std["p_spi_aw_bp0_norm"] = mean_std["p_spi_kav22_bp0"] / norm
+    mean_std["p_spi_aw_bp0_norm_high"] = mean_std["p_spi_kav22_bp0_high"] / norm
+    mean_std["p_spi_aw_bp0_norm_low"] = mean_std["p_spi_kav22_bp0_low"] / norm
 
     # -------------------------------------------------------------------------
+    
+
+
+
+    # -------------------------------------------------------------------------
+    # BIBKEYS
+    # -------------------------------------------------------------------------
+
     # For transparency, ADD BIBKEYS to the table for the literature values
 
 
@@ -384,6 +483,7 @@ if __name__ == "__main__":
 
     # -------------------------------------------------------------------------
     # SAVE THE RESULTS TABLE
+    # -------------------------------------------------------------------------
 
     # [WRITE] 
     # to file
