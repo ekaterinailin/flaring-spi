@@ -62,35 +62,42 @@ if __name__ == "__main__":
 
     # [READ] 
     # in AD test results
-    print("[UP] Reading in AD test results from")
     path = "../results/multistar_adtest.csv"
-    print(path)
+    print(f"[UP] Reading in AD test results from {path}")
     adtests = pd.read_csv(path)
+
+    # make TIC a string
+    adtests["TIC"] = adtests["TIC"].astype(str)
 
     # [READ] 
     # in the table of known parameters from the NASA Exoplanet Archive and TESS
-    print("[UP] Reading in the table of known parameters from "
-          "the NASA Exoplanet Archive")
     path = "../results/params_of_star_planet_systems_with_AD_tests.csv"
-    print(path)
+    print(f"[UP] Reading in the table of known parameters from "
+          f"the NASA Exoplanet Archive {path}")
     sps_w_ad = pd.read_csv(path)
 
     # rename column tic_id to TIC
     sps_w_ad.rename(columns={"tic_id": "TIC"}, inplace=True)
+
+    # make TIC a string
+    sps_w_ad["TIC"] = sps_w_ad["TIC"].astype(str)
 
     # [READ] 
     # in age and rotation period from the literature search
     print("[UP] Reading in age and rotation period "
           "from the literature search from")
     path = "../results/2022_08_stellar_params.csv"
-    print(path)
+
+    print(f"[UP] Reading in age and rotation period "
+          f"from the literature search from {path}")
     literature_params = pd.read_csv(path)
+    # make TIC a string
+    literature_params["TIC"] = literature_params["TIC"].astype(str)
 
     # [READ] 
     # in the flare table
-    print("[UP] Reading in the flare table from")
     path = "../results/2022_07_flares_vetted.csv"
-    print(path)
+    print(f"[UP] Reading in the flare table from {path}")
     flares = pd.read_csv(path)
 
     # -------------------------------------------------------------------------
@@ -100,7 +107,7 @@ if __name__ == "__main__":
     print("[CALC] Aggregating the p-values of the AD tests.")
 
     # aggregate the p-values
-    mean_std = aggregate_pvalues(adtests, subsample="ED>1s", period="orbit")
+    mean_std = aggregate_pvalues(adtests, subsample="all", period="orbit")
 
     # Then merge in the NASA Exoplanet Archive table and the literature 
     # search table
@@ -273,7 +280,7 @@ if __name__ == "__main__":
 
      # get normalization value from AU Mic p_spi_erg_s value
     print("[CALC] Calculating the normalization value for the SPI power.")
-    norm = mean_std.loc[mean_std.TIC == 441420236, "p_spi_erg_s"].values[0]
+    norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_erg_s"].values[0]
 
     # normalize the SPI power
     print("[CALC] Normalizing the SPI power.")
@@ -318,7 +325,7 @@ if __name__ == "__main__":
     mean_std["p_spi_erg_s_bp0_low"] = res[2]
 
     # get normalization value from AU Mic p_spi_erg_s_bp0 value
-    norm = mean_std.loc[mean_std.TIC == 441420236, "p_spi_erg_s_bp0"].values[0]
+    norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_erg_s_bp0"].values[0]
     print(norm)
 
     # normalize the SPI power to AU Mic
@@ -366,7 +373,7 @@ if __name__ == "__main__":
     mean_std["p_spi_kav22_low"] = res[2]
     
     # get normalization value from AU Mic p_spi_kav22 value
-    norm = mean_std.loc[mean_std.TIC == 441420236, "p_spi_kav22"].values[0]
+    norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_kav22"].values[0]
     
     # normalize the SPI power to AU Mic
     print("[CALC] Normalizing the SPI power to AU Mic.")
@@ -411,7 +418,7 @@ if __name__ == "__main__":
     mean_std["p_spi_kav22_bp0_low"] = res[2]
 
     # get normalization value from AU Mic p_spi_kav22 value
-    norm = mean_std.loc[mean_std.TIC == 441420236, "p_spi_kav22_bp0"].values[0]
+    norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_kav22_bp0"].values[0]
 
     # normalize the SPI power to AU Mic
     print("[CALC] Normalizing the SPI power to AU Mic.")

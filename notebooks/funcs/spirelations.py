@@ -157,8 +157,20 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
         pspi = B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.) / (a**4) * (rstar**4)
         
         if error:
-            pspi_high = Bhigh**(4./3.) * (v_rel + v_rel_err) * pl_radhigh**2 * (Bp + Bp_err)**(2./3.) * rstarhigh**4 /  (a - a_err)**4 
-            pspi_low = Blow**(4./3.) * (v_rel - v_rel_err) * pl_radlow**2 * (Bp - Bp_err)**(2./3.)  * rstarlow**4 /  (a + a_err)**4
+            pspi_high = (Bhigh**(4./3.) *
+                         (v_rel + v_rel_err) *
+                         pl_radhigh**2 *
+                         (Bp + Bp_err)**(2./3.) *
+                         rstarhigh**4 /
+                         ((a - a_err)**4)) 
+            
+            pspi_low = (Blow**(4./3.) *
+                        (v_rel - v_rel_err) *
+                        pl_radlow**2 *
+                        (Bp - Bp_err)**(2./3.) *
+                        rstarlow**4 /
+                        ((a + a_err)**4))
+            
             return pspi, pspi_high, pspi_low
         
         else:
@@ -169,8 +181,17 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
         pspi = B**2 * v_rel * pl_rad**2  / (a**4) * (rstar**4)
 
         if error:
-            pspi_high = Bhigh**2 * (v_rel + v_rel_err) * pl_radhigh**2  * rstarhigh**4 / (a-a_err**4) 
-            pspi_low = Blow**2 * (v_rel - v_rel_err) * pl_radlow**2 * rstarlow**4 / (a+a_err**4) 
+            pspi_high = (Bhigh**2 *
+                         (v_rel + v_rel_err) *
+                         pl_radhigh**2 *
+                         rstarhigh**4 /
+                         ((a-a_err)**4)) 
+
+            pspi_low = (Blow**2 *
+                        (v_rel - v_rel_err) *
+                        pl_radlow**2 *
+                        rstarlow**4 /
+                        ((a+a_err)**4))
             return pspi, pspi_high, pspi_low
     
         else:
@@ -472,22 +493,41 @@ def pspi_kavanagh2022(Rp, B, vrel, a, Bp=1., error=False, Rphigh=None, Bphigh=1.
     # convert Rp from Jupiter radii to km
     Rp = Rp * u.R_jup.to(u.km)
 
+    if Bp > 0:
 
-    pspi = Rp**2 * Bp**(2/3) * B**(1/3) * vrel**2 * a**(-2)
+        pspi = Rp**2 * Bp**(2/3) * B**(1/3) * vrel**2 * a**(-2)
 
-    if error:
-        # convert alow and ahigh from AU to km
-        alow = alow * u.AU.to(u.km)
-        ahigh = ahigh * u.AU.to(u.km)
+        if error:
+            # convert alow and ahigh from AU to km
+            alow = alow * u.AU.to(u.km)
+            ahigh = ahigh * u.AU.to(u.km)
 
-        # convert Rplow and Rphigh from Jupiter radii to km
-        Rplow = Rplow * u.R_jup.to(u.km)
-        Rphigh = Rphigh * u.R_jup.to(u.km)
+            # convert Rplow and Rphigh from Jupiter radii to km
+            Rplow = Rplow * u.R_jup.to(u.km)
+            Rphigh = Rphigh * u.R_jup.to(u.km)
 
-        pspi_high = Rphigh**2 * Bphigh**(2/3) * Bhigh**(1/3) * vrelhigh**2 * alow**(-2)
-        pspi_low = Rplow**2 * Bplow**(2/3) * Blow**(1/3) * vrellow**2 * ahigh**(-2)
-    
-        return pspi, pspi_high, pspi_low
+            pspi_high = Rphigh**2 * Bphigh**(2/3) * Bhigh**(1/3) * vrelhigh**2 * alow**(-2)
+            pspi_low = Rplow**2 * Bplow**(2/3) * Blow**(1/3) * vrellow**2 * ahigh**(-2)
+        
+            return pspi, pspi_high, pspi_low
 
-    else:
-        return pspi
+        else:
+            return pspi
+
+    elif Bp==0:
+        
+        pspi = Rp**2 * B * vrel**2 * a**(-4)
+
+        if error:
+            # convert alow and ahigh from AU to km
+            alow = alow * u.AU.to(u.km)
+            ahigh = ahigh * u.AU.to(u.km)
+
+            # convert Rplow and Rphigh from Jupiter radii to km
+            Rplow = Rplow * u.R_jup.to(u.km)
+            Rphigh = Rphigh * u.R_jup.to(u.km)
+
+            pspi_high = Rphigh**2 * Bhigh * vrelhigh**2 * alow**(-4)
+            pspi_low = Rplow**2 * Blow * vrellow**2 * ahigh**(-4)
+        
+            return pspi, pspi_high, pspi_low
