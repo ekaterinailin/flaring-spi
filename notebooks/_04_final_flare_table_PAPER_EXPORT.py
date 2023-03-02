@@ -5,6 +5,41 @@ if __name__ == "__main__":
     # Read the vetted flare table
     flares = pd.read_csv("../results/2022_07_flares_vetted.csv")
 
+    # -------------------------------------------------------------------------
+    # First, get some figures for the paper ...
+
+    paperpath = "../../../002_writing/flaring-spi-paper/src/tex/output/"
+
+    # remove the two extra stars from the statistic
+    ff = flares[(flares.ID!="Kepler-411") & (flares.ID!="EPIC 200164267")]
+    
+    # Drop duplicates
+    ff = ff.drop_duplicates(subset=["TIC", "tstart", "tstop", "qcs"])
+
+    # total number of Kepler light curves searched
+    total_kepler = len(ff[ff.mission == "Kepler"].groupby(["TIC", "qcs"]).size())
+
+    # write to file
+    with open(paperpath + "PAPER_total_kepler_lcs.txt", "w") as f:
+        f.write(str(total_kepler))
+
+    # total number of TESS light curves searched
+    total_tess = len(ff[ff.mission == "TESS"].groupby(["TIC", "qcs"]).size())
+
+    # write to file
+    with open(paperpath + "PAPER_total_tess_lcs.txt", "w") as f:
+        f.write(str(total_tess))
+
+    # total number of systems searched
+    total_systems = ff.TIC.unique().shape[0]
+
+    # write to file
+    with open(paperpath + "PAPER_total_systems.txt", "w") as f:
+        f.write(str(total_systems))
+
+    # -------------------------------------------------------------------------
+    # Back to business...
+
     # Drop duplicates
     flares = flares.drop_duplicates(subset=["TIC", "tstart", "tstop", "qcs"])
 
