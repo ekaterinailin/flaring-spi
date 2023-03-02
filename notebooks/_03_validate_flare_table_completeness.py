@@ -1,5 +1,17 @@
+"""
+UTF-8, Python 3
+
+------------------
+Flaring SPI
+------------------
+
+Ekaterina Ilin, 2023, MIT License
+
+
+"""
+
 import pandas as pd
-import numpy as np
+
 
 def unique_and_count(df, col="TIC"):
     unique = df[col].unique().astype("<U12")
@@ -54,14 +66,14 @@ if __name__=="__main__":
     unique_uvt, n_unique_in_unvetted_table = unique_and_count(unvetted_table)
     unique_nolc, n_unique_nolc = unique_and_count(nolc)
 
-    # +1 in the following is for TRAPPIST-1
+    # +1 is for TRAPPIST-1 and the Kepler-411 system
     # Assert all unvetted flares ended up in the vetted table
-    assert n_unique_in_vetted_table == n_unique_in_unvetted_table + 1, \
-           f"{n_unique_in_vetted_table} != {n_unique_in_unvetted_table}"
+    assert n_unique_in_vetted_table == n_unique_in_unvetted_table + 2, \
+           f"{n_unique_in_vetted_table} != {n_unique_in_unvetted_table + 2}"
 
     # Assert number of unique TICs in vetted table is the same as in input catalog
     # minues the number of TICs without LCs
-    assert n_unique_input_catalog == n_unique_in_vetted_table + n_unique_nolc -1, \
-           f"{n_unique_input_catalog} != {n_unique_in_vetted_table + n_unique_nolc}"
+    assert n_unique_input_catalog == n_unique_in_vetted_table -2 + n_unique_nolc, \
+           f"{n_unique_input_catalog} != {n_unique_in_vetted_table -2+ n_unique_nolc}"
 
     print(f"[FIN] Flare table completeness check finished successfully")

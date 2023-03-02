@@ -5,6 +5,9 @@ if __name__ == "__main__":
     # Read the vetted flare table
     flares = pd.read_csv("../results/2022_07_flares_vetted.csv")
 
+    # Drop duplicates
+    flares = flares.drop_duplicates(subset=["TIC", "tstart", "tstop", "qcs"])
+
     # Select only the confirmed flares
     final_table = flares[(flares.real == 1)]
 

@@ -250,6 +250,7 @@ def write_flc_to_file(dflcn, flc, path_dflcn, overwrite=True):
                   FLUX_MODEL=dflcn.flux_model.value.astype(float),
                   PHASE = dflcn.phase.astype(float),
                   overwrite=True)
+                  
 
 def write_no_lc(input_target, path="../results/2022_07_nolc.txt"):
     """Write TIC to file if no light curve is found.
