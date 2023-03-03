@@ -38,7 +38,7 @@ if __name__ == '__main__':
     tstamp = time.strftime("%Y_%m_%d")
 
     # Define the number of step for the A2 sampling
-    N = 10000
+    N = 300
 
     # phaseshift zero for now
     for  phaseshift in [0., 0.5,0.25,0.75]:
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         flare_table = flare_table[flare_table['ED'] > 0.]
 
         #select TRAPPIST-1
-        TIC = 278892590
+        TIC = "278892590"
         flare_table_single_star = flare_table[flare_table.TIC == TIC]
         
         ID = flare_table_single_star.ID.iloc[0]
@@ -101,6 +101,11 @@ if __name__ == '__main__':
             p = np.insert(p,0,0)
             p = np.append(p,1)
             plt.plot(p,f(p))
+            dsave = pd.DataFrame({"p":p, "f":f(p)})
+            dsave.to_csv(f"../results/observedtimes/TIC_{TIC}_cumhist.csv",
+                            index=False)
+            dsave.to_csv(f"../../../002_writing/flaring-spi-paper/src/data/TIC_{TIC}_cumhist.csv",
+                            index=False)
             cumsum =  np.cumsum(np.ones_like(p)) / len(p)
             plt.scatter(p, cumsum, c="r")
             plt.title(f"TIC {TIC}, {ID}")

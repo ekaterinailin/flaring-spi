@@ -40,7 +40,7 @@ if __name__ == '__main__':
     tstamp = time.strftime("%Y_%m_%d")
 
     # Define the number of step for the A2 sampling
-    N = 10000
+    N = 400
 
     # phaseshift zero for now
     # phaseshift = 0.
@@ -51,10 +51,13 @@ if __name__ == '__main__':
     # Get table with orbital periods from NASA Exoplanet Archive
     orbital_table = pd.read_csv("../data/2022_11_15_input_catalog_NONtransit_star_planet_systems.csv")
 
-    # Select only flare with ED > 1.:
+    # Select only flare with ED > 0.:
     flare_table = flare_table[flare_table['ED'] > 0.]
 
-    for phaseshift in [0., 0.25, 0.5, 0.75]:
+    flare_table = flare_table[(flare_table.ID != "EPIC 200164267")
+                              & (flare_table.TIC != "399954349(c)")]
+
+    for phaseshift in [0.]:#[0., 0.25, 0.5, 0.75]:
         print('---------------\nphaseshift = ', phaseshift)
 
         # flare_table = flare_table[flare_table.TIC == XXXX]
@@ -67,90 +70,95 @@ if __name__ == '__main__':
 
                 ID = flare_table_single_star.ID.iloc[0]
 
-                if ID in ['GJ 674', 'GJ 687', 'HD 41004 B', 'Proxima Cen', 'TAP 26', 'YZ Cet']:
                     
-                    # Get rotation period
-                    # print(rotation_table.TIC, TIC)
-                    try:
-                        orbital_period = orbital_table[orbital_table.tic_id == int(TIC)].pl_orbper.iloc[0]
-                    except IndexError:
-                        print('No orbital period for TIC', TIC)
-                        continue
-                    print(ID, orbital_period)
+                # Get rotation period
+                # print(rotation_table.TIC, TIC)
+                try:
+                    orbital_period = orbital_table[orbital_table.tic_id == int(TIC)].pl_orbper.iloc[0]
+                except IndexError:
+                    print('No orbital period for TIC', TIC)
+                    continue
+                print(ID, orbital_period)
 
-                    # real flares are those where an ED is given
-                    real = (~flare_table_single_star.ED.isnull()) 
+                # real flares are those where an ED is given
+                real = (~flare_table_single_star.ED.isnull()) 
 
-                    # -----------------------------------------------------------------
-                    # Get the pseudo-orbitak phase instead of orbital
-                    real_flares = flare_table_single_star[real]
-                    p = get_rotational_phases(real_flares.tstart, orbital_period,
-                                            real_flares.mission)
+                # -----------------------------------------------------------------
+                # Get the pseudo-orbitak phase instead of orbital
+                real_flares = flare_table_single_star[real]
+                p = get_rotational_phases(real_flares.tstart, orbital_period,
+                                        real_flares.mission)
 
-                    # sort values and apply phaseshift
-                    p = np.sort((p + phaseshift) % 1)
+                # sort values and apply phaseshift
+                p = np.sort((p + phaseshift) % 1)
 
-                    # Select the LCs that were searched for flares for this star
-                    lcs = flare_table_single_star[["timestamp","TIC","ID","mission",
-                                                "quarter_or_sector"]].drop_duplicates()
+                # Select the LCs that were searched for flares for this star
+                lcs = flare_table_single_star[["timestamp","TIC","ID","mission",
+                                            "quarter_or_sector"]].drop_duplicates()
 
-                    # Check that LCs were not searched multiple times with 
-                    # different timestamps
-                    unique_cols = ["mission","quarter_or_sector","TIC","ID"]
+                # Check that LCs were not searched multiple times with 
+                # different timestamps
+                unique_cols = ["mission","quarter_or_sector","TIC","ID"]
 
-                    # make sure that the LCs are unique, and none are searched
-                    # multiple times
-                    lccounts = lcs.groupby(by=unique_cols).count().timestamp.values
-                    assert (lccounts == 1).all(), \
-                        print(lcs)
+                # make sure that the LCs are unique, and none are searched
+                # multiple times
+                lccounts = lcs.groupby(by=unique_cols).count().timestamp.values
+                assert (lccounts == 1).all(), \
+                    print(lcs)
 
-                    # Get the total observing time in each phase bin
-                    location = "/media/ekaterina/USB DISK/lcs_w_phases/"
-                    observed_rotational_phases, binmids = get_observed_phases(p, lcs, location, phaseshift=phaseshift,
-                                                        period="rotation", rotper=orbital_period)
+                # Get the total observing time in each phase bin
+                location = "/media/ekaterina/USB DISK/lcs_w_phases/"
+                observed_rotational_phases, binmids = get_observed_phases(p, lcs, location, phaseshift=phaseshift,
+                                                    period="rotation", rotper=orbital_period)
 
-                    print(observed_rotational_phases)
-                    print(p)
+                print(observed_rotational_phases)
+                print(p)
 
-                    # -----------------------------------------------------------------
-                    # Get the (cumulative) flare phase distributions j
-                    # CHECK HERE IF THE PHASES ARE CORRECTLY CALCULATED
-                    n_exp, cum_n_exp = get_cumulative_distribution(flare_table_single_star,
-                                                                observed_rotational_phases, lcs)
+                # -----------------------------------------------------------------
+                # Get the (cumulative) flare phase distributions j
+                # CHECK HERE IF THE PHASES ARE CORRECTLY CALCULATED
+                n_exp, cum_n_exp = get_cumulative_distribution(flare_table_single_star,
+                                                            observed_rotational_phases, lcs)
 
-                    # Get the null hypothesis distribution of flare phases
-                    # assuming flares are distributed uniformly
-                    f = get_null_hypothesis_distribution(p, cum_n_exp)
-                
-                    if len(p) > 2:
+                # Get the null hypothesis distribution of flare phases
+                # assuming flares are distributed uniformly
+                f = get_null_hypothesis_distribution(p, cum_n_exp)
+            
+                if len(p) > 2:
 
-                        # Make a diagnostic plot
-                        plt.figure(figsize=(8,6))
-                        p = np.insert(p,0,0)
-                        p = np.append(p,1)
-                        plt.plot(p,f(p))
-                        cumsum =  np.cumsum(np.ones_like(p)) / len(p)
-                        plt.scatter(p, cumsum, c="r")
-                        plt.title(f"TIC {TIC}, {ID}")
-                        plt.xlim(0,1)
-                        plt.ylim(0,1)
-                        plt.savefig(f"../results/plots/{tstamp}_TIC_{TIC}_cumhist.png")
-                        plt.close()
+                    # Make a diagnostic plot
+                    plt.figure(figsize=(8,6))
+                    p = np.insert(p,0,0)
+                    p = np.append(p,1)
+                    plt.plot(p,f(p))
 
-                        # Finally, run the A-D test
-                        A2 = sample_AD_for_custom_distribution(f, p.shape[0], N)
+                    dsave = pd.DataFrame({"p":p, "f":f(p)})
+                    dsave.to_csv(f"../results/observedtimes/TIC_{TIC}_cumhist.csv",
+                                index=False)
+                    dsave.to_csv(f"../../../002_writing/flaring-spi-paper/src/data/TIC_{TIC}_cumhist.csv",
+                                index=False)
+                    cumsum =  np.cumsum(np.ones_like(p)) / len(p)
+                    plt.scatter(p, cumsum, c="r")
+                    plt.title(f"TIC {TIC}, {ID}")
+                    plt.xlim(0,1)
+                    plt.ylim(0,1)
+                    plt.savefig(f"../results/plots/{tstamp}_TIC_{TIC}_cumhist.png")
+                    plt.close()
 
-                        # This should go into the function above
-                        # select only the finite values
-                        A2 = A2[np.isfinite(A2)]
+                    # Finally, run the A-D test
+                    A2 = sample_AD_for_custom_distribution(f, p.shape[0], N)
 
-                        # Calculate the p-value and A2 value using the distribution 
-                        # of A2 values
-                        pval, atest = get_pvalue_from_AD_statistic(p, f, A2)
-                        print(pval, atest)
+                    # This should go into the function above
+                    # select only the finite values
+                    A2 = A2[np.isfinite(A2)]
 
-                        with open("../results/multistar_adtest.csv", "a") as f:
-                            f.write(f"{tstamp},{TIC},{ID},"
-                                    f"{len(p)-2},"# account for the added 0 and 1
-                                    f"{observed_rotational_phases.sum().sum()},{phaseshift},"
-                                    f"{N},{pval},{atest},all,randomized_orbit\n")
+                    # Calculate the p-value and A2 value using the distribution 
+                    # of A2 values
+                    pval, atest = get_pvalue_from_AD_statistic(p, f, A2)
+                    print(pval, atest)
+
+                    with open("../results/multistar_adtest.csv", "a") as f:
+                        f.write(f"{tstamp},{TIC},{ID},"
+                                f"{len(p)-2},"# account for the added 0 and 1
+                                f"{observed_rotational_phases.sum().sum()},{phaseshift},"
+                                f"{N},{pval},{atest},all,randomized_orbit\n")

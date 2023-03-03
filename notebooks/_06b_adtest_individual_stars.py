@@ -41,7 +41,7 @@ if __name__ == '__main__':
     tstamp = time.strftime("%Y_%m_%d")
 
     # Define the number of step for the A2 sampling
-    N = 10000
+    N = 400
 
     # phaseshift zero for now
     phaseshift = 0.75
@@ -50,10 +50,15 @@ if __name__ == '__main__':
     # Get flare table with final flares
     flare_table = pd.read_csv("../results/PAPER_flare_table.csv")
 
+
     # Select only flare with ED :
-    # flare_table = flare_table[flare_table['ED'] > 0.]
-    flare_table = flare_table[flare_table.TIC == "399954349"]
-    print(flare_table.shape)
+    flare_table = flare_table[flare_table['ED'] > 0.]
+    flare_table = flare_table[(flare_table.ID != "EPIC 200164267")
+                              & (flare_table.TIC != "399954349(c)")]
+    
+    flare_table = flare_table[flare_table.ID == "HAT-P-11"]
+    
+    # print(flare_table.shape)
     # pick a star to test
     for TIC, flare_table_single_star in flare_table.groupby("TIC"):
 
@@ -102,6 +107,11 @@ if __name__ == '__main__':
                 p = np.insert(p,0,0)
                 p = np.append(p,1)
                 plt.plot(p,f(p))
+                dsave = pd.DataFrame({"p":p, "f":f(p)})
+                dsave.to_csv(f"../results/observedtimes/TIC_{TIC}_cumhist.csv",
+                             index=False)
+                dsave.to_csv(f"../../../002_writing/flaring-spi-paper/src/data/TIC_{TIC}_cumhist.csv",
+                             index=False)
                 cumsum =  np.cumsum(np.ones_like(p)) / len(p)
                 plt.scatter(p, cumsum, c="r")
                 plt.title(f"TIC {TIC}, {ID}")

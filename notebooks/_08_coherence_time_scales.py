@@ -82,6 +82,7 @@ if __name__ == "__main__":
     # Read in stellar parameters table
     path = "../results/2022_08_stellar_params.csv"
     df = pd.read_csv(path)
+    df.TIC = df.TIC.astype(str)
     print(f"Get stellar parameters from\n{path}\n")
     if "time_span_d" in df.columns:
         for l in ["abs_tstart_min",	"abs_tstart_max", "time_span_d", 
@@ -95,6 +96,7 @@ if __name__ == "__main__":
     # Read in flare table
     path = "../results/PAPER_flare_table.csv"
     flares = pd.read_csv(path)
+
     print(f"Get flare table from\n{path}\n")
 
     # shift each tstart by mission specific offset using mission column and OFFSET
@@ -181,7 +183,7 @@ if __name__ == "__main__":
 
         # take the real flares for this TIC
         f = flares[(flares["TIC"].astype(str)==str(row.tic_id)) &
-                   (np.isfinite(flares["ED"]))]
+                   (np.isfinite(flares["tstart"]))]
     
         # If both transit midtimes for Kepler and TESS are present
         if (np.isfinite(row.pl_orbper_kepler)) & (np.isfinite(row.pl_orbper_tess)):
@@ -297,9 +299,12 @@ if __name__ == "__main__":
 
     # ------------------------------------------------------------------------------
     # check if the table has all SPSs in it that have ad tests
+    # print(df_timespan.ID)
     assert df_timespan.shape[0] == 41, df_timespan.shape[0]
     
     print("All 41 SPSs with AD tests are in the table")
+
+    print(df_timespan.sort_values("coherence_ratio_orbit", ascending=False).head(3))
 
     # ------------------------------------------------------------------------------
     # plot the result and save the file
