@@ -81,7 +81,7 @@ def get_distance_from_planet_range(semimajor_axis, eccentricity, semimajor_axis_
     Returns
     -------
     float
-        Range of the semi-major axis in AU
+        Half of the range between apoastron and periastron in AU
     """
 
     if np.isnan(eccentricity):
@@ -93,10 +93,11 @@ def get_distance_from_planet_range(semimajor_axis, eccentricity, semimajor_axis_
 
     else:
         # calculate the semi-minor axis
-        semiminor_axis = semimajor_axis * np.sqrt(1 - eccentricity**2)
+        apoastron = semimajor_axis * (1 + eccentricity)
+        periastron = semimajor_axis * (1 - eccentricity)
 
         # calculate the distance from the planet
-        distance_range = semimajor_axis - semiminor_axis
+        distance_range = (apoastron - periastron) / 2
 
         # return the maximum of distance range and error
         # if error is not nan

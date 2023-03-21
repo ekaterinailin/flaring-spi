@@ -136,7 +136,8 @@ if __name__ == "__main__":
     # THE ERROR ON THE SEMI-MAJOR AXIS
 
     # if eccentricity is given as 0 with no uncertainties, fill in np.nan
-    sps_w_ad.loc[sps_w_ad.pl_orbeccen == 0, "pl_orbeccen"] = np.nan
+    sps_w_ad.loc[(sps_w_ad.pl_orbeccen == 0) & (sps_w_ad.pl_orbeccenerr1.isnull()),
+                 "pl_orbeccen"] = np.nan
 
     # if eccentricity is given as 0 with no a value >0 for the upper error,
     # fill in that value

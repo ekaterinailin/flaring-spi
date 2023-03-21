@@ -107,7 +107,7 @@ if __name__ == "__main__":
     print("[CALC] Aggregating the p-values of the AD tests.")
 
     # aggregate the p-values
-    mean_std = aggregate_pvalues(adtests, subsample="all", period="orbit")
+    mean_std = aggregate_pvalues(adtests, subsample="ED>1s", period="orbit")
 
     # Then merge in the NASA Exoplanet Archive table and the literature 
     # search table
@@ -124,6 +124,8 @@ if __name__ == "__main__":
     mean_std = mean_std.merge(sps_w_ad[["TIC", "pl_orbsmax","st_rad_kepler",
                                         "st_raderr1_kepler", "st_raderr2_kepler",
                                         "st_rad_reflink", "st_lum", "st_lumerr1",
+                                        "pl_orbeccen", "pl_orbeccenerr1",
+                                        "pl_orbeccenerr2", "pl_orbeccen_reflink",
                                         "st_lumerr2","st_lum_reflink", "pl_orbsmax_reflink",
                                         "st_rad_tess", "pl_radj", "pl_orbper_kepler",
                                         "pl_orbpererr1_kepler", "pl_orbpererr2_kepler",
@@ -477,6 +479,15 @@ if __name__ == "__main__":
                                                             bibkeys),
                                                 axis=1) 
 
+    # 6. orbital eccentricity
+    print("[MERGE] Adding the bibkeys for orbital eccentricity to the results table.")       
+    mean_std["pl_orbeccen_bibkey"] = mean_std.apply(lambda x:
+                                                      map_bibkey(x.pl_orbeccen_reflink,
+                                                                  bibkeys),
+                                                      axis=1)
+
+                                                      
+
 
 
     # delete the reflink columns
@@ -485,6 +496,7 @@ if __name__ == "__main__":
     mean_std.drop(columns=["st_rad_reflink"], inplace=True)
     mean_std.drop(columns=["st_lum_reflink"], inplace=True)
     mean_std.drop(columns=["pl_radj_reflink"], inplace=True)
+    mean_std.drop(columns=["pl_orbeccen_reflink"], inplace=True)
 
 
 

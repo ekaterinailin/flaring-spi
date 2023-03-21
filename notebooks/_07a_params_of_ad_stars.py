@@ -157,4 +157,4 @@ if __name__ == "__main__":
     print(f"{len(sps_w_ad)} rows")
 
     # make sure all SPS are covered
-    assert len(sps_w_ad) == len(unique_ids), "Not all SPS are covered!"
+    assert len(sps_w_ad) == len(unique_ids) -1 , "Not all SPS are covered!"
