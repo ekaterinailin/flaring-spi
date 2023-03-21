@@ -141,13 +141,20 @@ if __name__ == "__main__":
 
     # if eccentricity is given as 0 with no a value >0 for the upper error,
     # fill in that value
-    sps_w_ad.loc[(sps_w_ad.pl_orbeccen == 0) & 
-                 (sps_w_ad.pl_orbeccenerr1 > 0.), "pl_orbeccen"] = sps_w_ad.loc[(sps_w_ad.pl_orbeccen == 0) & 
+    cond = (sps_w_ad.pl_orbeccen == 0) & (sps_w_ad.pl_orbeccenerr1 > 0.)
+    sps_w_ad.loc[cond, "pl_orbeccen"] = sps_w_ad.loc[(sps_w_ad.pl_orbeccen == 0) & 
                                (sps_w_ad.pl_orbeccenerr1 > 0.),
                                 "pl_orbeccenerr1"]
 
     sps_w_ad["a_au_err"] = sps_w_ad.apply(lambda x: 
-                                            get_distance_from_planet_range(x.pl_orbsmax, x.pl_orbeccen, x.pl_orbsmaxerr1), axis=1)
+                                            get_distance_from_planet_range(x.pl_orbsmax,
+                                                                           x.pl_orbeccen,
+                                                                           x.pl_orbsmaxerr1), 
+                                                                           axis=1)
+
+    # reverse the replacement of 0 eccentricity with uppper error
+    sps_w_ad.loc[cond, "pl_orbeccen"] = 0.
+
 
     # write the result to the original file
     sps_w_ad.to_csv("../results/params_of_star_planet_systems_with_AD_tests.csv", index=False)
