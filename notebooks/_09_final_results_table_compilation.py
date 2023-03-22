@@ -164,8 +164,8 @@ if __name__ == "__main__":
     rot_no_err = np.isnan(mean_std.st_rotp_err) & ~np.isnan(mean_std.st_rotp)
     mean_std.loc[rot_no_err, "st_rotp_err"] = mean_std[rot_no_err].st_rotp * 0.1
     
-    # add [*] footnote as the st_rotp_source
-    mean_std.loc[rot_no_err, "st_rotp_source"] = "[*]"
+    # add [*] footnote as the st_rotp_source2
+    mean_std.loc[rot_no_err, "st_rotp_source2"] = "[*]"
 
     # -------------------------------------------------------------------------
     # Now it's time to calculate some properties of the systems with
@@ -429,8 +429,13 @@ if __name__ == "__main__":
     mean_std["p_spi_aw_bp0_norm_low"] = mean_std["p_spi_kav22_bp0_low"] / norm
 
     # -------------------------------------------------------------------------
+    # Reverse the 10% error on the rotation period
+    print("[REVERSE] rotation period uncertainty with "
+          "10 per cent of the rotation period.")
     
-
+    mean_std.loc[mean_std.st_rotp_source2 == "[*]", "st_rotp_err"] = np.nan
+    
+    del mean_std["st_rotp_source2"]
 
 
     # -------------------------------------------------------------------------
