@@ -299,7 +299,10 @@ def get_rotational_phases(times, period, mission):
         times = times["time"]
     else:
         times = times
-    # print(period)
+
+    print(OFFSET["Kepler"])
+    print(period, times[:3], mission)
+    print(np.vectorize(OFFSET.get)(mission))
     phases = ((times + np.vectorize(OFFSET.get)(mission) - OFFSET["Kepler"]) / period) % 1.
     
     return phases
