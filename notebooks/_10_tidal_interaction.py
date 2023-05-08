@@ -48,8 +48,12 @@ if __name__ == "__main__":
     nr["Teff"] = 4000. 
     nr.TIC = nr.TIC.astype(str)
     new = pd.merge(p, nr, on="TIC", how="inner")
-    new = new.dropna(subset=cols[1:], how="any")
 
+    new['P_rot_err'] = new['P_rot_err'].fillna(0.1*new['P_rot'])
+
+    
+    new = new.dropna(subset=cols[1:], how="any")
+    print(new)
     new.to_csv("tidal/params.csv", index=False)
 
     # call Nikoleta's code to calculate expected power of interaction
