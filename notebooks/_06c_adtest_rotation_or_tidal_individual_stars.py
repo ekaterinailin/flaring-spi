@@ -1,3 +1,18 @@
+"""
+UTF-8, Python 3
+
+------------------
+Flaring SPI
+------------------
+
+Ekaterina Ilin, 2022, MIT License
+
+This script performs AD tests with rotational variability, or whatever
+period is chosen. Here, we also use P_orb/2 to calculate the deviation
+for potential tidal interaction."""
+
+
+
 import pandas as pd
 import numpy as np
 
@@ -74,7 +89,7 @@ if __name__ == '__main__':
 
     print(flare_table.ID.unique().shape)
     
-    for phaseshift in [0.25]:
+    for phaseshift in [0, 0.25, 0.5, .75]:
         
         print('phaseshift = ', phaseshift)
 
@@ -92,6 +107,7 @@ if __name__ == '__main__':
                 try:
                     _ = rotation_table[rotation_table.tic_id == int(TIC)]
                     # rotation_period = _.st_rotp.iloc[0]
+                    # use half the orbital period instead
                     rotation_period = _.pl_orbper_kepler.iloc[0] / 2.
                 except IndexError:
                     print('No rotation period for TIC', TIC)

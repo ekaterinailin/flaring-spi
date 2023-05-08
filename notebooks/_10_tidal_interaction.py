@@ -1,5 +1,17 @@
+"""
+UTF-8, Python 3
+
+------------------
+Flaring SPI
+------------------
+
+Ekaterina Ilin, 2022, MIT License
+
+This script uses the procedures from Ilic et al. (2022)  to calculate the
+tidal interaction between the star and the planet in the systems, and combines
+the results with the results of the AD tests."""
+
 import pandas as pd
-import numpy as np
 from funcs.ad import aggregate_pvalues
 
 import subprocess
