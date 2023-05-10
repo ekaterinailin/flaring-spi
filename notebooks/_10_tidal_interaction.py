@@ -11,41 +11,169 @@ This script uses the procedures from Ilic et al. (2022)  to calculate the
 tidal interaction between the star and the planet in the systems, and combines
 the results with the results of the AD tests."""
 
+import numpy as np
 import pandas as pd
 from funcs.ad import aggregate_pvalues
+from funcs.masses_and_radii import calculate_abs_Ks, mann_mass_from_abs_Ks
 
 import subprocess
+import forecaster
+
+from astroquery.gaia import Gaia
+
+def map_bibkey(reflink, bibkeys):
+    """Map the bibkey to the reflink.
+    
+    Parameters
+    ----------
+    reflink : str
+        The reflink to the source.
+    bibkeys : pd.DataFrame 
+        The table with the reflink to bibkey mapping.
+
+    Returns
+    -------
+    str
+        The bibkey.
+    """
+
+    try:
+        return bibkeys[bibkeys.pl_orbper_reflink == reflink]["pl_orbper_bibkey"].values[0]
+    except:
+        return np.nan
+
 
 if __name__ == "__main__":
 
+    # ------------------------------------------------------------------------
     # read in stellar parameters
     params = pd.read_csv("../results/params_of_star_planet_systems_with_AD_tests.csv")
 
     # rename columns
-    p = params[['st_mass','st_masserr1',
-                'pl_bmassj','pl_bmassjerr1','tic_id',]]
-    p.columns = ['M_star','M_star_err','M_pl','M_pl_err','TIC']
+    p = params[['st_mass','st_masserr1','st_masserr2',
+                'pl_bmassj','pl_bmassjerr1','pl_bmassjerr2','tic_id',
+                'st_mass_reflink', 'pl_bmassj_reflink',
+                'pl_radj','pl_radjerr1','pl_radjerr2',
+                'sy_kmag','sy_kmagerr1', "hostname"]]
 
-    # add in a very generous estimate of the masses of the star and planet
-    p["M_pl_err"] = p["M_pl_err"].fillna(.5*p["M_pl"])
-    p["M_star_err"] = p["M_star_err"].fillna(.2*p["M_star"])
 
     # make TIC a string
-    p.TIC = p.TIC.astype(str)
+    p.tic_id = p.tic_id.astype(str)
+
+    # read in the reflink to bibkey mapping table
+    print("[UP] Reading in the reflink to bibkey mapping table.")
+    bibkeys = pd.read_csv("../results/reflink_to_bibkey.csv")
+
+    # 1. stellar mass
+    print("[MERGE] Adding the bibkeys for stellar mass to the results table.")
+    p["st_mass_bibkey"] = p.apply(lambda x: map_bibkey(x.st_mass_reflink, 
+                                                             bibkeys),
+                                                  axis=1)
+    
+    # 2. planet mass
+    print("[MERGE] Adding the bibkeys for planetary mass to the results table.")
+    p["pl_bmassj_bibkey"] = p.apply(lambda x: map_bibkey(x.pl_bmassj_reflink,
+                                                                bibkeys),
+                                                                axis=1)
+    
+    # ------------------------------------------------------------------------
 
 
+    # calculate the planetary masses in the missing entries
+    massfromrad = lambda x: forecaster.Rstat2M(mean=x.pl_radj, 
+                                               onesig_neg=x.pl_radjerr2,
+                                               onesig_pos=x.pl_radjerr1, 
+                                               unit='Jupiter',
+                                               n_radii_samples=int(1e3),
+                                               classify=False,
+                                               )
+
+
+    nomasserr = (p.pl_bmassjerr1.isna()) & (~p.pl_radjerr2.isna())
+
+    rrr = p[nomasserr].iloc[::-1].apply(lambda x: massfromrad(x), axis=1)
+
+    rrr = np.array(rrr.to_list())
+
+    rrr = pd.DataFrame({"M_pl": rrr[:,0],
+                        "M_pl_err1": rrr[:,1],
+                        "M_pl_err2": rrr[:,2]})
+
+    p.loc[nomasserr, "pl_bmassj"] = rrr.M_pl.values
+    p.loc[nomasserr, "pl_bmassjerr1"] = rrr.M_pl_err1.values
+    p.loc[nomasserr, "pl_bmassjerr2"] = -rrr.M_pl_err2.values
+
+    # -----------------------------------------------------------------------    
+    # add the stellar masses in the missing entries
+
+    # add missing distance from Gaia DR3 Bailer-Jones to GJ 3323, GJ 674 and GJ 3082
+    p.loc[p.hostname == "GJ 3323", "dist_pc"] = 5.373613
+    p.loc[p.hostname == "GJ 674", "dist_pc"] = 4.552019
+    p.loc[p.hostname == "GJ 3082", "dist_pc"] = 16.632895
+
+    # add errors to the distances
+    p.loc[p.hostname == "GJ 3323", "dist_pc_err"] =  (5.374399 - 5.372851) / 2.
+    p.loc[p.hostname == "GJ 674", "dist_pc_err"] = (4.55265 - 4.5514603) / 2.
+    p.loc[p.hostname == "GJ 3082", "dist_pc_err"] = (16.63665 - 16.62884) / 2.
+
+    ids = ["GJ 3323", "GJ 674", "GJ 3082"]
+
+    # calculate distance modulus and err
+    p.loc[p.hostname.isin(ids), "dist_mod"] = 5 * np.log10(p.loc[p.hostname.isin(ids), "dist_pc"]) - 5
+    p.loc[p.hostname.isin(ids), "dist_mod_err"] = (5 * p.loc[p.hostname.isin(ids), "dist_pc_err"] / 
+                                             (p.loc[p.hostname.isin(ids), "dist_pc"] * np.log(10)))
+
+    absk = p[p.hostname.isin(ids)].apply(lambda x: calculate_abs_Ks(x.dist_mod,
+                                                                          x.dist_mod_err,
+                                                                            x.sy_kmag,
+                                                                            x.sy_kmagerr1),
+                                                                            axis=1)
+    abskmag, abskmagerr = np.array(absk.to_list()).T   
+
+
+    p.loc[p.hostname.isin(ids), "st_mass"], p.loc[p.hostname.isin(ids), "st_masserr1"] = mann_mass_from_abs_Ks(abskmag,
+                                                                                                 abskmagerr)
+    
+    # set second error to first error
+    p.loc[p.hostname.isin(ids), "st_masserr2"] = - p.loc[p.hostname.isin(ids), "st_masserr1"].values
+
+    # calculate mean value for the planetary mass error
+    p["pl_bmassj_err"] = (p["pl_bmassjerr1"].values - p["pl_bmassjerr2"]) / 2
+
+    # calculate mean value for the stellar mass error
+    p["st_mass_err"] = (p["st_masserr1"].values - p["st_masserr2"]) / 2
+
+
+    p = p.rename(index=str, columns=dict(zip(['st_mass','st_mass_err','pl_bmassj',
+                                              'pl_bmassj_err','tic_id',
+                                              "pl_bmassj_bibkey", "st_mass_bibkey"],
+                                             ['M_star','M_star_err','M_pl','M_pl_err',
+                                              'TIC',"pl_bmassj_bibkey", "st_mass_bibkey"])))
+
+
+
+    p = p[["M_star","M_star_err","M_pl","M_pl_err","TIC","hostname"]]
+
+    print(p)
+
+
+    # ------------------------------------------------------------------------
     # read in the other results with more stellar and planetary parameters
     nr = pd.read_csv("../results/results.csv")
 
     #select columns
-    nr = nr[["multiple_star","TIC", "ID",  "st_rotp","st_rotp_err", "orbper_d", "orbper_d_err", "a_au", "a_au_err", "st_rad","st_rad_err1"] ]
+    nr = nr[["multiple_star","TIC", "ID",  "st_rotp","st_rotp_err", "orbper_d", 
+             "orbper_d_err", "a_au", "a_au_err", "st_rad","st_rad_err1"] ]
 
     # rename columns
-    cols =  ["multiple_star", "TIC", "ID",   "P_rot", "P_rot_err", "P_orb", "P_orb_err", "a", "a_err", "R_star", "R_star_err"]
+    cols =  ["multiple_star", "TIC", "ID",   "P_rot", "P_rot_err", "P_orb", 
+             "P_orb_err", "a", "a_err", "R_star", "R_star_err"]
+    
     nr.columns = cols
 
     # placeholder just to make sure we are convective envelope stars
     nr["Teff"] = 4000. 
+
     nr.TIC = nr.TIC.astype(str)
     new = pd.merge(p, nr, on="TIC", how="inner")
 

@@ -13,7 +13,6 @@ we still replace the NASA Exoplanet archive value with the Gaia DR3 value.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from astroquery.gaia import Gaia
 
@@ -29,7 +28,6 @@ if __name__ == "__main__":
     print(f"[UP] Loading stellar parameters of stars with AD tests from {path}")
     df = pd.read_csv(path)
 
-    print(len(df))
     for col in ["lum_flame", "lum_flame_lower", "lum_flame_upper", "gaiadr3_id"]:
         if col in df.columns:
             del df[col]

@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 
-from ..radii import (mann_radius_from_abs_Ks,
+from ..masses_and_radii import (mann_radius_from_abs_Ks,
 	                 calculate_distmod,
                      calculate_abs_Ks,)
 

@@ -65,6 +65,26 @@ def mann_radius_from_abs_Ks(K, Kerr):
 
 
 
+def mann_mass_from_abs_Ks(K, Kerr):
+    """Mann et al. (2016) relation for Ks to stellar mass.
+    
+    Parameters:
+    -----------
+    K, Kerr : float, float
+        2MASS Ks magnitude and error
+        
+    Return:
+    -------
+    (float, float) - radius in solar radii and error
+    """
+    M = 0.5858 + 0.3872 * K - 0.1217 * K**2 + 0.0106 * K**3 - 2.7262e-4 * K**4 
+    Merr = (0.3872 - 0.1217 * 2. * K + 0.0106 * 3 * K**2 - 4 * 2.7262e-4 * K**3) * Kerr 
+    Merr_scatter = 0.018 * M
+
+    return M, np.sqrt(Merr**2 + Merr_scatter**2)
+
+
+
 def calculate_abs_Ks(dmod, dmoderr, Kmag, Kmagerr):
     """Apply distance modulus to measured 2MASS
     Ks magnitude and propagate errors.
