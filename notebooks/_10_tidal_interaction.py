@@ -137,22 +137,17 @@ if __name__ == "__main__":
     # set second error to first error
     p.loc[p.hostname.isin(ids), "st_masserr2"] = - p.loc[p.hostname.isin(ids), "st_masserr1"].values
 
-    # calculate mean value for the planetary mass error
-    p["pl_bmassj_err"] = (p["pl_bmassjerr1"].values - p["pl_bmassjerr2"]) / 2
 
-    # calculate mean value for the stellar mass error
-    p["st_mass_err"] = (p["st_masserr1"].values - p["st_masserr2"]) / 2
+    ocs = ['st_mass', 'st_masserr1', 'st_masserr2',
+           'pl_bmassj', 'pl_bmassjerr1', 'pl_bmassjerr2',
+           'tic_id', "pl_bmassj_bibkey", "st_mass_bibkey"]
+    newcs = ['M_star', 'M_star_up_err','M_star_low_err',
+             'M_pl','M_pl_up_err','M_pl_low_err',
+             'TIC',"pl_bmassj_bibkey", "st_mass_bibkey"]
 
+    p = p.rename(index=str, columns=dict(zip(ocs, newcs)))
 
-    p = p.rename(index=str, columns=dict(zip(['st_mass','st_mass_err','pl_bmassj',
-                                              'pl_bmassj_err','tic_id',
-                                              "pl_bmassj_bibkey", "st_mass_bibkey"],
-                                             ['M_star','M_star_err','M_pl','M_pl_err',
-                                              'TIC',"pl_bmassj_bibkey", "st_mass_bibkey"])))
-
-
-
-    p = p[["M_star","M_star_err","M_pl","M_pl_err","TIC","hostname"]]
+    p = p[newcs]
 
     print(p)
 
@@ -163,11 +158,11 @@ if __name__ == "__main__":
 
     #select columns
     nr = nr[["multiple_star","TIC", "ID",  "st_rotp","st_rotp_err", "orbper_d", 
-             "orbper_d_err", "a_au", "a_au_err", "st_rad","st_rad_err1"] ]
+             "orbper_d_err", "a_au", "a_au_err", "st_rad","st_rad_err1", "st_rad_err2"] ]
 
     # rename columns
     cols =  ["multiple_star", "TIC", "ID",   "P_rot", "P_rot_err", "P_orb", 
-             "P_orb_err", "a", "a_err", "R_star", "R_star_err"]
+             "P_orb_err", "a", "a_err", "R_star", "R_star_up_err","R_star_low_err"]
     
     nr.columns = cols
 
@@ -181,7 +176,7 @@ if __name__ == "__main__":
 
     
     new = new.dropna(subset=cols[1:], how="any")
-    print(new)
+   
     new.to_csv("tidal/params.csv", index=False)
 
     # call Nikoleta's code to calculate expected power of interaction
