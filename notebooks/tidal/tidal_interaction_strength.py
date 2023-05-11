@@ -13,11 +13,17 @@ grav_pert = TSI['M_pl']/1047.57/TSI['M_star']*2.*TSI['R_star']**3./(TSI['a']*215
 
 TSI.add_column(Column(grav_pert,name = 'grav_pert'))
 
-grav_pert_low_err = TSI['M_pl']/1047.57/TSI['M_star']*2.*TSI['R_star']**3./(TSI['a']*215.032-TSI['R_star'])**3.*np.sqrt((TSI['M_pl_up_err']/TSI['M_pl'])**2.+(TSI['M_star_up_err']/TSI['M_star'])**2.+(3*TSI['a_err']*215.032/(TSI['a']*215.032-TSI['R_star']))**2.+(3*TSI['a']*215.032/(TSI['a']*215.032-TSI['R_star'])*TSI['R_star_up_err']/TSI['R_star'])**2.)
+grav_pert_up_err = (TSI['M_pl'] / 1047.57 /TSI['M_star'] * 2. * TSI['R_star']**3. / 
+                    ( TSI['a'] * 215.032 - TSI['R_star'] )**3. * 
+                    np.sqrt((TSI['M_pl_up_err'] / TSI['M_pl'])**2. + 
+                            (TSI['M_star_up_err'] / TSI['M_star'])**2. + 
+                            (3 * TSI['a_err'] * 215.032 / (TSI['a'] * 215.032 - TSI['R_star']) )**2. + 
+                            (3 * TSI['a'] * 215.032 / (TSI['a'] * 215.032 - TSI['R_star']) * TSI['R_star_up_err'] / TSI['R_star'])**2.)
+                           )
 # grav_pert_err = grav_pert_err.filled(np.nan)
 
 
-grav_pert_up_err = TSI['M_pl']/1047.57/TSI['M_star']*2.*TSI['R_star']**3./(TSI['a']*215.032-TSI['R_star'])**3.*np.sqrt((TSI['M_pl_low_err']/TSI['M_pl'])**2.+(TSI['M_star_low_err']/TSI['M_star'])**2.+(3*TSI['a_err']*215.032/(TSI['a']*215.032-TSI['R_star']))**2.+(3*TSI['a']*215.032/(TSI['a']*215.032-TSI['R_star'])*TSI['R_star_low_err']/TSI['R_star'])**2.)
+grav_pert_low_err = TSI['M_pl']/1047.57/TSI['M_star']*2.*TSI['R_star']**3./(TSI['a']*215.032-TSI['R_star'])**3.*np.sqrt((TSI['M_pl_low_err']/TSI['M_pl'])**2.+(TSI['M_star_low_err']/TSI['M_star'])**2.+(3*TSI['a_err']*215.032/(TSI['a']*215.032-TSI['R_star']))**2.+(3*TSI['a']*215.032/(TSI['a']*215.032-TSI['R_star'])*TSI['R_star_low_err']/TSI['R_star'])**2.)
 # grav_pert_err = grav_pert_err.filled(np.nan)
 TSI.add_column(Column(grav_pert_low_err,name = 'grav_pert_low_err'))
 TSI.add_column(Column(grav_pert_up_err,name = 'grav_pert_up_err'))
@@ -68,7 +74,11 @@ a = TSI['a']*215.032 #in solar radii
 #thirs model is 'Modelling of tidal interactions and stellar wind' (Penev et al.,2012)
 #torque_conv = -0.5*M_pl*TSI['M_star']*np.sqrt(G/(a*(TSI['M_star']+M_pl)))*np.sign((1./TSI['P_rot'])-(1./TSI['P_orb']))*9./2.*np.sqrt(G/(a*TSI['M_star']))*(TSI['R_star']/a)**5.*M_pl/Q_star -- can be rewritten as below:
 torque_conv = -9./4. * np.sign((1./TSI['P_rot'])-(1./TSI['P_orb']))* G/Q_star*TSI['R_star']**5./a**6.*np.sqrt(1./(1.+q)) * (TSI['M_pl']/1047.57)**2.
-torque_conv_up_err = torque_conv*np.sqrt((5.*TSI['R_star_up_err']/TSI['R_star'])**2. + (6.*TSI['a_err']/TSI['a'])**2.+ (0.5*TSI['M_star_up_err']/TSI['M_star']*(1+q**-1.)**-1.)**2. + (TSI['M_pl_up_err']/TSI['M_pl']*(2.-0.5*(1+q**-1)**-1.))**2.)
+torque_conv_up_err = torque_conv * np.sqrt( (5. * TSI['R_star_up_err'] / TSI['R_star'])**2. +
+                                            (6. * TSI['a_err'] / TSI['a'])**2. + 
+                                            (0.5 * TSI['M_star_up_err'] / TSI['M_star'] * (1 + q**-1.)**-1.)**2. +
+                                            (TSI['M_pl_up_err'] / TSI['M_pl'] * (2. - 0.5 * (1 + q**-1)**-1.))**2.
+                                          )
 
 torque_conv_low_err = torque_conv*np.sqrt((5.*TSI['R_star_low_err']/TSI['R_star'])**2. + (6.*TSI['a_err']/TSI['a'])**2.+ (0.5*TSI['M_star_low_err']/TSI['M_star']*(1+q**-1.)**-1.)**2. + (TSI['M_pl_low_err']/TSI['M_pl']*(2.-0.5*(1+q**-1)**-1.))**2.)
 

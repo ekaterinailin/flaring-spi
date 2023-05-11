@@ -88,8 +88,7 @@ if __name__ == "__main__":
                                                classify=False,
                                                )
 
-
-    nomasserr = (p.pl_bmassjerr1.isna()) & (~p.pl_radjerr2.isna())
+    nomasserr = ((p.pl_bmassjerr1.isna()) | p.pl_bmassj_bibkey.isna()) & (~p.pl_radjerr2.isna())
 
     rrr = p[nomasserr].iloc[::-1].apply(lambda x: massfromrad(x), axis=1)
 
@@ -102,6 +101,7 @@ if __name__ == "__main__":
     p.loc[nomasserr, "pl_bmassj"] = rrr.M_pl.values
     p.loc[nomasserr, "pl_bmassjerr1"] = rrr.M_pl_err1.values
     p.loc[nomasserr, "pl_bmassjerr2"] = -rrr.M_pl_err2.values
+    p.loc[nomasserr, "pl_bmassj_bibkey"] = "chen2017probabilistic"
 
     # -----------------------------------------------------------------------    
     # add the stellar masses in the missing entries
@@ -122,6 +122,7 @@ if __name__ == "__main__":
     p.loc[p.hostname.isin(ids), "dist_mod"] = 5 * np.log10(p.loc[p.hostname.isin(ids), "dist_pc"]) - 5
     p.loc[p.hostname.isin(ids), "dist_mod_err"] = (5 * p.loc[p.hostname.isin(ids), "dist_pc_err"] / 
                                              (p.loc[p.hostname.isin(ids), "dist_pc"] * np.log(10)))
+    p.loc[p.hostname.isin(ids), "st_mass_bibkey"] = "mann2015how"
 
     absk = p[p.hostname.isin(ids)].apply(lambda x: calculate_abs_Ks(x.dist_mod,
                                                                           x.dist_mod_err,
@@ -174,7 +175,16 @@ if __name__ == "__main__":
 
     new['P_rot_err'] = new['P_rot_err'].fillna(0.1*new['P_rot'])
 
-    
+
+    # add Kepler-42 c upper limit of 2.06 Earth mass from muirhead2012characterizing
+    new.loc[new.ID == "Kepler-42", "M_pl_up_err"] = 0
+    new.loc[new.ID == "Kepler-42", "M_pl_low_err"] = 2.06 /  317.82838
+    new.loc[new.ID == "Kepler-42", "M_pl"] = 2.06 / 317.82838
+
+    # add bibkey for Kepler-42 c
+    new.loc[new.ID == "Kepler-42", "pl_bmassj_bibkey"] = "muirhead2012characterizing"
+
+
     new = new.dropna(subset=cols[1:], how="any")
    
     new.to_csv("tidal/params.csv", index=False)
