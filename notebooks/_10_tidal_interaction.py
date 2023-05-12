@@ -16,10 +16,31 @@ import pandas as pd
 from funcs.ad import aggregate_pvalues
 from funcs.masses_and_radii import calculate_abs_Ks, mann_mass_from_abs_Ks
 
+from astropy import units as u
+from astropy.constants import R_jup, M_jup
+
 import subprocess
 import forecaster
 
 from astroquery.gaia import Gaia
+
+def logarithmic_mean(a, b):
+    """Calculate the logarithmic mean of two values.
+    
+    Parameters
+    ----------
+    a : float
+        The first value.
+    b : float
+        The second value.
+
+    Returns
+    -------
+    float
+        The logarithmic mean.
+    """
+
+    return np.exp((np.log(a) + np.log(b)) / 2.)
 
 def map_bibkey(reflink, bibkeys):
     """Map the bibkey to the reflink.
@@ -84,9 +105,9 @@ if __name__ == "__main__":
                                                onesig_neg=x.pl_radjerr2,
                                                onesig_pos=x.pl_radjerr1, 
                                                unit='Jupiter',
-                                               n_radii_samples=int(1e3),
+                                               n_radii_samples=int(1e4),
                                                classify=False,
-                                               )
+                                               ) if x.pl_radj > 0.07 else (np.nan, np.nan, np.nan)
 
     nomasserr = ((p.pl_bmassjerr1.isna()) | p.pl_bmassj_bibkey.isna()) & (~p.pl_radjerr2.isna())
 
@@ -96,7 +117,7 @@ if __name__ == "__main__":
 
     rrr = pd.DataFrame({"M_pl": rrr[:,0],
                         "M_pl_err1": rrr[:,1],
-                        "M_pl_err2": rrr[:,2]})
+                        "M_pl_err2": rrr[:,2]}).iloc[::-1]
 
     p.loc[nomasserr, "pl_bmassj"] = rrr.M_pl.values
     p.loc[nomasserr, "pl_bmassjerr1"] = rrr.M_pl_err1.values
@@ -177,15 +198,40 @@ if __name__ == "__main__":
 
 
     # add Kepler-42 c upper limit of 2.06 Earth mass from muirhead2012characterizing
-    new.loc[new.ID == "Kepler-42", "M_pl_up_err"] = 0
-    new.loc[new.ID == "Kepler-42", "M_pl_low_err"] = 2.06 /  317.82838
-    new.loc[new.ID == "Kepler-42", "M_pl"] = 2.06 / 317.82838
+    m42 = logarithmic_mean(2.06, 0.1) / 317.82838
+    new.loc[new.ID == "Kepler-42", "M_pl_up_err"] = 2.06 / 317.82838 - m42
+    new.loc[new.ID == "Kepler-42", "M_pl_low_err"] = m42 - 0.1 /  317.82838 # assume it's not lighter than pure rock
+    new.loc[new.ID == "Kepler-42", "M_pl"] = m42
+
 
     # add bibkey for Kepler-42 c
     new.loc[new.ID == "Kepler-42", "pl_bmassj_bibkey"] = "muirhead2012characterizing"
 
-
+    # add Kepler-1558 mass estimate with iron core at 7.874 g/cm^3 vs 5.51 g/cm^3 for pure rock
+    r1558 = 0.06 * R_jup
+    v1558 = 4/3 * np.pi * r1558**3
+    miron = (7.874 * u.g / (u.cm)**3 * v1558 / M_jup ).decompose().value # assume it's not heavier than pure iron
+    mrock = (5.51 * u.g / (u.cm)**3 * v1558 / M_jup ).decompose().value # assume it's not lighter than pure rock
+    new.loc[new.ID == "Kepler-1558", "M_pl"] = (miron + mrock) / 2.
+    m1558 = new.loc[new.ID == "Kepler-1558", "M_pl"].values[0]
+    new.loc[new.ID == "Kepler-1558", "M_pl_up_err"] = miron - m1558
+    new.loc[new.ID == "Kepler-1558", "M_pl_low_err"] = m1558 - mrock
+ 
+    # replace HIP 67522 values with an upper limit of 5 M_jup
+    hip675 = new.ID == "HIP 67522"
+    new.loc[hip675, "M_pl_up_err"] = 0.
+    new.loc[hip675, "M_pl_low_err"] = 5. - new.loc[hip675, "M_pl"] + new.loc[hip675, "M_pl_low_err"]
+    new.loc[hip675, "M_pl"] = 5.
+    
     new = new.dropna(subset=cols[1:], how="any")
+
+    new = new[~new.M_pl.isna()]
+
+
+    # convert all columns with _err in them to positive values
+    for c in new.columns:
+        if "_err" in c:
+            new[c] = np.abs(new[c])
    
     new.to_csv("tidal/params.csv", index=False)
 
@@ -221,6 +267,7 @@ if __name__ == "__main__":
 
     # remove multiple stars
     res = df[df["multiple_star"].isnull()]
+
 
     # write to file
     res.to_csv("tidal/TIS_with_ADtests.csv", index=False)
