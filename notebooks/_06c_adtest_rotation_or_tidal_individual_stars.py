@@ -32,17 +32,6 @@ from funcs.ad import (sample_AD_for_custom_distribution,
                       get_pvalue_from_AD_statistic,
                       )
 
-def shuffle_column(df, column_name):
-    # Store the column values in a variable
-    column_values = df[column_name].values
-    
-    # Use numpy's random.shuffle function to shuffle the values
-    np.random.shuffle(column_values)
-    
-    # Update the column in the DataFrame with the shuffled values
-    df[column_name] = column_values
-    
-    return df
 
 import time
 
@@ -63,26 +52,12 @@ if __name__ == '__main__':
 
     # Fill in missing pl_orbper_kepler values with pl_orbper_tess
     rotation_table.pl_orbper_kepler.fillna(rotation_table.pl_orbper_tess, inplace=True)
-   
-    #pd.read_csv("../results/2022_08_stellar_params.csv")
 
     # Select only flare with ED > 1.:
     flare_table = flare_table[flare_table['ED'] >= 1.]
 
     # remove EPIC 200164267
     flare_table = flare_table[flare_table.ID != "EPIC 200164267"]
-
-    readres = pd.read_csv("../results/multistar_adtest.csv")
-
-    # get all IDs that have been tested with ED>1s and phasshift 0.25
-    tested_IDs = readres[(readres.subsample=="ED>1s") &
-                         (readres.phaseshift == 0.25) &
-                         (readres.period == "half_orbit")].ID.values
-
-    print(flare_table.ID.unique().shape)
-
-    # remove all stars that have been tested
-    flare_table = flare_table[~flare_table.ID.isin(tested_IDs)]
 
     # remove  TIC 399954349 (c)
     flare_table = flare_table[flare_table.TIC != "399954349(c)"]
@@ -106,9 +81,9 @@ if __name__ == '__main__':
                 # print(rotation_table.TIC, TIC)
                 try:
                     _ = rotation_table[rotation_table.tic_id == int(TIC)]
-                    # rotation_period = _.st_rotp.iloc[0]
+                    rotation_period = _.st_rotp.iloc[0]
                     # use half the orbital period instead
-                    rotation_period = _.pl_orbper_kepler.iloc[0] / 2.
+                    # rotation_period = _.pl_orbper_kepler.iloc[0] / 2.
                 except IndexError:
                     print('No rotation period for TIC', TIC)
                     continue

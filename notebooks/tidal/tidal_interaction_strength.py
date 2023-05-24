@@ -1,10 +1,10 @@
 #first model is 'Tidal buldge height approach' (Cuntz et al.,2000):
 #del_g/g = (M_pl/M_star)*(2.*R_star**3.)/(a-R_star)**3.
 
-import pandas as pd
+
 import numpy as np
 from astropy.io import ascii
-from astropy.table import Table, Column
+from astropy.table import Column
 
 TSI = ascii.read('tidal/params.csv',format = 'csv')#system,P_rot[d],P_rot_err[d],R_star[R_sun],R_star_err[R_sun],M_star[M_sun],M_star_err[M_sun],P_orb[d],P_orb_err[d],M_pl[M_jup],M_pl_err[M_jup],a[AU],a_err[AU]
 
@@ -80,10 +80,15 @@ for i in range(len(TSI)):
     tau_inv_low.append(tau_inv_el_low)
 
 tau_inv = np.asarray(tau_inv)
-tau = 1./tau_inv
-tau_up_err = tau - 1 / np.asarray(tau_inv_low)
-tau_low_err = 1 / np.asarray(tau_inv_up) - tau
 
+
+tau = 1./tau_inv
+
+tau_up =  1 / np.asarray(tau_inv_low)
+tau_low = 1 / np.asarray(tau_inv_up) 
+
+tau_up_err = np.amax(np.asarray([tau_up, tau_low]), axis=0) - tau
+tau_low_err = tau - np.amin(np.asarray([tau_up, tau_low]), axis=0) 
 
 
 TSI.add_column(Column(tau,name = 'tidal_disip_timescale'))

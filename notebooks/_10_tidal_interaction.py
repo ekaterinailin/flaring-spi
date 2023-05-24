@@ -207,7 +207,7 @@ if __name__ == "__main__":
     # add bibkey for Kepler-42 c
     new.loc[new.ID == "Kepler-42", "pl_bmassj_bibkey"] = "muirhead2012characterizing"
 
-    # add Kepler-1558 mass estimate with iron core at 7.874 g/cm^3 vs 5.51 g/cm^3 for pure rock
+    # add Kepler-1558 mass estimate with iron core at 7.874 g/cm^3 vs 5.51 g/cm^3 for Earth bulk composition
     r1558 = 0.06 * R_jup
     v1558 = 4/3 * np.pi * r1558**3
     miron = (7.874 * u.g / (u.cm)**3 * v1558 / M_jup ).decompose().value # assume it's not heavier than pure iron
@@ -220,7 +220,7 @@ if __name__ == "__main__":
     # replace HIP 67522 values with an upper limit of 5 M_jup
     hip675 = new.ID == "HIP 67522"
     new.loc[hip675, "M_pl_up_err"] = 0.
-    new.loc[hip675, "M_pl_low_err"] = 5. - new.loc[hip675, "M_pl"] + new.loc[hip675, "M_pl_low_err"]
+    new.loc[hip675, "M_pl_low_err"] = 5. - (new.loc[hip675, "M_pl"] - new.loc[hip675, "M_pl_low_err"])
     new.loc[hip675, "M_pl"] = 5.
     
     new = new.dropna(subset=cols[1:], how="any")
