@@ -1,18 +1,18 @@
 # Flaring Star-Planet Interactions in Kepler and TESS Data
 
-This repository contains the statistical analysis modules, and scripts to produce the figures and tables in the two following works in progress:
+This repository contains the statistical analysis modules, and scripts to produce the figures and tables in the two following works:
 
 1. [Ilin, E. and Poppenhäger K., (2022). *Searching for flaring star-planet interactions in AU Mic TESS observations.*](https://ui.adsabs.harvard.edu/abs/2022MNRAS.513.4579I/abstract)
 2. Ilin, E., Poppenhäger K. et al. (2023, in prep.) *Searching for flaring star-planet interactions in Kepler and TESS observations.*
+
+The first introduces the statistical method used in the second, and demonstrates it on the popular case of AU Mic.
 
 #### How to navigate this repository
 
 **Nomenclature:**
 
-- File names that contain `AU_Mic` or `AUMic` belong to project 1. 
-- File names that contain `ALL` belong to project 2.
-- File names with neither belong to both, like `notebooks/findflares.py`.
-- File names with a `_` prefix are work in progress.
+- File names that contain `AU_Mic` are from project 1. 
+- File names that begin with `_` belong to project 2.
 
 **Folders:**
 
@@ -42,7 +42,7 @@ Calculation of quiescent flux in the TESS band: `AU_Mic_quiescent_flux_in_TESS_b
 
 ## Project 2: Searching for flaring star-planet interactions in Kepler and TESS observations
 
-*work in progress*
+*TBD*
 
 `notebooks/`
 
@@ -58,6 +58,5 @@ Calculation of quiescent flux in the TESS band: `AU_Mic_quiescent_flux_in_TESS_b
 - matplotlib
 - lightkurve
 - altaipony
-- transitleastsquares
 - emcee
 - corner`
