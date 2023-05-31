@@ -165,7 +165,7 @@ def Alfven_surface_size_au (B_G, B_G_high, B_G_low, st_rad, ID, st_rad_err1, st_
 
     Dataframe.to_csv(f'{path}AS_estimation.csv', index=False)
     path_to_paper = "/home/ekaterina/Documents/002_writing/flaring-spi-paper/src/data/"
-    Dataframe.to_csv(f'{path_to_paper}AS_estimation.txt', index=False)
+    Dataframe.to_csv(f'{path_to_paper}AS_estimation.csv', index=False)
 
 if __name__ == '__main__':
     
