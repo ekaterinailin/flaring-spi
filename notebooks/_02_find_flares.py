@@ -24,8 +24,8 @@ from funcs.notebook import *
 from funcs.detrend import (custom_detrending,
                            estimate_detrended_noise)
 
-from funcs.findflares import (get_observed_phases, get_flare_phases,
-                              get_midtime,
+from funcs.findflares import (get_observed_phases,
+                                get_flare_phases,
                               add_meta_data_and_write,
                               write_flc_to_file,
                               get_table_of_light_curves,
@@ -201,6 +201,11 @@ if __name__=="__main__":
 
     # make an ID list of all stars that have already been processed
     found_flares["helpid"] = found_flares.apply(add_helpid, axis=1)
+
+
+    # -------------------------------------------------------------------------
+
+
 
     # stop if too many flares are found, bc it's sus
     for n, input_target in input_catalog.iterrows():

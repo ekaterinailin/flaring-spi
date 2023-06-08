@@ -41,22 +41,22 @@ if __name__ == '__main__':
     tstamp = time.strftime("%Y_%m_%d")
 
     # Define the number of step for the A2 sampling
-    N = 400
+    N = 10000
 
     # phaseshift zero for now
-    phaseshift = 0.75
+    phaseshift = 0.
     print('phaseshift = ', phaseshift)
 
     # Get flare table with final flares
     flare_table = pd.read_csv("../results/PAPER_flare_table.csv")
 
 
-    # Select only flare with ED :
-    flare_table = flare_table[flare_table['ED'] > 0.]
-    flare_table = flare_table[(flare_table.ID != "EPIC 200164267")
-                              & (flare_table.TIC != "399954349(c)")]
+    # # Select only flare with ED :
+    # flare_table = flare_table[flare_table['ED'] > 0.]
+    # flare_table = flare_table[(flare_table.ID != "EPIC 200164267")
+    #                           & (flare_table.TIC != "399954349(c)")]
     
-    flare_table = flare_table[flare_table.ID == "HAT-P-11"]
+    flare_table = flare_table[flare_table.ID == "HIP 67522"]
     
     # print(flare_table.shape)
     # pick a star to test
@@ -77,6 +77,8 @@ if __name__ == '__main__':
             # Select the LCs that were searched for flares for this star
             lcs = flare_table_single_star[["timestamp","TIC","ID","mission",
                                         "quarter_or_sector"]].drop_duplicates()
+            
+            print(lcs)
 
             # Check that LCs were not searched multiple times with 
             # different timestamps
@@ -85,11 +87,13 @@ if __name__ == '__main__':
             # make sure that the LCs are unique, and none are searched
             # multiple times
             lccounts = lcs.groupby(by=unique_cols).count().timestamp.values
+            print(lccounts)
             assert (lccounts == 1).all(), \
                 print(lcs)
 
             # Get the total observing time in each phase bin
             location = "/media/ekaterina/USB DISK/lcs_w_phases/"
+            location = "/home/ekaterina/Documents/001_science/lcs/"
             observed_phases, binmids  = get_observed_phases(p, lcs, location)
 
             # Get the (cumulative) flare phase distributions j

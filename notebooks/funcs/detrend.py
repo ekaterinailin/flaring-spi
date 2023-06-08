@@ -68,12 +68,14 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     # removes strong and fast variability on 5 day to 4.8 hours 
     # simple sines are probably because rotational variability is 
     # either weak and transient or strong and persistent on the timescales
-    lc2 = remove_sines_iteratively(lc1)
+    # lc2 = remove_sines_iteratively(lc1)
+    lc2 = lc1
     
     # choose a 6 hour window
     w = int((np.rint(savgol1 / 24. / dt) // 2) * 2 + 1)
 
     # use Savitzy-Golay to iron out the rest
+    lc2.flux_err = lc2.flux_err.value
     lc3 = lc2.detrend("savgol", window_length=w, pad=pad)
 
     # choose a three hour window

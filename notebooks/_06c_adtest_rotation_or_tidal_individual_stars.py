@@ -62,6 +62,8 @@ if __name__ == '__main__':
     # remove  TIC 399954349 (c)
     flare_table = flare_table[flare_table.TIC != "399954349(c)"]
 
+    flare_table = flare_table[flare_table.ID == "HIP 67522"]
+
     print(flare_table.ID.unique().shape)
     
     for phaseshift in [0, 0.25, 0.5, .75]:
@@ -118,6 +120,8 @@ if __name__ == '__main__':
 
                 # Get the total observing time in each phase bin
                 location = "/media/ekaterina/USB DISK/lcs_w_phases/"
+
+                location = "/home/ekaterina/Documents/001_science/lcs/"
                 observed_rotational_phases, binmids = get_observed_phases(p, lcs,
                                                                         location, period="rotation",
                                                                         rotper=rotation_period,
@@ -166,4 +170,4 @@ if __name__ == '__main__':
                         f.write(f"{tstamp},{TIC},{ID},"
                                 f"{len(p)-2},"# account for the added 0 and 1
                                 f"{observed_rotational_phases.sum().sum()},{phaseshift},"
-                                f"{N},{pval},{atest},ED>1s,half_orbit\n")
+                                f"{N},{pval},{atest},ED>1s,rotation\n")

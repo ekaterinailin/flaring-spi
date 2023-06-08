@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # other LCs
     selection_criteria = ((flares.real == -1) & # no flares found in this LC
                           (flares.TIC.isin(final_table.TIC))) # flares found in other LCs
-    final_table = final_table.append(flares[selection_criteria])
+    final_table = pd.concat([final_table, flares[selection_criteria]])
 
     # For the final csv table, sort by TIC ID
     final_table = final_table.sort_values(by="TIC")

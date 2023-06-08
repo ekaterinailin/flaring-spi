@@ -55,7 +55,7 @@ def Alfven_surface_size_au (B_G, B_G_high, B_G_low, st_rad, ID, st_rad_err1, st_
     input_file_cleaned  = input_file [B_G_ .notna()]
     pd.set_option('display.max_columns', None)
     input_file.head()
-    print(input_file_cleaned)
+    # print(input_file_cleaned)
     
     ##########  Work with the cleaned table (After removing the rows with nan 
     # values in column radius and magnetic field)
@@ -67,15 +67,15 @@ def Alfven_surface_size_au (B_G, B_G_high, B_G_low, st_rad, ID, st_rad_err1, st_
     radius_min_error = input_file_cleaned[st_rad_err1]
     radius_max_error = input_file_cleaned[st_rad_err2]
     
-    print(len(B_G))
-    print(len(radius))
+    # print(len(B_G))
+    # print(len(radius))
     
     ######################## Calculate B_G errors###############################
     B_G_min_error = [a-b for a,b in zip(B_G, B_G_low)]
-    print(f'Minimum B_G error  = {B_G_min_error}\n')
+    # print(f'Minimum B_G error  = {B_G_min_error}\n')
     
     B_G_max_error = [a-b for a,b in zip(B_G_high, B_G) ]
-    print(f'Maximum B_G error  = {B_G_max_error}\n')
+    # print(f'Maximum B_G error  = {B_G_max_error}\n')
     
     
     ##################### Calculate 15% of B_G, B_G_min_error, B_G_max_error###
@@ -83,13 +83,13 @@ def Alfven_surface_size_au (B_G, B_G_high, B_G_low, st_rad, ID, st_rad_err1, st_
     percent = lambda part, whole:float(whole) / 100 * float(part) 
     
     B_G_15perc = [percent(15,a) for a in B_G] 
-    print(f'15% of B_G  = {B_G_15perc}\n')
+    # print(f'15% of B_G  = {B_G_15perc}\n')
     
     B_G_min_error_15perc = [percent(15,a) for a in B_G_min_error] 
-    print(f'15% of B_G_min_error  = {B_G_min_error_15perc}\n')
+    # print(f'15% of B_G_min_error  = {B_G_min_error_15perc}\n')
     
     B_G_max_error_15perc = [percent(15,a) for a in B_G_max_error] 
-    print(f'15% of B_G_max_error  = {B_G_max_error_15perc}\n')
+    # print(f'15% of B_G_max_error  = {B_G_max_error_15perc}\n')
     
     ####### Calculating the Alfven surface in stellar radius with the errors####
     a = 0.44
@@ -103,12 +103,12 @@ def Alfven_surface_size_au (B_G, B_G_high, B_G_low, st_rad, ID, st_rad_err1, st_
     # Calculate AS in stellar radius
     log_AS_Rstar = [a*np.log10(c) + b for c in B_G_15perc]
     AS_Rstar     = [10**(d) for d in log_AS_Rstar]
-    print(f'AS_Rstar = {AS_Rstar}\n')
+    # print(f'AS_Rstar = {AS_Rstar}\n')
     
     # Calculate AS min in stellar radius
     log_AS_min = [(a+a_min_error)*np.log10(c-f) + (b+b_min_error) for c,f in zip(B_G_15perc, B_G_min_error_15perc)]
     AS_min     = [10**(d) for d in log_AS_min]
-    print(f'AS_min = {AS_min}\n')
+    # print(f'AS_min = {AS_min}\n')
     
     # Calculate AS max in stellar radius
     log_AS_max = [(a+a_max_error)*np.log10(c+f) + (b+b_max_error) for c,f in zip(B_G_15perc, B_G_max_error_15perc)]
@@ -136,20 +136,20 @@ def Alfven_surface_size_au (B_G, B_G_high, B_G_low, st_rad, ID, st_rad_err1, st_
     #Convert AS min from stellar radius to au
     radius_min = [a-b for a,b in zip(radius, radius_min_error)]
     AS_min_au = Rstar_AU_list(AS_min, radius_min)
-    print(f'AS min in au = {AS_min_au}\n')
+    # print(f'AS min in au = {AS_min_au}\n')
     
     #Convert AS max from stellar radius to au
     radius_max = [a+b for a,b in zip(radius, radius_max_error)]
     AS_max_au = Rstar_AU_list(AS_max, radius_max)
-    print(f'AS max in au = {AS_max_au}\n')
+    # print(f'AS max in au = {AS_max_au}\n')
 
     #Calculate AS min error in au
     AS_min_error_au = [a- b for a,b in zip(AS_au , AS_min_au)]
-    print(f'AS_min_error_au = {AS_min_error_au}\n')
+    # print(f'AS_min_error_au = {AS_min_error_au}\n')
     
     #Calculate AS max error in au
     AS_max_error_au = [a - b for a,b in zip(AS_max_au , AS_au)]
-    print(f'AS_max_error_au = {AS_max_error_au}\n')
+    # print(f'AS_max_error_au = {AS_max_error_au}\n')
     
 
     ## Create csv table to store the estimated Alfven surface size with the errors######
