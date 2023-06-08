@@ -83,9 +83,9 @@ if __name__ == '__main__':
                 # print(rotation_table.TIC, TIC)
                 try:
                     _ = rotation_table[rotation_table.tic_id == int(TIC)]
-                    rotation_period = _.st_rotp.iloc[0]
+                    # rotation_period = _.st_rotp.iloc[0]
                     # use half the orbital period instead
-                    # rotation_period = _.pl_orbper_kepler.iloc[0] / 2.
+                    rotation_period = _.pl_orbper_kepler.iloc[0] / 2.
                 except IndexError:
                     print('No rotation period for TIC', TIC)
                     continue
@@ -170,4 +170,4 @@ if __name__ == '__main__':
                         f.write(f"{tstamp},{TIC},{ID},"
                                 f"{len(p)-2},"# account for the added 0 and 1
                                 f"{observed_rotational_phases.sum().sum()},{phaseshift},"
-                                f"{N},{pval},{atest},ED>1s,rotation\n")
+                                f"{N},{pval},{atest},ED>1s,half_orbit\n")
