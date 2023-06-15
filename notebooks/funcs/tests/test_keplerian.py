@@ -36,10 +36,10 @@ def test_get_distance_from_planet_range():
     # test the case where eccentricity is known to be 0.1
 
     # ... and the error on the semimajor axis is larger than eccentricity
-    assert get_distance_from_planet_range(1, 0.1, .1) == 0.1
+    assert get_distance_from_planet_range(1, 0.1, .1) == pytest.approx(0.1, rel=1e-7)
 
     # ... and the error on the semimajor axis is smaller than eccentricity
-    assert get_distance_from_planet_range(1, 0.1, .001) == 1 - np.sqrt(0.99)
+    assert get_distance_from_planet_range(1, 0.1, .001) == 0.1
 
     # ... and the error on the semimajor axis is nan
-    assert get_distance_from_planet_range(1, 0.1, np.nan) == 1 - np.sqrt(0.99)
+    assert get_distance_from_planet_range(1, 0.1, np.nan) == 0.1

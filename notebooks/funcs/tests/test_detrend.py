@@ -39,8 +39,6 @@ def test_custom_detrending(a1, a2, period1, period2, quad, cube,):
 
 
     flares = flccc.find_flares(addtail=True).flares
-    print(flares.ed_rec)
-    print(flares.ampl_rec)
 
     # check that uncertainty is 
     assert np.nanmedian(flccc.detrended_flux_err) == pytest.approx(errorval, abs=2)

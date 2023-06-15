@@ -119,6 +119,13 @@ def test_add_meta_data_and_write():
     ff = pd.DataFrame(columns=default_columns)  # empty dataframe
     ID, TIC, sector, mission = "AB", 12345, 1, "TESS"
     lc_n, w, tstamp, mask_pos_outliers_sigma = 3, 1, "2019-01-01", 2.5
+
+    if os.path.exists("test.csv"):
+        os.remove("test.csv")
+   
+    print(ff)
+    print(flc)
+
     add_meta_data_and_write(ff, flc, ID, TIC, sector, mission, lc_n, w, tstamp,
                             mask_pos_outliers_sigma, path="test.csv", 
                             header=True)

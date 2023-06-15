@@ -68,8 +68,7 @@ def custom_detrending(lc, spline_coarseness=30, spline_order=3,
     # removes strong and fast variability on 5 day to 4.8 hours 
     # simple sines are probably because rotational variability is 
     # either weak and transient or strong and persistent on the timescales
-    # lc2 = remove_sines_iteratively(lc1)
-    lc2 = lc1
+    lc2 = remove_sines_iteratively(lc1)
     
     # choose a 6 hour window
     w = int((np.rint(savgol1 / 24. / dt) // 2) * 2 + 1)
@@ -536,7 +535,7 @@ def measure_flare(flc, sta, sto):
     tstop = flc.time.value[sto]
     
     # add result to flare table
-    flc.flares = flc.flares.append(pd.Series(
+    flc.flares = pd.concat([flc.flares, pd.DataFrame(pd.Series(
                                  {'ed_rec': ed_rec,
                                   'ed_rec_err': ed_rec_err,
                                   'ampl_rec': ampl_rec,
@@ -548,7 +547,7 @@ def measure_flare(flc, sta, sto):
                                   'tstop': tstop,
                                   'dur': tstop - tstart,
                                   'total_n_valid_data_points': flc.flux.value.shape[0]
-                                  }),ignore_index=True)
+                                  })).T],ignore_index=True)
     return 
 
 

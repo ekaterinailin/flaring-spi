@@ -174,7 +174,7 @@ def add_meta_data_and_write(ff, dflcn, ID, TIC, sector, mission,
         ff["w"] = w
         ff["mask_pos_outliers_sigma"] = mask_pos_outliers_sigma
         ff["real"]=-1
-        ff = ff.append({"phase":-1,
+        ff = pd.concat([ff, pd.DataFrame(pd.Series({"phase":-1,
                         "total_n_valid_data_points":dflcn.detrended_flux.shape[0],
                         "ID":ID,
                         "TIC":TIC,
@@ -184,8 +184,8 @@ def add_meta_data_and_write(ff, dflcn, ID, TIC, sector, mission,
                         "lc_n":lc_n,
                         "w":w,
                         "mask_pos_outliers_sigma":mask_pos_outliers_sigma,
-                        "real":-1},
-                         ignore_index=True)
+                        "real":-1})).T],
+                        ignore_index=True)
 
     # otherwise add ID, QCS and mission
     else:
