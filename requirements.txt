@@ -1,6 +1,5 @@
-markupsafe==2.0.1
 altaipony==2.0.0
-astropy==4.1
+astropy>=4.1
 corner==2.0.1
 emcee==3.0rc2
 matplotlib==3.2.0
