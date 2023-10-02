@@ -1,6 +1,6 @@
 import numpy as np
 import astropy.units as u
-from astropy.constants import R_jup, R_sun
+from astropy.constants import R_jup, R_sun, mu0
 
 
 def convert_datapoints_to_obstime(n, mission):
@@ -73,7 +73,8 @@ def wrap_obstimes(TIC, flares):
 def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False, 
                   v_rel_err=None, Bhigh=None, Blow=None, 
                   pl_radhigh=None, pl_radlow=None, a_err=None,
-                  Bp_err=None, rstarhigh=None, rstarlow=None):
+                  Bp_err=None, rstarhigh=None, rstarlow=None, Baxisym=.15,
+                  n=1):
     """Lanza 2012 scaling relation and its adaptation to absence of
     planet magnetic field (Bp=0).
 
@@ -82,7 +83,7 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
     v_rel : float
         Relative velocity between stellar rotation and orbital velocity in km/s.
     B : float
-        X-ray luminosity in erg/s.
+        Surface average magnetic field strength.
     pl_rad : float
         Planet radius in R_jup.
     a : float
@@ -113,7 +114,10 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
         Upper limit of stellar radius in R_sun.
     rstarlow : float
         Lower limit of stellar radius in R_sun.
-
+    Baxisym : float
+        Axisymmetric component of the stellar magnetic field at the poles.
+    n : float
+        constant factor in 45, between 0.1 and 1
 
     Returns
     -------
@@ -122,29 +126,32 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
     """
     # --------------------
     # Unit conversion:
+    gauss_cgs_squared = u.g * u.cm**(-1) * u.s**(-2)
+    vrel_unit = u.km / u.s
+    unit_add = gauss_cgs_squared * vrel_unit
 
     # convert from Rjup to cm
-    pl_rad = pl_rad * R_jup.to(u.km).value
+    pl_rad = pl_rad * R_jup.to(u.km)
 
     # convert from rsun to cm
-    rstar = rstar * R_sun.to(u.km).value
+    rstar = rstar * R_sun.to(u.km)
 
     # convert a from AU to km
-    a = a * u.AU.to(u.km)
+    a = (a * u.AU).to(u.km)
 
 
     if error:
         # convert from Rjup to cm
-        pl_radhigh = pl_radhigh * R_jup.to(u.km).value
-        pl_radlow = pl_radlow * R_jup.to(u.km).value
+        pl_radhigh = pl_radhigh * R_jup.to(u.km)
+        pl_radlow = pl_radlow * R_jup.to(u.km)
 
         # convert rstar, rstarhigh, rstarlow from rsun to cm
       
-        rstarhigh = rstarhigh * R_sun.to(u.km).value
-        rstarlow = rstarlow * R_sun.to(u.km).value
+        rstarhigh = rstarhigh * R_sun.to(u.km)
+        rstarlow = rstarlow * R_sun.to(u.km)
 
         #convert a_err from AU to km
-        a_err = a_err * u.AU.to(u.km)
+        a_err = (a_err * u.AU).to(u.km)
 
 
     # --------------------
@@ -152,50 +159,60 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
     # --------------------
     # Three cases: Bp > 0 and Bp = 0 and Bp < 0
 
+    exp = (n + 11) / 3
+
     if Bp > 0.:
 
-        pspi = B**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.) / (a**4) * (rstar**4)
+        pspi = (B * Baxisym)**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.) / (a**exp) * (rstar**exp) * unit_add
         
         if error:
-            pspi_high = (Bhigh**(4./3.) *
+            pspi_high = ((Bhigh * Baxisym)**(4./3.) *
                          (v_rel + v_rel_err) *
                          pl_radhigh**2 *
                          (Bp + Bp_err)**(2./3.) *
-                         rstarhigh**4 /
-                         ((a - a_err)**4)) 
+                         rstarhigh**exp /
+                         ((a - a_err)**exp)) * unit_add
             
-            pspi_low = (Blow**(4./3.) *
+            pspi_low = ((Blow * Baxisym)**(4./3.) *
                         (v_rel - v_rel_err) *
                         pl_radlow**2 *
                         (Bp - Bp_err)**(2./3.) *
-                        rstarlow**4 /
-                        ((a + a_err)**4))
+                        rstarlow**exp /
+                        ((a + a_err)**exp)) * unit_add
             
-            return pspi, pspi_high, pspi_low
-        
+             
+            return (pspi.decompose().to(u.erg/u.s).value, 
+                    pspi_high.decompose().to(u.erg/u.s).value, 
+                    pspi_low.decompose().to(u.erg/u.s).value)
+
         else:
-            return pspi
+
+            return pspi.decompose().to(u.erg/u.s).value
     
     elif Bp == 0.:
 
-        pspi = B**2 * v_rel * pl_rad**2  / (a**4) * (rstar**4)
+        pspi = (B * Baxisym)**2 * v_rel * pl_rad**2  / (a**exp) * (rstar**exp) * unit_add
 
         if error:
-            pspi_high = (Bhigh**2 *
+            pspi_high = ((Bhigh * Baxisym)**2 *
                          (v_rel + v_rel_err) *
                          pl_radhigh**2 *
-                         rstarhigh**4 /
-                         ((a-a_err)**4)) 
+                         rstarhigh**exp /
+                         ((a-a_err)**exp)) * unit_add
 
-            pspi_low = (Blow**2 *
+            pspi_low = ((Blow * Baxisym)**2 *
                         (v_rel - v_rel_err) *
                         pl_radlow**2 *
-                        rstarlow**4 /
-                        ((a+a_err)**4))
-            return pspi, pspi_high, pspi_low
-    
+                        rstarlow**exp /
+                        ((a+a_err)**exp)) * unit_add
+              
+            return (pspi.decompose().to(u.erg/u.s).value, 
+                    pspi_high.decompose().to(u.erg/u.s).value, 
+                    pspi_low.decompose().to(u.erg/u.s).value)
+
         else:
-            return pspi
+
+            return pspi.decompose().to(u.erg/u.s).value
     
     else:
         raise ValueError("Planet magnetic field must be >= 0.")
@@ -440,9 +457,9 @@ def b_from_ro_reiners2022(Ro, error=False, Ro_high=None, Ro_low=None):
 
 
 
-def pspi_kavanagh2022(Rp, B, vrel, a, Bp=1., error=False, Rphigh=None, Bphigh=1.,
+def pspi_kavanagh2022(Rp, B, vrel, a,  R, Bp=1., error=False, Rphigh=None, Bphigh=1.,
                       Bhigh=None, vrelhigh=None, alow=None, Rplow=None, Bplow=1., 
-                      Blow=None, vrellow=None, ahigh=None):
+                      Blow=None, vrellow=None, ahigh=None, Rhigh=None, Rlow=None):
     """Power of star-plaet interactions following the
     Saur et al. 2013 model, put in a scaling law by
     Kavanagh et al. 2022.
@@ -457,6 +474,8 @@ def pspi_kavanagh2022(Rp, B, vrel, a, Bp=1., error=False, Rphigh=None, Bphigh=1.
         Relative velocity in km/s
     a : float
         Orbital separation in AU
+    R : float
+        Stellar radius in R_sun
     Bp : float
         Planet magnetic field in G
     error : bool
@@ -481,53 +500,87 @@ def pspi_kavanagh2022(Rp, B, vrel, a, Bp=1., error=False, Rphigh=None, Bphigh=1.
         Lower limit on relative velocity in km/s
     ahigh : float
         Upper limit on orbital separation in AU
+    Rhigh : float
+        Upper limit on stellar radius in R_sun
+    Rlow : float
+        Lower limit on stellar radius in R_sun
 
     Returns
     -------
     pspi : float
-        prop. to power of star-planet interaction
+        prop. to power of star-planet interaction in erg/s
     """
+    # set rho star to fixed value of Alvarado-Gomez et al. 2020, and similar to solar value
+    # use mass of proton in kg for ionized  hydrogen
+    rho_star = 2e22 * u.km**(-3) * 1.6726e-27 * u.kg
+
     # convert a from AU to km
-    a = a * u.AU.to(u.km)
+    a = (a * u.AU).to(u.km)
 
     # convert Rp from Jupiter radii to km
-    Rp = Rp * u.R_jup.to(u.km)
+    Rp = Rp * R_jup.to(u.km)
+
+    # convert R from R_sun to km
+    R = R * R_sun.to(u.km)
+
+    gauss_cgs = u.g**(0.5) * u.cm**(-0.5) * u.s**(-1)
+    vrel_squared_unit = u.km**2 / u.s**2
+    unit_add = gauss_cgs * vrel_squared_unit
 
     if Bp > 0:
 
-        pspi = Rp**2 * Bp**(2/3) * B**(1/3) * vrel**2 * a**(-2)
+        print(a)
+        pspi = np.sqrt(rho_star) * Rp**2 * Bp**(2/3) * B**(1/3) * R**2 * vrel**2 * a**(-2) * unit_add
 
         if error:
             # convert alow and ahigh from AU to km
-            alow = alow * u.AU.to(u.km)
-            ahigh = ahigh * u.AU.to(u.km)
+            alow = (alow * u.AU).to(u.km)
+            ahigh = (ahigh * u.AU).to(u.km)
 
             # convert Rplow and Rphigh from Jupiter radii to km
-            Rplow = Rplow * u.R_jup.to(u.km)
-            Rphigh = Rphigh * u.R_jup.to(u.km)
+            Rplow = Rplow * R_jup.to(u.km)
+            Rphigh = Rphigh * R_jup.to(u.km)
 
-            pspi_high = Rphigh**2 * Bphigh**(2/3) * Bhigh**(1/3) * vrelhigh**2 * alow**(-2)
-            pspi_low = Rplow**2 * Bplow**(2/3) * Blow**(1/3) * vrellow**2 * ahigh**(-2)
+            # convert R_high and R_low from R_sun to km
+            Rhigh = Rhigh * R_sun.to(u.km)
+            Rlow = Rlow * R_sun.to(u.km)
+
+            pspi_high = np.sqrt(rho_star) * Rphigh**2 * Bphigh**(2/3) * Bhigh**(1/3) * Rhigh**2 * vrelhigh**2 * alow**(-2) * unit_add
+            pspi_low = np.sqrt(rho_star) * Rplow**2 * Bplow**(2/3) * Blow**(1/3) * Rlow**2 * vrellow**2 * ahigh**(-2) * unit_add
         
-            return pspi, pspi_high, pspi_low
+        
+            return (pspi.decompose().to(u.erg/u.s).value, 
+                    pspi_high.decompose().to(u.erg/u.s).value, 
+                    pspi_low.decompose().to(u.erg/u.s).value)
 
         else:
-            return pspi
+
+            return pspi.decompose().to(u.erg/u.s).value
 
     elif Bp==0:
-        
-        pspi = Rp**2 * B * vrel**2 * a**(-4)
+
+        print(R, Rp, rho_star, B, vrel, a, unit_add)        
+        pspi = np.sqrt(rho_star) * Rp**2 * R**4 * B * vrel**2 * a**(-4) * unit_add
 
         if error:
             # convert alow and ahigh from AU to km
-            alow = alow * u.AU.to(u.km)
-            ahigh = ahigh * u.AU.to(u.km)
+            alow = (alow * u.AU).to(u.km)
+            ahigh = (ahigh * u.AU).to(u.km)
 
             # convert Rplow and Rphigh from Jupiter radii to km
-            Rplow = Rplow * u.R_jup.to(u.km)
-            Rphigh = Rphigh * u.R_jup.to(u.km)
+            Rplow = Rplow * R_jup.to(u.km)
+            Rphigh = Rphigh * R_jup.to(u.km)
 
-            pspi_high = Rphigh**2 * Bhigh * vrelhigh**2 * alow**(-4)
-            pspi_low = Rplow**2 * Blow * vrellow**2 * ahigh**(-4)
+            # convert R_high and R_low from R_sun to km
+            Rhigh = Rhigh * R_sun.to(u.km)
+            Rlow = Rlow * R_sun.to(u.km)
+
+            pspi_high = np.sqrt(rho_star) * Rphigh**2 * Rhigh**4 * Bhigh * vrelhigh**2 * alow**(-4) * unit_add
+            pspi_low = np.sqrt(rho_star) * Rplow**2 * Rlow**4 * Blow * vrellow**2 * ahigh**(-4) * unit_add
         
-            return pspi, pspi_high, pspi_low
+            return (pspi.decompose().to(u.erg/u.s).value, 
+                    pspi_high.decompose().to(u.erg/u.s).value, 
+                    pspi_low.decompose().to(u.erg/u.s).value)
+        else:
+
+            return pspi.decompose().to(u.erg/u.s).value

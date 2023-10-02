@@ -35,12 +35,20 @@ def test_convert_datapoints_to_obstime():
 
 def test_p_spi_lanza12():
     """Test SPI power function"""
-    plrad =  1./ R_jup.to("km").value
-    rstar =  1. / R_sun.to("km").value
-    a = 1 / (1.*u.AU.to('km'))
+    plrad =  1.2#/ R_jup.to("km").value
+    rstar =  (.059 * u.AU).to("m") / R_sun / 10.16
+    print(rstar) 
+    a = .059 #/ (1.*u.AU.to('km'))
+    vrel = 71.4 # km/s
+    Bs = 10 / 0.15  # G
+    Bp = 100  # G
+
+
 
     # input unit conversion check
-    assert p_spi_lanza12(1, 1., plrad, a, rstar) == 1.
+    factor = 27 / 16 * np.pi * 3 * 0.82343 * (0.82343 + 0.5**2)**(-1/3)
+    res = 0.35e26 / factor
+    assert np.round(p_spi_lanza12(vrel, Bs, plrad, a, rstar, Bp=Bp, n=0.5), -22) == res
 
     # input NaN returns NaN
     with pytest.raises(ValueError):
@@ -54,7 +62,7 @@ def test_p_spi_lanza12():
     assert (p_spi_lanza12(1, 1., plrad, a, rstar, error=True, rstarhigh=rstar,
                         rstarlow=rstar, v_rel_err=0, Bhigh=1, Blow=1., Bp_err=0.,
                         pl_radhigh=plrad, pl_radlow=plrad, a_err=0.) 
-                         == (1., 1., 1.))
+                         == (3.05e19, 3.05e19, 3.05e19))
 
     # error check
     assert (p_spi_lanza12(1, 1.,plrad, a, rstar, error=True, rstarhigh=rstar,
