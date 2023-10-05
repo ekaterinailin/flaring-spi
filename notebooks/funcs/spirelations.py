@@ -71,11 +71,11 @@ def wrap_obstimes(TIC, flares):
 
 
 def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False, 
-                  v_rel_err=None, Bhigh=None, Blow=None, 
-                  pl_radhigh=None, pl_radlow=None, a_err=None,
-                  Bp_err=None, rstarhigh=None, rstarlow=None, Baxisym=.15,
-                  n=1):
-    """Lanza 2012 scaling relation and its adaptation to absence of
+                  v_rel_err=0, Bhigh=0, Blow=0, 
+                  pl_radhigh=0, pl_radlow=0, a_err=0,
+                  Bp_err=0, rstarhigh=0, rstarlow=0,
+                  n=0.25, lambda_squared=1.01203):
+    """Lanza 2012 Eq. 45 scaling relation and its adaptation to absence of
     planet magnetic field (Bp=0).
 
     Parameters
@@ -114,8 +114,6 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
         Upper limit of stellar radius in R_sun.
     rstarlow : float
         Lower limit of stellar radius in R_sun.
-    Baxisym : float
-        Axisymmetric component of the stellar magnetic field at the poles.
     n : float
         constant factor in 45, between 0.1 and 1
 
@@ -124,98 +122,115 @@ def p_spi_lanza12(v_rel, B, pl_rad, a, rstar, Bp=1., error=False,
     p_spi, p_spi_err : float, float
         Power of the star-planet interaction in erg/s, error in erg/s.
     """
-    # --------------------
-    # Unit conversion:
-    gauss_cgs_squared = u.g * u.cm**(-1) * u.s**(-2)
-    vrel_unit = u.km / u.s
-    unit_add = gauss_cgs_squared * vrel_unit
-
-    # convert from Rjup to cm
-    pl_rad = pl_rad * R_jup.to(u.km)
-
-    # convert from rsun to cm
-    rstar = rstar * R_sun.to(u.km)
-
-    # convert a from AU to km
-    a = (a * u.AU).to(u.km)
-
+    pspi = eq45_lanza2012(B, Bp, rstar, pl_rad, a, v_rel, n, lambda_squared)
+    
+    
 
     if error:
-        # convert from Rjup to cm
-        pl_radhigh = pl_radhigh * R_jup.to(u.km)
-        pl_radlow = pl_radlow * R_jup.to(u.km)
 
-        # convert rstar, rstarhigh, rstarlow from rsun to cm
-      
-        rstarhigh = rstarhigh * R_sun.to(u.km)
-        rstarlow = rstarlow * R_sun.to(u.km)
+        # if any of the inputs are NaN, return NaN
+        if (np.isnan(v_rel) | np.isnan(B) | np.isnan(pl_rad) | np.isnan(a) |
+            np.isnan(rstar) | np.isnan(Bp)):
+            return np.nan, np.nan, np.nan
+        
+        # if any of the upper, lower and err values are NaN, return NaN
+        if (np.isnan(v_rel_err) | np.isnan(Bhigh) | np.isnan(Blow) |
+            np.isnan(pl_radhigh) | np.isnan(pl_radlow) | np.isnan(a_err) | 
+            np.isnan(Bp_err) | np.isnan(rstarhigh) | np.isnan(rstarlow)):
+            return np.nan, np.nan, np.nan
+        
+        assert (Bhigh >= B) & (Blow <= B), "Bhigh must be > B and Blow must be < B"
+        assert (pl_radhigh >= pl_rad) & (pl_radlow <= pl_rad), "pl_radhigh must be > pl_rad and pl_radlow must be < pl_rad"
+        assert (rstarhigh >= rstar) & (rstarlow <= rstar), "rstarhigh must be > rstar and rstarlow must be < rstar"
+        assert (a_err >= 0) & (Bp_err >= 0) & (v_rel_err >= 0), "a_err, Bp_err, and v_rel_err must be > 0"
 
-        #convert a_err from AU to km
-        a_err = (a_err * u.AU).to(u.km)
+        pspi_high = eq45_lanza2012(Bhigh, Bp + Bp_err, rstarhigh, 
+                                    pl_radhigh, a - a_err, v_rel + v_rel_err,
+                                    n, lambda_squared)
+        
+        
+        
+        pspi_low = eq45_lanza2012(Blow, Bp - Bp_err, rstarlow,
+                                    pl_radlow, a + a_err, v_rel - v_rel_err,
+                                    n, lambda_squared)
+                    
+            
+        return pspi, pspi_high, pspi_low
+
+    else:
+
+        # if any of the inputs are NaN, return NaN
+        if (np.isnan(v_rel) | np.isnan(B) | np.isnan(pl_rad) | np.isnan(a) |
+            np.isnan(rstar) | np.isnan(Bp)):
+            return np.nan, np.nan, np.nan
+       
+
+        return pspi
 
 
-    # --------------------
 
-    # --------------------
-    # Three cases: Bp > 0 and Bp = 0 and Bp < 0
 
+def eq45_lanza2012(Bs, Bp, Rs, Rp, a, vrel, n, lambda_squared):
+    """Eq. 45 from Lanza et al. (2012)
+
+    Parameters
+    ----------
+    Bs : float
+            stellar magnetic field strength in G
+    Bp : float
+            planetary magnetic field strength in G
+    Rs : float
+            stellar radius in R_sun
+    Rp : float
+            planetary radius in R_jup
+    a : float
+            orbital distance in AU
+    vrel : float
+            relative velocity in km/s
+    n : float
+            power law index
+    lambda_squared : float
+            eigenvalue
+
+    Returns
+    -------
+    pspi : float
+            power dissipated in erg/s
+    """
+    # unit relative velocity
+    vrel = vrel * 1000 * u.m / u.s
+
+    # convert from Rjup to cm
+    Rp = Rp * R_jup.to(u.m)
+
+    # convert from rsun to cm
+    Rs = Rs * R_sun.to(u.m)
+
+    # convert a from AU to km
+    a = (a * u.AU).to(u.m)
+
+    # convert from G to T
+    Bs = Bs * 1e-4 * u.Tesla
+    Bp = Bp * 1e-4 * u.Tesla
+
+    # exponent for r/R
     exp = (n + 11) / 3
 
+    # constant factor in Eq. 45
+    constant_factor = (27 / 16 * np.pi * (n + 1) / n * lambda_squared *
+                       (lambda_squared + n**2)**(-1/3)) / mu0
+
+    # Eq. 45 from Lanza et al. (2012):
     if Bp > 0.:
-
-        pspi = (B * Baxisym)**(4./3.) * v_rel * pl_rad**2 * Bp**(2./3.) / (a**exp) * (rstar**exp) * unit_add
-        
-        if error:
-            pspi_high = ((Bhigh * Baxisym)**(4./3.) *
-                         (v_rel + v_rel_err) *
-                         pl_radhigh**2 *
-                         (Bp + Bp_err)**(2./3.) *
-                         rstarhigh**exp /
-                         ((a - a_err)**exp)) * unit_add
-            
-            pspi_low = ((Blow * Baxisym)**(4./3.) *
-                        (v_rel - v_rel_err) *
-                        pl_radlow**2 *
-                        (Bp - Bp_err)**(2./3.) *
-                        rstarlow**exp /
-                        ((a + a_err)**exp)) * unit_add
-            
-             
-            return (pspi.decompose().to(u.erg/u.s).value, 
-                    pspi_high.decompose().to(u.erg/u.s).value, 
-                    pspi_low.decompose().to(u.erg/u.s).value)
-
-        else:
-
-            return pspi.decompose().to(u.erg/u.s).value
-    
-    elif Bp == 0.:
-
-        pspi = (B * Baxisym)**2 * v_rel * pl_rad**2  / (a**exp) * (rstar**exp) * unit_add
-
-        if error:
-            pspi_high = ((Bhigh * Baxisym)**2 *
-                         (v_rel + v_rel_err) *
-                         pl_radhigh**2 *
-                         rstarhigh**exp /
-                         ((a-a_err)**exp)) * unit_add
-
-            pspi_low = ((Blow * Baxisym)**2 *
-                        (v_rel - v_rel_err) *
-                        pl_radlow**2 *
-                        rstarlow**exp /
-                        ((a+a_err)**exp)) * unit_add
-              
-            return (pspi.decompose().to(u.erg/u.s).value, 
-                    pspi_high.decompose().to(u.erg/u.s).value, 
-                    pspi_low.decompose().to(u.erg/u.s).value)
-
-        else:
-
-            return pspi.decompose().to(u.erg/u.s).value
-    
+        pspi = (constant_factor * Bs**(4/3) * vrel * Rp**2 * Bp**(2./3.) / (a**exp) * 
+                (Rs**exp))
+    elif Bp == 0:
+        pspi = (constant_factor * Bs**2 * vrel * Rp**2 / (a**exp) * 
+                (Rs**exp))  
     else:
         raise ValueError("Planet magnetic field must be >= 0.")
+    
+    return pspi.to("erg/s").value
 
 def b_from_lx_reiners(lx, r, error=False, lx_err=None, r_err=None):
     """Reiners et al. 2022 Eq. 4 inverted to get magnetic field in Gauss.
@@ -527,10 +542,12 @@ def pspi_kavanagh2022(Rp, B, vrel, a,  R, Bp=1., error=False, Rphigh=None, Bphig
     vrel_squared_unit = u.km**2 / u.s**2
     unit_add = gauss_cgs * vrel_squared_unit
 
+
     if Bp > 0:
 
-        print(a)
-        pspi = np.sqrt(rho_star) * Rp**2 * Bp**(2/3) * B**(1/3) * R**2 * vrel**2 * a**(-2) * unit_add
+        constant_factor = np.pi**0.5 * 2**(-2/3)
+
+        pspi = constant_factor * np.sqrt(rho_star) * Rp**2 * Bp**(2/3) * B**(1/3) * R**2 * vrel**2 * a**(-2) * unit_add
 
         if error:
             # convert alow and ahigh from AU to km
@@ -545,8 +562,8 @@ def pspi_kavanagh2022(Rp, B, vrel, a,  R, Bp=1., error=False, Rphigh=None, Bphig
             Rhigh = Rhigh * R_sun.to(u.km)
             Rlow = Rlow * R_sun.to(u.km)
 
-            pspi_high = np.sqrt(rho_star) * Rphigh**2 * Bphigh**(2/3) * Bhigh**(1/3) * Rhigh**2 * vrelhigh**2 * alow**(-2) * unit_add
-            pspi_low = np.sqrt(rho_star) * Rplow**2 * Bplow**(2/3) * Blow**(1/3) * Rlow**2 * vrellow**2 * ahigh**(-2) * unit_add
+            pspi_high = constant_factor * np.sqrt(rho_star) * Rphigh**2 * Bphigh**(2/3) * Bhigh**(1/3) * Rhigh**2 * vrelhigh**2 * alow**(-2) * unit_add
+            pspi_low = constant_factor *  np.sqrt(rho_star) * Rplow**2 * Bplow**(2/3) * Blow**(1/3) * Rlow**2 * vrellow**2 * ahigh**(-2) * unit_add
         
         
             return (pspi.decompose().to(u.erg/u.s).value, 
@@ -559,7 +576,8 @@ def pspi_kavanagh2022(Rp, B, vrel, a,  R, Bp=1., error=False, Rphigh=None, Bphig
 
     elif Bp==0:
 
-        print(R, Rp, rho_star, B, vrel, a, unit_add)        
+        constant_factor = np.pi**0.5
+              
         pspi = np.sqrt(rho_star) * Rp**2 * R**4 * B * vrel**2 * a**(-4) * unit_add
 
         if error:

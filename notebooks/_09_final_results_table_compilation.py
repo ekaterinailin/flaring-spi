@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     print("[CALC] Calculating stellar radius uncertainty from the mean"
           "of the upper and lower uncertainties.")
-    mean_std["st_rad_err"] =  (mean_std.st_rad_err1 + mean_std.st_rad_err2) / 2
+    mean_std["st_rad_err"] =  (mean_std.st_rad_err1 - mean_std.st_rad_err2) / 2
 
     print("[MERGE] Fill in TESS orbital period values where Kepler values are NaN.")
     mean_std["orbper_d"] =  mean_std.pl_orbper_kepler.fillna(mean_std.pl_orbper_tess)
@@ -273,12 +273,14 @@ if __name__ == "__main__":
                         axis=1)
 
     # convert res into an a 2d array
+    print(res)
     res = np.array(res.values.tolist()).T
+    print(res)
 
     # write to columns
-    mean_std["p_spi_erg_s"] = res[0]
-    mean_std["p_spi_erg_s_high"] = res[1]
-    mean_std["p_spi_erg_s_low"] = res[2]
+    mean_std["p_spi_sb_bp1_erg_s"] = res[0]
+    mean_std["p_spi_sb_bp1_erg_s_high"] = res[1]
+    mean_std["p_spi_sb_bp1_erg_s_low"] = res[2]
 
      # get normalization value from AU Mic p_spi_erg_s value
     print("[CALC] Calculating the normalization value for the SPI power.")
@@ -286,9 +288,9 @@ if __name__ == "__main__":
 
     # normalize the SPI power
     print("[CALC] Normalizing the SPI power.")
-    mean_std["p_spi_sb_bp1_norm"] = mean_std["p_spi_erg_s"] / norm
-    mean_std["p_spi_sb_bp1_norm_high"] = mean_std["p_spi_erg_s_high"] / norm
-    mean_std["p_spi_sb_bp1_norm_low"] = mean_std["p_spi_erg_s_low"] / norm
+    mean_std["p_spi_sb_bp1_norm"] = mean_std["p_spi_sb_bp1_erg_s"] / norm
+    mean_std["p_spi_sb_bp1_norm_high"] = mean_std["p_spi_sb_bp1_erg_s_high"] / norm
+    mean_std["p_spi_sb_bp1_norm_low"] = mean_std["p_spi_sb_bp1_erg_s_low"] / norm
 
     # -------------------------------------------------------------------------
 
@@ -353,6 +355,7 @@ if __name__ == "__main__":
                                                      x.B_G,
                                                      np.abs(x.v_rel_km_s), 
                                                      x.a_au,
+                                                     x.st_rad,
                                                      error=True, 
                                                      Rphigh=x.pl_radj + x.pl_radjerr1, 
                                                      Rplow=x.pl_radj + x.pl_radjerr2,
@@ -363,7 +366,9 @@ if __name__ == "__main__":
                                                      ahigh=x.a_au + x.a_au_err, 
                                                      alow=x.a_au - x.a_au_err,
                                                      Bphigh=1.,
-                                                     Bplow=1.),
+                                                     Bplow=1.,
+                                                     Rhigh=x.st_rad + x.st_rad_err1,
+                                                     Rlow=x.st_rad + x.st_rad_err2),
                         axis=1)
 
     # convert res into an a 2d array
@@ -397,6 +402,7 @@ if __name__ == "__main__":
                                                         x.B_G,
                                                         np.abs(x.v_rel_km_s),
                                                         x.a_au,
+                                                        x.st_rad,
                                                         error=True,
                                                         Bp=0.,
                                                         Rphigh=x.pl_radj + x.pl_radjerr1,
@@ -408,7 +414,9 @@ if __name__ == "__main__":
                                                         ahigh=x.a_au + x.a_au_err,
                                                         alow=x.a_au - x.a_au_err,
                                                         Bphigh=0.,
-                                                        Bplow=0.),
+                                                        Bplow=0.,
+                                                        Rhigh=x.st_rad + x.st_rad_err1,
+                                                        Rlow=x.st_rad + x.st_rad_err2),
                             axis=1)
 
     # convert res into an a 2d array

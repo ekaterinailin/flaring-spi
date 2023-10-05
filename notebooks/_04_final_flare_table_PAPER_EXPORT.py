@@ -1,5 +1,17 @@
 import pandas as pd
 
+
+def convert_dp_to_days(row):
+
+    if row.mission == "Kepler": # 1min cadence
+        return row.total_n_valid_data_points / 60. / 24.
+    elif row.mission == "TESS":
+        if row.total_n_valid_data_points < 30000: # 2min cadence
+            return row.total_n_valid_data_points / 30. / 24.
+        elif row.total_n_valid_data_points > 30000: # 20 sec cadence
+            return row.total_n_valid_data_points / 3. / 60. / 24.
+
+
 if __name__ == "__main__":
 
     # Read the vetted flare table
@@ -55,10 +67,14 @@ if __name__ == "__main__":
     # For the final csv table, sort by TIC ID
     final_table = final_table.sort_values(by="TIC")
 
+    # convert 'total_n_valid_data_points' to days duration 
+    final_table['total_time_observed_in_lc_days'] = final_table.apply(lambda x: convert_dp_to_days(x), axis=1)
+
     # Select columns to keep
     cols = ['TIC', 'ID', 'mission', 'qcs', 'tstart', 'tstop',
-            'ampl_rec','ed_rec','ed_rec_err','phase','tstamp']
+            'ampl_rec','ed_rec','ed_rec_err','phase','tstamp', 'total_time_observed_in_lc_days']
     final_table = final_table[cols]
+
 
     # Rename columns to be more informative
     final_table = final_table.rename(index=str,

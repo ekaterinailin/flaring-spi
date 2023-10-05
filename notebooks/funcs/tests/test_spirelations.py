@@ -1,10 +1,12 @@
 import pytest
 import numpy as np
-from astropy.constants import R_jup, R_sun
+import pandas as pd
+from astropy.constants import R_sun
 from astropy import units as u
 
 
 from ..spirelations import (convert_datapoints_to_obstime,
+                            eq45_lanza2012,
                             p_spi_lanza12,
                             b_from_lx_reiners,
                             calculate_relative_velocity)
@@ -33,42 +35,127 @@ def test_convert_datapoints_to_obstime():
         convert_datapoints_to_obstime(1e5, "Chandra")
 
 
+def test_eq45_lanza2012():
+    """Tables 1 and 3 from Lanza et al. (2012), also notes from the text to fill
+    in the missing values. Results should be consistent with 2%.
+
+    """
+
+    # from Table 1
+    sname = ["HD 179949", "HD 189733", "ups And", "tau Boo"]
+    B = np.array([10, 10, 10, 10]) # G
+    Bp = np.array([100, 100, 100, 100]) # G
+    a = [0.045, 0.031, 0.059, 0.046] # AU
+    a_over_R = [7.72, 8.56, 10.16, 7.38] 
+    vrel = [88.4, 125.4, 71.4, 22.8] # km/s
+
+    # from Table 3
+    res_tab3 = [1.23e26, 1.04e26, 0.35e26, 0.38e26] # erg/s
+
+    # planet radii from text in 3.2
+    Rp = [1.2, 1.127, 1.2, 1.2] # R_jup
+
+    # make DataFrame from lists
+    df = pd.DataFrame({"sname": sname, "Bs": B, "Bp": Bp, "a": a, "Rp": Rp,
+                    "a_over_R": a_over_R, "vrel": vrel, "res_tab3": res_tab3})
+
+    # calculate Rstar from a/R and R in units of R_sun
+    df["Rs"] = df["a"]*u.AU.to("m") / df["a_over_R"] / R_sun
+
+    # use the eigenvalue and n from 3.3
+    lambda_05 = .82343 # lambda squared
+    n = 0.5
+
+    # calculate SPI power
+    df["power_SPI_erg_s"] = df.apply(lambda x: eq45_lanza2012(x.Bs, x.Bp, x.Rs, 
+                                                            x.Rp, x.a, x.vrel, n, 
+                                                            lambda_05), axis=1)
+
+
+    # calculate ratio with Table 3 results
+    df["power_SPI_erg_s_over_res_tab3"] = df["power_SPI_erg_s"] / df["res_tab3"]
+
+    # check that the results are within 2% of the values in Table 3
+    assert (np.round(df["power_SPI_erg_s_over_res_tab3"].values, 2) ==
+            [0.99, 0.99, 0.98, 0.98]).all()
+
+    # check that Bp=0 gives a positive value
+    assert (df.apply(lambda x: eq45_lanza2012(x.Bs, 0, x.Rs, x.Rp, x.a, x.vrel, n, 
+                                              lambda_05,), axis=1).values > 0.).all()  
+
 def test_p_spi_lanza12():
-    """Test SPI power function"""
-    plrad =  1.2#/ R_jup.to("km").value
-    rstar =  (.059 * u.AU).to("m") / R_sun / 10.16
-    print(rstar) 
-    a = .059 #/ (1.*u.AU.to('km'))
-    vrel = 71.4 # km/s
-    Bs = 10 / 0.15  # G
-    Bp = 100  # G
+    """Test SPI power function with and without errors"""
 
+    # check that no error reduces to the original Lanza equation.
+    assert p_spi_lanza12(1, 1, 1, 1, 1, Bp=1.) == eq45_lanza2012(1, 1, 1, 1, 1, 1, 0.25, 1.01203)
 
-
-    # input unit conversion check
-    factor = 27 / 16 * np.pi * 3 * 0.82343 * (0.82343 + 0.5**2)**(-1/3)
-    res = 0.35e26 / factor
-    assert np.round(p_spi_lanza12(vrel, Bs, plrad, a, rstar, Bp=Bp, n=0.5), -22) == res
-
-    # input NaN returns NaN
-    with pytest.raises(ValueError):
-        np.isnan(p_spi_lanza12(1, 1., plrad, a, rstar, Bp=np.nan))
-
-    # input negative returns ValueError
-    with pytest.raises(ValueError):
-        p_spi_lanza12(1, 1., plrad, a, rstar, Bp=-1.)
+    res = p_spi_lanza12(1, 1, 1, 1, 1, Bp=1., error=True, 
+                        v_rel_err=0, Bhigh=1, Blow=0, 
+                        pl_radhigh=1, pl_radlow=0, a_err=0,
+                        Bp_err=0, rstarhigh=1, rstarlow=0, 
+                        n=0.25, lambda_squared=1.01203)
     
-    # error check
-    assert (p_spi_lanza12(1, 1., plrad, a, rstar, error=True, rstarhigh=rstar,
-                        rstarlow=rstar, v_rel_err=0, Bhigh=1, Blow=1., Bp_err=0.,
-                        pl_radhigh=plrad, pl_radlow=plrad, a_err=0.) 
-                         == (3.05e19, 3.05e19, 3.05e19))
+    assert res[1] == res[0]
+    assert res[2] == 0
 
-    # error check
-    assert (p_spi_lanza12(1, 1.,plrad, a, rstar, error=True, rstarhigh=rstar,
-                        rstarlow=rstar, v_rel_err=0., Bhigh=2, Blow=0., Bp_err=1., 
-                        pl_radhigh=plrad,pl_radlow=plrad, a_err=0.)
-                            == (1., 4., 0.))
+    res = p_spi_lanza12(1, 1, 1, 1, 1, Bp=1., error=True, 
+                        v_rel_err=.1, Bhigh=2, Blow=0, 
+                        pl_radhigh=1., pl_radlow=0, a_err=0.,
+                        Bp_err=.1, rstarhigh=1., rstarlow=0, 
+                        n=0.25, lambda_squared=1.01203)
+    
+    assert res[1] > 0
+    assert res[1] > res[0]
+    assert res[2] == 0
+
+    res = p_spi_lanza12(1, 1, 1, 1, 1, Bp=1., error=True,
+                        v_rel_err=0, Bhigh=1, Blow=0.9,
+                        pl_radhigh=1, pl_radlow=0.9, a_err=0,
+                        Bp_err=0, rstarhigh=1, rstarlow=0.9, 
+                        n=0.25, lambda_squared=1.01203)
+
+    assert res[1] == res[0]
+    assert res[2] > 0
+
+    with pytest.raises(AssertionError):
+        p_spi_lanza12(1, 1., 1., 1., 1., Bhigh=0.1, error=True)
+
+    with pytest.raises(AssertionError):
+        p_spi_lanza12(1, 1., 1., 1., 1., Blow=1.1, error=True)
+
+    with pytest.raises(AssertionError):
+        p_spi_lanza12(1, 1., 1., 1., 1., pl_radhigh=0.1, error=True)
+
+    with pytest.raises(AssertionError):
+        p_spi_lanza12(1, 1., 1., 1., 1., pl_radlow=1.1, error=True)
+
+    with pytest.raises(AssertionError):
+        p_spi_lanza12(1, 1., 1., 1., 1., a_err=-1.1, error=True)
+
+    with pytest.raises(AssertionError):
+        p_spi_lanza12(1, 1., 1., 1., 1., Bp_err=-1.1, error=True)
+
+    with pytest.raises(AssertionError):
+        p_spi_lanza12(1, 1., 1., 1., 1., v_rel_err=-1.1, error=True)
+
+    with pytest.raises(AssertionError):
+        p_spi_lanza12(1, 1., 1., 1., 1., rstarhigh=0.1, error=True)
+
+    with pytest.raises(AssertionError):
+        p_spi_lanza12(1, 1., 1., 1., 1., rstarlow=1.1, error=True)
+
+    with pytest.raises(ValueError):
+        p_spi_lanza12(1, 1., 1., 1., 1., Bp=-1.)
+
+    res = p_spi_lanza12(1, 1, 1, 1, 1, Bp=0., error=True, 
+                        v_rel_err=0, Bhigh=1, Blow=0, 
+                        pl_radhigh=1, pl_radlow=0, a_err=0,
+                        Bp_err=0, rstarhigh=1, rstarlow=0, 
+                        n=0.25, lambda_squared=1.01203)
+    
+    assert res[0] > 0
+    assert res[1] == res[0]
+    assert res[2] == 0
 
 
 def test_b_from_lx_reiners():
