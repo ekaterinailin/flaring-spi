@@ -82,4 +82,4 @@ if __name__ == "__main__":
 
     # save to flaring spi paper directory
     path = "/home/ekaterina/Documents/002_writing/flaring-spi-paper/src/data/"
-    df.to_csv(path + "PAPER_flare_table.csv", index=False)
+    df2.to_csv(path + "PAPER_flare_table.csv", index=False)
