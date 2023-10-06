@@ -1,3 +1,16 @@
+"""
+UTF-8, Python 3
+
+------------------
+Flaring SPI
+------------------
+
+Ekaterina Ilin, 2023, MIT License
+
+This script calculates the coherence timescales of the rotation and orbital
+periods of stars with known transiting and RV detected exoplanets.
+"""
+
 import pandas as pd
 import numpy as np
 
@@ -175,6 +188,9 @@ if __name__ == "__main__":
     # column
     flares["abs_tstart"] = flares.tstart + flares["mission"].apply(lambda x: OFFSET[x])
 
+    # write flares table back to file
+    flares.to_csv("../results/PAPER_flare_table.csv", index=False)
+
     # Init a coherence timescales table
     ct = pd.DataFrame(columns=columns)
 
@@ -184,6 +200,8 @@ if __name__ == "__main__":
         # take the real flares for this TIC
         f = flares[(flares["TIC"].astype(str)==str(row.tic_id)) &
                    (np.isfinite(flares["tstart"]))]
+        
+        print(orbits.columns)
     
         # If both transit midtimes for Kepler and TESS are present
         if (np.isfinite(row.pl_orbper_kepler)) & (np.isfinite(row.pl_orbper_tess)):

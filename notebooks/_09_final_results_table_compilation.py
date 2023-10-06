@@ -273,24 +273,22 @@ if __name__ == "__main__":
                         axis=1)
 
     # convert res into an a 2d array
-    print(res)
     res = np.array(res.values.tolist()).T
-    print(res)
 
     # write to columns
     mean_std["p_spi_sb_bp1_erg_s"] = res[0]
     mean_std["p_spi_sb_bp1_erg_s_high"] = res[1]
     mean_std["p_spi_sb_bp1_erg_s_low"] = res[2]
 
-     # get normalization value from AU Mic p_spi_erg_s value
-    print("[CALC] Calculating the normalization value for the SPI power.")
-    norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_erg_s"].values[0]
+#      # get normalization value from AU Mic p_spi_erg_s value
+#     print("[CALC] Calculating the normalization value for the SPI power.")
+#     norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_erg_s"].values[0]
 
-    # normalize the SPI power
-    print("[CALC] Normalizing the SPI power.")
-    mean_std["p_spi_sb_bp1_norm"] = mean_std["p_spi_sb_bp1_erg_s"] / norm
-    mean_std["p_spi_sb_bp1_norm_high"] = mean_std["p_spi_sb_bp1_erg_s_high"] / norm
-    mean_std["p_spi_sb_bp1_norm_low"] = mean_std["p_spi_sb_bp1_erg_s_low"] / norm
+#     # normalize the SPI power
+#     print("[CALC] Normalizing the SPI power.")
+#     mean_std["p_spi_sb_bp1_norm"] = mean_std["p_spi_sb_bp1_erg_s"] / norm
+#     mean_std["p_spi_sb_bp1_norm_high"] = mean_std["p_spi_sb_bp1_erg_s_high"] / norm
+#     mean_std["p_spi_sb_bp1_norm_low"] = mean_std["p_spi_sb_bp1_erg_s_low"] / norm
 
     # -------------------------------------------------------------------------
 
@@ -324,19 +322,19 @@ if __name__ == "__main__":
     res = np.array(res.values.tolist()).T
 
     # write to columns
-    mean_std["p_spi_erg_s_bp0"] = res[0]
-    mean_std["p_spi_erg_s_bp0_high"] = res[1]
-    mean_std["p_spi_erg_s_bp0_low"] = res[2]
+    mean_std["p_spi_sb_bp0_erg_s"] = res[0]
+    mean_std["p_spi_sb_bp0_erg_s_high"] = res[1]
+    mean_std["p_spi_sb_bp0_erg_s_low"] = res[2]
 
-    # get normalization value from AU Mic p_spi_erg_s_bp0 value
-    norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_erg_s_bp0"].values[0]
-    print(norm)
+#     # get normalization value from AU Mic p_spi_erg_s_bp0 value
+#     norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_bp0_erg_s"].values[0]
+#     print(norm)
 
-    # normalize the SPI power to AU Mic
-    print("[CALC] Normalizing the SPI power to AU Mic.")
-    mean_std["p_spi_sb_bp0_norm"] = mean_std["p_spi_erg_s_bp0"] / norm
-    mean_std["p_spi_sb_bp0_norm_high"] = mean_std["p_spi_erg_s_bp0_high"] / norm
-    mean_std["p_spi_sb_bp0_norm_low"] = mean_std["p_spi_erg_s_bp0_low"] / norm
+#     # normalize the SPI power to AU Mic
+#     print("[CALC] Normalizing the SPI power to AU Mic.")
+#     mean_std["p_spi_sb_bp0_norm"] = mean_std["p_spi_bp0_erg_s"] / norm
+#     mean_std["p_spi_sb_bp0_norm_high"] = mean_std["p_spi_bp0_erg_s_high"] / norm
+#     mean_std["p_spi_sb_bp0_norm_low"] = mean_std["p_spi_bp0_erg_s_low"] / norm
 
 
     # -----------------------------------------------------------------------
@@ -375,18 +373,18 @@ if __name__ == "__main__":
     res = np.array(res.values.tolist()).T
 
     # write to columns
-    mean_std["p_spi_kav22"] = res[0]
-    mean_std["p_spi_kav22_high"] = res[1]
-    mean_std["p_spi_kav22_low"] = res[2]
+    mean_std["p_spi_aw_bp1_erg_s"] = res[0]
+    mean_std["p_spi_aw_bp1_erg_s_high"] = res[1]
+    mean_std["p_spi_aw_bp1_erg_s_low"] = res[2]
     
-    # get normalization value from AU Mic p_spi_kav22 value
-    norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_kav22"].values[0]
+#     # get normalization value from AU Mic p_spi_kav22 value
+#     norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_kav22"].values[0]
     
-    # normalize the SPI power to AU Mic
-    print("[CALC] Normalizing the SPI power to AU Mic.")
-    mean_std["p_spi_aw_bp1_norm"] = mean_std["p_spi_kav22"] / norm
-    mean_std["p_spi_aw_bp1_norm_high"] = mean_std["p_spi_kav22_high"] / norm
-    mean_std["p_spi_aw_bp1_norm_low"] = mean_std["p_spi_kav22_low"] / norm
+#     # normalize the SPI power to AU Mic
+#     print("[CALC] Normalizing the SPI power to AU Mic.")
+#     mean_std["p_spi_aw_bp1_norm"] = mean_std["p_spi_kav22"] / norm
+#     mean_std["p_spi_aw_bp1_norm_high"] = mean_std["p_spi_kav22_high"] / norm
+#     mean_std["p_spi_aw_bp1_norm_low"] = mean_std["p_spi_kav22_low"] / norm
 
     # -----------
     # B_P = 0 G
@@ -423,18 +421,18 @@ if __name__ == "__main__":
     res = np.array(res.values.tolist()).T
 
     # write to columns
-    mean_std["p_spi_kav22_bp0"] = res[0]
-    mean_std["p_spi_kav22_bp0_high"] = res[1]
-    mean_std["p_spi_kav22_bp0_low"] = res[2]
+    mean_std["p_spi_aw_bp0_erg_s"] = res[0]
+    mean_std["p_spi_aw_bp0_erg_s_high"] = res[1]
+    mean_std["p_spi_aw_bp0_erg_s_low"] = res[2]
 
-    # get normalization value from AU Mic p_spi_kav22 value
-    norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_kav22_bp0"].values[0]
+#     # get normalization value from AU Mic p_spi_kav22 value
+#     norm = mean_std.loc[mean_std.TIC == "441420236", "p_spi_kav22_bp0"].values[0]
 
-    # normalize the SPI power to AU Mic
-    print("[CALC] Normalizing the SPI power to AU Mic.")
-    mean_std["p_spi_aw_bp0_norm"] = mean_std["p_spi_kav22_bp0"] / norm
-    mean_std["p_spi_aw_bp0_norm_high"] = mean_std["p_spi_kav22_bp0_high"] / norm
-    mean_std["p_spi_aw_bp0_norm_low"] = mean_std["p_spi_kav22_bp0_low"] / norm
+#     # normalize the SPI power to AU Mic
+#     print("[CALC] Normalizing the SPI power to AU Mic.")
+#     mean_std["p_spi_aw_bp0_norm"] = mean_std["p_spi_kav22_bp0"] / norm
+#     mean_std["p_spi_aw_bp0_norm_high"] = mean_std["p_spi_kav22_bp0_high"] / norm
+#     mean_std["p_spi_aw_bp0_norm_low"] = mean_std["p_spi_kav22_bp0_low"] / norm
 
     # -------------------------------------------------------------------------
     # Reverse the 10% error on the rotation period
