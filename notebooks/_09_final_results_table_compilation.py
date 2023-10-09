@@ -23,6 +23,9 @@ Final table is called: results.csv
 import numpy as np
 import pandas as pd
 
+from astropy import units as u
+from astropy.constants import R_sun
+
 from funcs.ad import aggregate_pvalues
 from funcs.spirelations import (wrap_obstimes,
                                 p_spi_lanza12,
@@ -132,6 +135,7 @@ if __name__ == "__main__":
                                         "pl_orbpererr1_tess", "pl_orbpererr2_tess",
                                         "pl_orbper_tess","pl_orbper_reflink",
                                         "a_au_err", "pl_radjerr1","pl_radjerr2",
+                                        "st_spectype", "st_spectype_reflink",
                                         "pl_radj_reflink",
                                         "sy_dist", "sy_snum"]],
                                 on="TIC", how="left")
@@ -154,6 +158,20 @@ if __name__ == "__main__":
     filledin1 = mean_std.pl_orbpererr1_kepler.fillna(mean_std.pl_orbpererr1_tess)
     filledin2 = mean_std.pl_orbpererr2_kepler.fillna(mean_std.pl_orbpererr2_tess)
     mean_std["orbper_d_err"] =  (filledin1 - filledin2) / 2
+
+
+    # -------------------------------------------------------------------------
+    # As per request of the referee, add the distance from star in unit of stellar radii
+
+    print("[CALC] Calculating the distance from star in unit of stellar radii.")
+    factor = (1. * u.AU.to("km") / R_sun.to("km")).value
+    print(factor)
+    mean_std["a_rstar"] = mean_std["a_au"] / mean_std["st_rad"] * factor
+
+    mean_std["a_rstar_err"] = (mean_std["a_rstar"] * 
+                               np.sqrt((mean_std["a_au_err"] / mean_std["a_au"])**2 +
+                                       (mean_std["st_rad_err"] / mean_std["st_rad"] )**2))
+    
 
     # -------------------------------------------------------------------------
     # Fill in missing values for the rotation period uncertainty with 10% of the
@@ -214,7 +232,9 @@ if __name__ == "__main__":
     print("[CALC] Calculating the observing baseline for each star in days.")
     mean_std["obstime_d"] = mean_std.apply(lambda x: wrap_obstimes(str(x.TIC), 
                                                     flares), axis=1)
-
+    
+    mean_std.loc[mean_std.ID == "TRAPPIST-1", "obstime_d"] = 73.08 # Luger et al. 2017
+    
     # calculate the number of covered orbits
     print("[CALC] Calculating the number of orbits covered by the observing baseline.")
     mean_std["orbits_covered"] = mean_std["obstime_d"] / mean_std["orbper_d"]
@@ -497,8 +517,17 @@ if __name__ == "__main__":
                                                                   bibkeys),
                                                       axis=1)
 
-                                                      
 
+    # 6. spectral type
+    print("[MERGE] Adding the bibkeys for spectral type to the results table.") 
+    mapped = mean_std.st_spectype_reflink.apply(lambda x: map_bibkey(x, bibkeys)) 
+    print(mapped)     
+    mean_std["st_spectype_bibkey"] = mean_std["st_spectype_bibkey"].fillna(mapped)                                        
+    mean_std["st_spectype"] = mean_std["st_spectype_x"].fillna(mean_std["st_spectype_y"])
+
+    # delete the _x and _y columns
+    mean_std.drop(columns=["st_spectype_x"], inplace=True)
+    mean_std.drop(columns=["st_spectype_y"], inplace=True)
 
 
     # delete the reflink columns
@@ -508,6 +537,7 @@ if __name__ == "__main__":
     mean_std.drop(columns=["st_lum_reflink"], inplace=True)
     mean_std.drop(columns=["pl_radj_reflink"], inplace=True)
     mean_std.drop(columns=["pl_orbeccen_reflink"], inplace=True)
+    mean_std.drop(columns=["st_spectype_reflink"], inplace=True)
 
 
 

@@ -1,48 +1,53 @@
-pl_orbper_reflink,pl_orbper_bibkey
-<a refstr=MORTON_ET_AL__2016 href=https://ui.adsabs.harvard.edu/abs/2016ApJ...822...86M/abstract target=ref>Morton et al. 2016</a>,morton2016false
-<a refstr=JONTOF_HUTTER_ET_AL__2015 href=https://ui.adsabs.harvard.edu/abs/2015Natur.522..321J/abstract target=ref>Jontof-Hutter et al. 2015</a>,jontof-hutter2015mass
-<a refstr=ROWE_ET_AL__2014 href=https://ui.adsabs.harvard.edu/abs/2014ApJ...784...45R/abstract target=ref> Rowe et al. 2014</a>,rowe2014validation
-<a refstr=RIZZUTO_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020AJ....160...33R/abstract target=ref>Rizzuto et al. 2020</a>,rizzuto2020tess
-<a refstr=MASUDA_2017 href=https://ui.adsabs.harvard.edu/abs/2017AJ....154...64M/abstract target=ref>Masuda 2017</a>,masuda2017eccentric
-<a refstr=MENT_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021AJ....161...23M/abstract target=ref>Ment et al. 2021</a>,ment2021toi
-<a refstr=XIE_2014 href=https://ui.adsabs.harvard.edu/abs/2014ApJS..210...25X/abstract target=ref>Xie 2014</a>,xie2014transit
-<a refstr=YEE_ET_AL__2018 href=https://ui.adsabs.harvard.edu/abs/2018AJ....155..255Y/abstract target=ref>Yee et al. 2018</a>,yee2018hatp11
-<a refstr=DEMANGEON_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021A&A...653A..41D/abstract target=ref>Demangeon et al. 2021</a>,demangeon2021warm
-<a refstr=SUN_ET_AL__2019 href=https://ui.adsabs.harvard.edu/abs/2019A&A...624A..15S/abstract target=ref>Sun et al. 2019</a>,sun2019kepler411
-<a refstr=NEWTON_ET_AL__2019 href=https://ui.adsabs.harvard.edu/abs/2019ApJ...880L..17N/abstract target=ref>Newton et al. 2019</a>,newton2019tess
-<a refstr=STEFANSSON_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020AJ....160..192S/abstract target=ref>Stefansson et al. 2020</a>,stefansson2020habitable
-<a refstr=BOUMA_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020AJ....160..239B/abstract target=ref>Bouma et al. 2020</a>,bouma2020cluster
-<a refstr=DE_LEON_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021MNRAS.tmp.2120D/abstract target=ref>de Leon et al. 2021</a>,deleon202137
-<a refstr=MANN_ET_AL__2017 href=https://ui.adsabs.harvard.edu/abs/2017AJ....153..267M/abstract target=ref>Mann et al. 2017</a>,mann2017gold
-<a refstr=MUIRHEAD_ET_AL__2012 href=https://ui.adsabs.harvard.edu/abs/2012arXiv1201.2189M/abstract target=ref> Muirhead et al. 2012 </a>,muirhead2012characterizing
-<a refstr=WINTERS_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021arXiv210714737W/abstract target=ref>Winters et al. 2021</a>,winters2022second
-<a refstr=ASTUDILLO_DEFRU_ET_AL__2017 href=https://ui.adsabs.harvard.edu/abs/2017A&A...602A..88A/abstract target=ref>Astudillo-Defru et al. 2017</a>,astudillo-defru2017harps
-<a refstr=DREIZLER_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020MNRAS.493..536D/abstract target=ref>Dreizler et al. 2020</a>,dreizler2020reddots
-<a refstr=FENG_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020ApJS..246...11F/abstract target=ref>Feng et al. 2020</a>,feng2020searcha
-<a refstr=BONFILS_ET_AL__2007 href=https://ui.adsabs.harvard.edu/abs/2007A&A...474..293B/abstract target=ref> Bonfils et al. 2007 </a>,bonfils2007harps
-<a refstr=AMADO_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021A&A...650A.188A/abstract target=ref>Amado et al. 2021</a>,amado2021carmenes
-<a refstr=ANGLADA_ESCUD_EACUTE__ET_AL__2016 href=https://ui.adsabs.harvard.edu/abs/2016Natur.536..437A/abstract target=ref>Anglada-Escud&eacute et al. 2016</a>,anglada-escude2016terrestrial
-<a refstr=YU_ET_AL__2017 href=https://ui.adsabs.harvard.edu/abs/2017MNRAS.467.1342Y/abstract target=ref>Yu et al. 2017</a>,yu2017hot
-<a refstr=STOCK_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020A&A...636A.119S/abstract target=ref>Stock et al. 2020</a>,stock2020carmenes
-<a refstr=ZUCKER_ET_AL__2004 href=https://ui.adsabs.harvard.edu/abs/2004A&A...426..695Z/abstract target=ref> Zucker et al. 2004 </a>,zucker2004multiorder
-<a refstr=ZICHER_ET_AL__2022 href=https://ui.adsabs.harvard.edu/abs/2022MNRAS.512.3060Z/abstract target=ref>Zicher et al. 2022</a>,zicher2022one
-<a refstr=FENG_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020ApJS..250...29F/abstract target=ref>Feng et al. 2020</a>,feng2020search
-<a refstr=BATTLEY_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021MNRAS.503.4092B/abstract target=ref>Battley et al. 2021</a>,battley2021revisiting
-<a refstr=BAKOS_ET_AL__2010 href=https://ui.adsabs.harvard.edu/abs/2010ApJ...710.1724B/abstract target=ref>Bakos et al. 2010</a>,bakos2010hatp11b
-<a refstr=RIZZUTO_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020AJ....160...33R/abstract target=ref>Rizzuto et al. 2020</a>,rizzuto2020tess
-<a refstr=CHEN_AND_KIPPING__2017 href=https://ui.adsabs.harvard.edu/abs/2017ApJ...834...17C target=ref>Chen and Kipping 2017</a>,chen2017probabilistic
-"<a refstr=GILLON_ET_AL__2016 href=https://ui.adsabs.harvard.edu/abs/2016Natur.533..221G/abstract target=ref>Gillon et al. 2016</a,""gillon2017seven",gillon2017seven
-<a refstr=AGOL_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract target=ref>Agol et al. 2021</a>,agol2021refining
-<a refstr=Q1_Q17_DR25_KOI_TABLE href=https://exoplanetarchive.ipac.caltech.edu/docs/Kepler_KOI_docs.html target=ref>Q1-Q17 DR25 KOI Table</a>,thompson2018planetary
-<a refstr=TORRES_ET_AL__2017 href=https://ui.adsabs.harvard.edu/abs/2017AJ....154..264T/abstract target=ref>Torres et al. 2017</a>,torres2017validation
-<a refstr=CALE_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021AJ....162..295C/abstract target=ref>Cale et al. 2021</a>,cale2021diving
-<a refstr=STASSUN_ET_AL__2019 href=https://ui.adsabs.harvard.edu/abs/2019AJ....158..138S/abstract target=ref>TICv8</a>,stassun2019revised
-<a refstr=GILBERT_ET_AL__2022 href=https://ui.adsabs.harvard.edu/abs/2022AJ....163..147G/abstract target=ref>Gilbert et al. 2022</a>,gilbert2022flares
-<a refstr=BURT_ET_AL__2014 href=https://ui.adsabs.harvard.edu/abs/2014ApJ...789..114B/abstract target=ref> Burt et al. 2014</a>,burt2014lickcarnegie
-<a refstr=GAIA_COLLABORATION_ET_AL__2018 href=https://ui.adsabs.harvard.edu/abs/2018A&A...616A...1G/abstract target=ref>Gaia DR2</a>,collaboration2018gaia
-<a refstr=MANN_ET_AL__2013 href=https://ui.adsabs.harvard.edu/abs/2013ApJ...779..188M/abstract target=ref>Mann et al. 2013</a>,mann2013spectrothermometry
-<a refstr=MARTIOLI_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021A&A...649A.177M/abstract target=ref>Martioli et al. 2021</a>,martioli2021new
-<a refstr=FOUESNEAU__ET_AL__2022 href=https://ui.adsabs.harvard.edu/abs/2022arXiv220605992F target=ref>Fousneau et al. 2022</a>,fouesneau2022gaia
-<a refstr=ALMENARA_ET_AL__2018 href=https://ui.adsabs.harvard.edu/abs/2018MNRAS.478..460A/abstract target=ref>Almenara et al. 2018</a>,almenara2018absolute
-<a refstr=SOUTHWORTH_2011 href=https://ui.adsabs.harvard.edu/abs/2011MNRAS.417.2166S/abstract target=ref>Southworth 2011</a>,southworth2011homogeneous
-<a refstr=Q1_Q8_KOI_TABLE href=https://exoplanetarchive.ipac.caltech.edu/docs/Kepler_KOI_docs.html target=ref>Q1-Q8 KOI Table</a>,burke2014planetary
+"pl_orbper_reflink","pl_orbper_bibkey"
+"<a refstr=MORTON_ET_AL__2016 href=https://ui.adsabs.harvard.edu/abs/2016ApJ...822...86M/abstract target=ref>Morton et al. 2016</a>","morton2016false"
+"<a refstr=JONTOF_HUTTER_ET_AL__2015 href=https://ui.adsabs.harvard.edu/abs/2015Natur.522..321J/abstract target=ref>Jontof-Hutter et al. 2015</a>","jontof-hutter2015mass"
+"<a refstr=ROWE_ET_AL__2014 href=https://ui.adsabs.harvard.edu/abs/2014ApJ...784...45R/abstract target=ref> Rowe et al. 2014</a>","rowe2014validation"
+"<a refstr=RIZZUTO_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020AJ....160...33R/abstract target=ref>Rizzuto et al. 2020</a>","rizzuto2020tess"
+"<a refstr=MASUDA_2017 href=https://ui.adsabs.harvard.edu/abs/2017AJ....154...64M/abstract target=ref>Masuda 2017</a>","masuda2017eccentric"
+"<a refstr=MENT_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021AJ....161...23M/abstract target=ref>Ment et al. 2021</a>","ment2021toi"
+"<a refstr=XIE_2014 href=https://ui.adsabs.harvard.edu/abs/2014ApJS..210...25X/abstract target=ref>Xie 2014</a>","xie2014transit"
+"<a refstr=YEE_ET_AL__2018 href=https://ui.adsabs.harvard.edu/abs/2018AJ....155..255Y/abstract target=ref>Yee et al. 2018</a>","yee2018hatp11"
+"<a refstr=DEMANGEON_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021A&A...653A..41D/abstract target=ref>Demangeon et al. 2021</a>","demangeon2021warm"
+"<a refstr=SUN_ET_AL__2019 href=https://ui.adsabs.harvard.edu/abs/2019A&A...624A..15S/abstract target=ref>Sun et al. 2019</a>","sun2019kepler411"
+"<a refstr=NEWTON_ET_AL__2019 href=https://ui.adsabs.harvard.edu/abs/2019ApJ...880L..17N/abstract target=ref>Newton et al. 2019</a>","newton2019tess"
+"<a refstr=STEFANSSON_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020AJ....160..192S/abstract target=ref>Stefansson et al. 2020</a>","stefansson2020habitable"
+"<a refstr=BOUMA_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020AJ....160..239B/abstract target=ref>Bouma et al. 2020</a>","bouma2020cluster"
+"<a refstr=DE_LEON_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021MNRAS.tmp.2120D/abstract target=ref>de Leon et al. 2021</a>","deleon202137"
+"<a refstr=MANN_ET_AL__2017 href=https://ui.adsabs.harvard.edu/abs/2017AJ....153..267M/abstract target=ref>Mann et al. 2017</a>","mann2017gold"
+"<a refstr=MUIRHEAD_ET_AL__2012 href=https://ui.adsabs.harvard.edu/abs/2012arXiv1201.2189M/abstract target=ref> Muirhead et al. 2012 </a>","muirhead2012characterizing"
+"<a refstr=WINTERS_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021arXiv210714737W/abstract target=ref>Winters et al. 2021</a>","winters2022second"
+"<a refstr=ASTUDILLO_DEFRU_ET_AL__2017 href=https://ui.adsabs.harvard.edu/abs/2017A&A...602A..88A/abstract target=ref>Astudillo-Defru et al. 2017</a>","astudillo-defru2017harps"
+"<a refstr=DREIZLER_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020MNRAS.493..536D/abstract target=ref>Dreizler et al. 2020</a>","dreizler2020reddots"
+"<a refstr=FENG_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020ApJS..246...11F/abstract target=ref>Feng et al. 2020</a>","feng2020searcha"
+"<a refstr=BONFILS_ET_AL__2007 href=https://ui.adsabs.harvard.edu/abs/2007A&A...474..293B/abstract target=ref> Bonfils et al. 2007 </a>","bonfils2007harps"
+"<a refstr=AMADO_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021A&A...650A.188A/abstract target=ref>Amado et al. 2021</a>","amado2021carmenes"
+"<a refstr=ANGLADA_ESCUD_EACUTE__ET_AL__2016 href=https://ui.adsabs.harvard.edu/abs/2016Natur.536..437A/abstract target=ref>Anglada-Escud&eacute et al. 2016</a>","anglada-escude2016terrestrial"
+"<a refstr=YU_ET_AL__2017 href=https://ui.adsabs.harvard.edu/abs/2017MNRAS.467.1342Y/abstract target=ref>Yu et al. 2017</a>","yu2017hot"
+"<a refstr=STOCK_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020A&A...636A.119S/abstract target=ref>Stock et al. 2020</a>","stock2020carmenes"
+"<a refstr=ZUCKER_ET_AL__2004 href=https://ui.adsabs.harvard.edu/abs/2004A&A...426..695Z/abstract target=ref> Zucker et al. 2004 </a>","zucker2004multiorder"
+"<a refstr=ZICHER_ET_AL__2022 href=https://ui.adsabs.harvard.edu/abs/2022MNRAS.512.3060Z/abstract target=ref>Zicher et al. 2022</a>","zicher2022one"
+"<a refstr=FENG_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020ApJS..250...29F/abstract target=ref>Feng et al. 2020</a>","feng2020search"
+"<a refstr=BATTLEY_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021MNRAS.503.4092B/abstract target=ref>Battley et al. 2021</a>","battley2021revisiting"
+"<a refstr=BAKOS_ET_AL__2010 href=https://ui.adsabs.harvard.edu/abs/2010ApJ...710.1724B/abstract target=ref>Bakos et al. 2010</a>","bakos2010hatp11b"
+"<a refstr=RIZZUTO_ET_AL__2020 href=https://ui.adsabs.harvard.edu/abs/2020AJ....160...33R/abstract target=ref>Rizzuto et al. 2020</a>","rizzuto2020tess"
+"<a refstr=CHEN_AND_KIPPING__2017 href=https://ui.adsabs.harvard.edu/abs/2017ApJ...834...17C target=ref>Chen and Kipping 2017</a>","chen2017probabilistic"
+"<a refstr=GILLON_ET_AL__2016 href=https://ui.adsabs.harvard.edu/abs/2016Natur.533..221G/abstract target=ref>Gillon et al. 2016</a,""gillon2017seven","gillon2017seven"
+"<a refstr=AGOL_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021PSJ.....2....1A/abstract target=ref>Agol et al. 2021</a>","agol2021refining"
+"<a refstr=Q1_Q17_DR25_KOI_TABLE href=https://exoplanetarchive.ipac.caltech.edu/docs/Kepler_KOI_docs.html target=ref>Q1-Q17 DR25 KOI Table</a>","thompson2018planetary"
+"<a refstr=TORRES_ET_AL__2017 href=https://ui.adsabs.harvard.edu/abs/2017AJ....154..264T/abstract target=ref>Torres et al. 2017</a>","torres2017validation"
+"<a refstr=CALE_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021AJ....162..295C/abstract target=ref>Cale et al. 2021</a>","cale2021diving"
+"<a refstr=STASSUN_ET_AL__2019 href=https://ui.adsabs.harvard.edu/abs/2019AJ....158..138S/abstract target=ref>TICv8</a>","stassun2019revised"
+"<a refstr=GILBERT_ET_AL__2022 href=https://ui.adsabs.harvard.edu/abs/2022AJ....163..147G/abstract target=ref>Gilbert et al. 2022</a>","gilbert2022flares"
+"<a refstr=BURT_ET_AL__2014 href=https://ui.adsabs.harvard.edu/abs/2014ApJ...789..114B/abstract target=ref> Burt et al. 2014</a>","burt2014lickcarnegie"
+"<a refstr=GAIA_COLLABORATION_ET_AL__2018 href=https://ui.adsabs.harvard.edu/abs/2018A&A...616A...1G/abstract target=ref>Gaia DR2</a>","collaboration2018gaia"
+"<a refstr=MANN_ET_AL__2013 href=https://ui.adsabs.harvard.edu/abs/2013ApJ...779..188M/abstract target=ref>Mann et al. 2013</a>","mann2013spectrothermometry"
+"<a refstr=MARTIOLI_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021A&A...649A.177M/abstract target=ref>Martioli et al. 2021</a>","martioli2021new"
+"<a refstr=FOUESNEAU__ET_AL__2022 href=https://ui.adsabs.harvard.edu/abs/2022arXiv220605992F target=ref>Fousneau et al. 2022</a>","fouesneau2022gaia"
+"<a refstr=ALMENARA_ET_AL__2018 href=https://ui.adsabs.harvard.edu/abs/2018MNRAS.478..460A/abstract target=ref>Almenara et al. 2018</a>","almenara2018absolute"
+"<a refstr=SOUTHWORTH_2011 href=https://ui.adsabs.harvard.edu/abs/2011MNRAS.417.2166S/abstract target=ref>Southworth 2011</a>","southworth2011homogeneous"
+"<a refstr=Q1_Q8_KOI_TABLE href=https://exoplanetarchive.ipac.caltech.edu/docs/Kepler_KOI_docs.html target=ref>Q1-Q8 KOI Table</a>","burke2014planetary"
+"<a refstr=KIPPING_ET_AL__2014 href=https://ui.adsabs.harvard.edu/abs/2014ApJ...784...28K/abstract target=ref> Kipping et al. 2014</a>","kipping2014hunt"
+"<a refstr=MICHIGAN_CATALOG__VOL__2 href=https://ui.adsabs.harvard.edu/abs/1978MSS...C02....0H/abstract target=ref> Michigan Catalog, Vol. 2 </a>","houk1978michigan"
+"<a refstr=MUIRHEAD_ET_AL__2012 href=https://ui.adsabs.harvard.edu/abs/2012ApJ...750L..37M/abstract target=ref>Muirhead et al. 2012</a>","muirhead2012characterizinga"
+"<a refstr=KLEIN_ET_AL__2021 href=https://ui.adsabs.harvard.edu/abs/2021MNRAS.502..188K/abstract target=ref>Klein et al. 2021</a>","klein2021investigating"
+"<a refstr=TURNBULL_2015 href=https://ui.adsabs.harvard.edu/abs/2015arXiv151001731T/abstract target=ref>Turnbull 2015</a>","turnbull2015exocat1"
