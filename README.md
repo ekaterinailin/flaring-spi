@@ -3,7 +3,7 @@
 This repository contains the statistical analysis modules, and scripts to produce the figures and tables in the two following works:
 
 1. [Ilin, E. and Poppenhäger K., (2022). *Searching for flaring star-planet interactions in AU Mic TESS observations.*](https://ui.adsabs.harvard.edu/abs/2022MNRAS.513.4579I/abstract)
-2. Ilin, E., Poppenhäger K. et al. (2023, in prep.) *Searching for flaring star-planet interactions in Kepler and TESS observations.*
+2. Ilin, E., Poppenhäger K. et al. (2023, accepted to MNRAS on October 30, 2023) *Planetary perturbers: Flaring star-planet interactions in Kepler and TESS*
 
 The first introduces the statistical method used in the second, and demonstrates it on the popular case of AU Mic.
 
