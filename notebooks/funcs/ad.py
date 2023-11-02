@@ -179,7 +179,8 @@ def sample_AD_for_custom_distribution(f, nobs, N, savefig=False,
             if np.isnan(lp):
                 return -np.inf
             else:
-                return lp
+                
+                return lp[0]
         
 
     # Apply ensemble sampler from emcee
@@ -204,7 +205,7 @@ def sample_AD_for_custom_distribution(f, nobs, N, savefig=False,
 
     # replace infs
     missing = np.where(~np.isfinite(samples))[0]
-    if len(missing)>0:
+    if len(missing) > 0:
         samples[missing] = f(np.random.rand(*missing.shape))
     c = samples.reshape((N,nobs))
 
