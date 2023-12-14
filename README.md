@@ -40,7 +40,9 @@ Look into A-D tests with doubled and tripled sample: `AU_Mic_AD_test_doubled_sam
 
 Calculation of quiescent flux in the TESS band: `AU_Mic_quiescent_flux_in_TESS_band_RESULTS.ipynb`
 
-## Project 2: Searching for flaring star-planet interactions in Kepler and TESS observations
+## Project 2: Planetary perturbers: Flaring star-planet interactions in Kepler and TESS*
+
+Find tables and light curves for this project on [Zenodo](https://zenodo.org/records/10065891).
 
 `notebooks/`
 
