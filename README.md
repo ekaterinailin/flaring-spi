@@ -42,11 +42,21 @@ Calculation of quiescent flux in the TESS band: `AU_Mic_quiescent_flux_in_TESS_b
 
 ## Project 2: Searching for flaring star-planet interactions in Kepler and TESS observations
 
-*TBD*
-
 `notebooks/`
 
-
+01a and 01b -- sample selection
+02 -- flare finding
+02b -- take a closer look at Kepler-411 that actually is two flaring stars
+03 -- vetting notebook, validating the completeness of the vetted table (did I look at all the flares and assigned false positives?)
+04 -- write out the flare table to csv, paper-ready
+05 -- notebook to make some nice flare plots
+06 -- Anderson-Darling tests in various sub-samples
+07 -- stellar and planetary parameters
+08 -- coherence time scales of obrit and rotation
+09 -- compiling the results in one giant table, incl. calculation of power of magnetic star-planet interaction
+10 -- estimating tidal star-planet interaction
+11 -- estimating the size of the Alfven radius
+12 -- calculate the error on orbital phase of the flares as per reviewer request
 
 
 
